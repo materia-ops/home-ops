@@ -18,8 +18,6 @@ talosconfig
 terraform.tfstate
 terraform.tfstate.backup
 terraform/**/.env
-# Local-only docs (personal notes — keep out of the public repo)
-/.docs/
 # Misc.
 .claude/
 .private/
