@@ -8,13 +8,7 @@ spec:
   chartRef:
     kind: OCIRepository
     name: snapshot-controller
-  install:
-    crds: CreateReplace
   interval: 1h
-  upgrade:
-    # The home-operations chart ships CRDs in crds/ instead of templates/;
-    # CreateReplace keeps them updated on chart bumps (Flux default is None).
-    crds: CreateReplace
   values:
     monitoring:
       serviceMonitor:
