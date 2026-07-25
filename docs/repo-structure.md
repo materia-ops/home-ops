@@ -18,7 +18,7 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 | [`.github/workflows/`](../.github/workflows) | CI — see [cicd.md](./cicd.md) |
 | [`.mise/`](../.mise/config.toml) | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment |
 | [`.justfile`](../.justfile) | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules |
-| `docs/` | This documentation (committed). `.docs/` is gitignored personal notes |
+| `docs/` | This documentation (committed); work notes live in the private materia-vault |
 
 ## Anatomy of an app
 

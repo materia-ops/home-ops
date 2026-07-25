@@ -32,9 +32,8 @@ with `gh pr create` and merged by the maintainer, not by sessions.
 - `kubernetes/apps/<namespace>/<app>/` — workloads;
   `kubernetes/{flux,components,templates}/` — shared machinery;
   `talos/`, `bootstrap/`, `infrastructure/` (ansible).
-- `docs/` — committed public docs (start at docs/README.md).
-  `.docs/` — untracked personal scratch; never commit it. Being
-  retired: its contents were migrated to the materia-vault (below).
+- `docs/` — committed public docs (start at docs/README.md). Work
+  notes live in the private materia-vault (below), never in this repo.
 
 ## Conventions
 
@@ -70,8 +69,9 @@ with `gh pr create` and merged by the maintainer, not by sessions.
    substitution rules).
 3. Read the konflate rendered-diff comment on the PR — it is the ground
    truth for what actually reconciles; confirm it matches intent.
-4. PR describes what changes on the cluster when it reconciles and how
-   it was validated, with a rollback note for anything stateful.
+4. PR describes what changes on the cluster when it reconciles —
+   behavior before vs after, not just which files moved — how it was
+   validated, and a rollback note for anything stateful.
 
 ## Work docs
 
