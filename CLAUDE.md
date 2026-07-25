@@ -33,7 +33,8 @@ with `gh pr create` and merged by the maintainer, not by sessions.
   `kubernetes/{flux,components,templates}/` — shared machinery;
   `talos/`, `bootstrap/`, `infrastructure/` (ansible).
 - `docs/` — committed public docs (start at docs/README.md).
-  `.docs/` — untracked personal notes; never commit it.
+  `.docs/` — untracked personal scratch; never commit it. Being
+  retired: its contents were migrated to the materia-vault (below).
 
 ## Conventions
 
@@ -71,3 +72,11 @@ with `gh pr create` and merged by the maintainer, not by sessions.
    truth for what actually reconciles; confirm it matches intent.
 4. PR describes what changes on the cluster when it reconciles and how
    it was validated, with a rollback note for anything stateful.
+
+## Work docs
+
+Code-describing docs (architecture, CI, troubleshooting) live in this
+repo. Work-describing docs — decisions, plans, handovers, reviews,
+prompts, anything cross-repo — live in the private
+`materia-ops/materia-vault` Obsidian vault; its root CLAUDE.md holds
+the note contract.
