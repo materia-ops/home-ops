@@ -71,17 +71,8 @@ sonarr:
             - cddfb4e32db826151d97352b8e37c648  # x264
             - c9eafd50846d299b862ca9bb6ea91950  # x265
             - 041d90b435ebd773271cea047a457a6a  # x266
+        # all CFs in this group are required, so a select would be redundant
         - trash_id: f54985e5e96747cef58731f1cf4c9181  # [Streaming Services] Anime
-          select:
-            - a370d974bc7b80374de1d9ba7519760b  # ABEMA
-            - d54cd2bf1326287275b56bccedb72ee2  # ADN
-            - 7dd31f3dee6d2ef8eeaa156e23c3857e  # B-Global
-            - 4c67ff059210182b59cdd41697b8cb08  # Bilibili
-            - 3e0b26604165f463f3e8e192261e7284  # CR
-            - 1284d18e693de8efe0fe7d6b3e0b9170  # FUNi
-            - 570b03b3145a25011bf073274a407259  # HIDIVE
-            - 44a8ee6403071dd7b8a3a8dd3fe8cb20  # VRV
-            - e5e6405d439dcd1af90962538acd4fe0  # WKN
         # - trash_id: 7832db22b71ab669458c17a2850d6913  # [Streaming Services] Miscellaneous
         #   select:
         #     - e6e299075e22ac8f541f722254c8350a  # AUBC

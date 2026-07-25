@@ -43,10 +43,8 @@ sonarr:
           select:
             # - 47435ece6b99a0b477caf360e79ba0bb  # x265 (HD)
             - 9b64dff695c2115facf1b6ea59c9bd07  # x265 (no HDR/DV)
+        # both CFs in this group are required, so a select would be redundant
         - trash_id: 85fae4a2294965b75710ef2989c850eb  # [Streaming Services] HD/UHD boost
-          select:
-            - 218e93e5702f44a68ad9e3c6ba87d2f0  # HD Streaming Boost
-            - 43b3cf48cb385cd3eac608ee6bca7f09  # UHD Streaming Boost
         - trash_id: 59c3af66780d08332fdc64e68297098f  # [Unwanted] Unwanted Formats
           select:
             - 15a05bc7c1a36e2b57fd628f8977e2fc  # AV1
