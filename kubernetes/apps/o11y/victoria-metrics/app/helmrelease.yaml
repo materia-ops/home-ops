@@ -262,6 +262,31 @@ spec:
                 expr: (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]) == 1
                 labels:
                   severity: critical
+      prowlarr-rules:
+        create: true
+        groups:
+          - name: prowlarr
+            type: vlogs
+            interval: 30m
+            rules:
+              # MAM locks each session cookie to an IP (or ASN); when the
+              # cookie dies every MAM query 403s until a human mints a new
+              # one, so the alert carries the fix. Matching the bare cookie
+              # name catches all MAM error variants ("mam_id expired or
+              # invalid" etc.) — at info level it never appears otherwise.
+              - alert: ProwlarrMamSessionExpired
+                annotations:
+                  summary: >-
+                    Prowlarr's MyAnonamouse session cookie is dead — {{ $value }} mam_id auth failure(s) in the last 30m.
+                  description: >-
+                    Prowlarr's MyAnonamouse mam_id cookie expired or got IP-invalidated — all MAM searches/RSS are 403ing.
+                    Fix: from the home network (Prowlarr egresses via the house WAN IP, not the VPN), log in to MyAnonamouse
+                    → Preferences → Security, create a new session locked to the current IP (ASN-locked if the IP may change),
+                    copy the mam_id value, then Prowlarr → Indexers → MyAnonamouse → paste into MAM ID → Test → Save.
+                expr: |-
+                  kubernetes.pod_namespace:=media kubernetes.container_name:=prowlarr "mam_id" | stats count() as failures | filter failures:>0
+                labels:
+                  severity: warning
       recyclarr-rules:
         create: true
         groups:
