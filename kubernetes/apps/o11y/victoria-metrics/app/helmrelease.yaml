@@ -301,6 +301,43 @@ spec:
                   kubernetes.pod_namespace:=media kubernetes.container_name:=recyclarr ("[ERR]" OR "[WRN]" OR "[FTL]" OR "level=error") | stats count() as errors | filter errors:>0
                 labels:
                   severity: warning
+      sqlite-rules:
+        create: true
+        groups:
+          # Migrated from the retired per-app lokirule.yaml files; one
+          # namespace-wide group now also covers bazarr/lidarr, which the
+          # old copies never did. stats by app -> one alert per container.
+          - name: sqlite
+            type: vlogs
+            interval: 5m
+            rules:
+              - alert: MediaDatabaseLocked
+                annotations:
+                  summary: >-
+                    {{ $labels.app }} is logging SQLite "database is locked" errors — its DB is under contention or the config volume is unhealthy.
+                expr: |-
+                  kubernetes.pod_namespace:=media i("database is locked") | rename kubernetes.container_name as app | stats by (app) count() as hits | filter hits:>0
+                for: 5m
+                labels:
+                  severity: critical
+              # Corruption is never transient — no `for`, page on first sight.
+              - alert: MediaDatabaseMalformed
+                annotations:
+                  summary: >-
+                    {{ $labels.app }} SQLite database is malformed — likely corruption; restore the config PVC from the latest volsync snapshot.
+                expr: |-
+                  kubernetes.pod_namespace:=media i("database disk image is malformed") | rename kubernetes.container_name as app | stats by (app) count() as hits | filter hits:>0
+                labels:
+                  severity: critical
+              - alert: PlexDatabaseBusy
+                annotations:
+                  summary: >-
+                    Plex is logging "retry busy DB" — its database is under sustained contention.
+                expr: |-
+                  kubernetes.pod_namespace:=media kubernetes.container_name:=plex i("retry busy DB") | stats count() as hits | filter hits:>0
+                for: 5m
+                labels:
+                  severity: critical
       wow-panel-rules:
         create: true
         groups:
