@@ -47,6 +47,9 @@ kind: CiliumBGPPeerConfig
 metadata:
   name: bgp-peer-config-v4
 spec:
+  timers:
+    holdTimeSeconds: 9
+    keepAliveTimeSeconds: 3
   families:
     - afi: ipv4
       safi: unicast
