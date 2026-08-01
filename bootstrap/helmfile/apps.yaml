@@ -68,7 +68,7 @@ releases:
           - --namespace=security
           - --server-side
           - --force-conflicts
-          - --filename=../../kubernetes/apps/security/cert-manager/app/clusterissuers.yaml
+          - --filename=../../kubernetes/apps/security/cert-manager/app/clusterissuer.yaml
           - --wait=true
         showlogs: true
     needs:
