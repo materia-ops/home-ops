@@ -1,5 +1,6 @@
 ---
-# Exactly docs/wow-server/context/11-panel-rbac-spec.md — anything the panel
+# Exactly materia-vault projects/wow-server/context/11-panel-rbac-spec.md —
+# anything the panel
 # "needs" beyond this is an escalation, not an addition here.
 apiVersion: v1
 kind: ServiceAccount

@@ -46,7 +46,8 @@ spec:
               AC_DB_PORT: "3306"
               AC_DB_USER: acore
               AUTH_DEPLOY: azerothcore-authserver
-              # Idle auto-scale-down (docs/wow-server 04-parameters.md):
+              # Idle auto-scale-down (materia-vault
+              # projects/wow-server/context/04-parameters.md):
               # IDLE_SCALEDOWN_ENABLED=false is the single kill switch.
               IDLE_SCALEDOWN_ENABLED: "true"
               IDLE_SCALEDOWN_HOURS: "3"
