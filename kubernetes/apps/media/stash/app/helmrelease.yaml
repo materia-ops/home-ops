@@ -66,7 +66,13 @@ spec:
         runAsUser: 0
         runAsGroup: 0
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
+        # Always, not the fleet-default OnRootMismatch: the blob store carries
+        # directories that predate this deployment at mode 2755, and the
+        # container is root with all capabilities dropped, so it has no
+        # DAC_OVERRIDE to write past a missing group-write bit. OnRootMismatch
+        # only ever looked at the volume root, which already matched. The
+        # recursive pass is cheap here (~6k files) even with the zeroscaler.
+        fsGroupChangePolicy: Always
         seccompProfile: { type: RuntimeDefault }
         supplementalGroups: [ 44, 226 ]
     service:
