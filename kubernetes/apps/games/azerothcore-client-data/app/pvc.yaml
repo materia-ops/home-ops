@@ -1,8 +1,9 @@
 ---
 # Game client data (dbc/maps/vmaps/mmaps/Cameras + VERSION marker) extracted
 # from the owner's 3.3.5a client by the manual WP2 Job
-# (docs/wow-server/manifests/client-data-extract-job.yaml). Flux-managed as its
-# own app so the data survives any game-app lifecycle. Mounted read-only by the
+# (materia-vault projects/wow-server/manifests/client-data-extract-job.yaml).
+# Flux-managed as its own app so the data survives any game-app lifecycle.
+# Mounted read-only by the
 # worldserver (WP4); RWO, so the extract Job must be gone before worldserver
 # starts. No volsync: contents are reproducible by re-running the extraction.
 apiVersion: v1

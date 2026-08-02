@@ -12,7 +12,8 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # PANEL_HOST (docs/wow-server 04-parameters.md) — not <app>.materia.wtf
+      # PANEL_HOST (materia-vault projects/wow-server/context/04-parameters.md)
+      # — not <app>.materia.wtf
       APP_HOST: wow.materia.wtf
   prune: true
   sourceRef:

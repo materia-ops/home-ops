@@ -47,7 +47,7 @@
       ignoreTests: false,
     },
     {
-      description: "AzerothCore server image — never auto-merge; human PR merge is the realm promotion gate (docs/wow-server: 01 §2, 10 §4)",
+      description: "AzerothCore server image — never auto-merge; human PR merge is the realm promotion gate (materia-vault projects/wow-server/context: 01-architecture-and-decisions.md §2, 10-pin-manifest-spec.md §4)",
       matchDatasources: [ "docker" ],
       matchPackageNames: [ "/azerothcore-wotlk-playerbots/" ],
       automerge: false,
