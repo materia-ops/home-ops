@@ -1,7 +1,7 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
-    "github>home-operations/renovate-presets#3.0.0",
+    "github>home-operations/renovate-presets#4.0.0",
     ":timezone(Australia/Melbourne)",
     // Org policy — LAST so it wins over the upstream :automergeBranch: forces
     // PR-based automerge. The org ruleset forbids direct pushes to the default
