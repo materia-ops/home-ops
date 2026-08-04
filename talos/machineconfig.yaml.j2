@@ -28,9 +28,9 @@ machine:
     rbac: true
   install:
     {% if ENV.NODE_TYPE == 'vm' %}
-    image: factory.talos.dev/installer/{{ ENV.SCHEMATIC }}:v1.13.7
+    image: factory.talos.dev/installer/{{ ENV.SCHEMATIC }}:v1.13.8
     {% else %}
-    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.7
+    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.8
     {% endif %}
     wipe: false
     grubUseUKICmdline: true
