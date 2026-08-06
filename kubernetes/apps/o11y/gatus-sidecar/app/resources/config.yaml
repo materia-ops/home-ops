@@ -126,11 +126,14 @@ endpoints:
   # redirect to Authentik (302) - a 200 here means the SecurityPolicy is being
   # skipped and the app is serving with no auth (the fail-open regression this
   # check exists to catch). ignore-redirect so the 302 is observed, not followed.
+  # dns-resolver: LAN-only hostname (NXDOMAIN on public DNS) - resolve via
+  # k8s-gateway (UDP only).
   - name: wow-panel-sso-guard
     group: security
     url: https://wow.materia.wtf
     interval: 5m
     client:
+      dns-resolver: udp://192.168.10.4:53
       ignore-redirect: true
     conditions:
       - "[STATUS] == 302"

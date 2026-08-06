@@ -92,6 +92,13 @@ spec:
             port: *port
     route:
       app:
+        # Grey-cloud hostname: public DNS = WAN IP = hairpin timeout for the
+        # gatus pod, so resolve via k8s-gateway (UDP only).
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            client:
+              dns-resolver: udp://192.168.10.4:53
+            path: /identity
         hostnames:
           - "{{ .Release.Name }}.materia.wtf"
         parentRefs:
