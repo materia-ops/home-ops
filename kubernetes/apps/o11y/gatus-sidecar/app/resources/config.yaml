@@ -126,10 +126,8 @@ endpoints:
   # redirect to Authentik (302) - a 200 here means the SecurityPolicy is being
   # skipped and the app is serving with no auth (the fail-open regression this
   # check exists to catch). ignore-redirect so the 302 is observed, not followed.
-  # dns-resolver: the hostname is LAN-only split DNS by design (no public
-  # record), so cluster CoreDNS gets NXDOMAIN - resolve via k8s-gateway
-  # (UDP only; its LoadBalancer does not expose TCP 53) to reach
-  # envoy-internal the way a LAN client does.
+  # dns-resolver: LAN-only hostname (NXDOMAIN on public DNS) - resolve via
+  # k8s-gateway (UDP only).
   - name: wow-panel-sso-guard
     group: security
     url: https://wow.materia.wtf

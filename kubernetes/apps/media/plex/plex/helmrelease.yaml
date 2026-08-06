@@ -92,14 +92,8 @@ spec:
             port: *port
     route:
       app:
-        # gatus override: plex.materia.wtf is deliberately grey-cloud (CNAME
-        # to the WAN IP - Cloudflare-proxying Plex streams breaks CF ToS), so
-        # the gateway-inherited public resolver hands the gatus pod the WAN
-        # IP and the probe dies in hairpin NAT. Resolve via k8s-gateway (UDP
-        # only) to probe envoy-external the way a LAN client does. /identity
-        # is Plex's unauthenticated health endpoint; it must live here in
-        # git - the live route only kept it as a server-side-apply orphan
-        # after an old refactor dropped it.
+        # Grey-cloud hostname: public DNS = WAN IP = hairpin timeout for the
+        # gatus pod, so resolve via k8s-gateway (UDP only).
         annotations:
           gatus.home-operations.com/endpoint: |-
             client:
