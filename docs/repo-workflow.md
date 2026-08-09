@@ -41,8 +41,9 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
      not have touched directly.
    - **Image Pull** pre-warms any changed images onto the nodes. A failure here usually
      means a typo'd image reference — fix it before merge, not after.
-   - **Ansible Check** (only when `infrastructure/**` changed) dry-runs against the
-     live Pis.
+   - **Validate (Syntax Check)** (only when `infrastructure/**` changed) checks the
+     playbook without credentials; the live `--check` dry-run runs post-merge, gating
+     the apply.
 3. **Merge.** The GitHub webhook triggers Flux within seconds. If you're impatient or
    the webhook misfires: `just kube reconcile`.
 4. **Verify.** `flux get ks -A --status-selector ready=false` and
@@ -91,8 +92,8 @@ just kube restore <namespace> <app> [previous]
 ```
 
 Suspends Flux for the app, scales it down, runs a Kopia restore from
-`nas.internal:/mnt/apps/kopia` into the app PVC, and leaves you to resume. Browse any
-PVC with `just kube browse-pvc <ns> <claim>`.
+`nas.internal:/mnt/apps/kopia` into the app PVC, then resumes Flux and waits for the
+pod to come back Ready. Browse any PVC with `just kube browse-pvc <ns> <claim>`.
 
 ### Talos / Kubernetes changes
 
@@ -107,9 +108,10 @@ Some machine-config changes only take effect with an upgrade, not just an apply.
 
 ### Infrastructure (Pi-hole) changes
 
-Edit under `infrastructure/`, open a PR — CI runs check mode against the live Pis; the
-apply happens automatically on merge, one Pi at a time. For an ad-hoc scoped run use the
-workflow's manual dispatch (`tags`, `limit`, `check_only`).
+Edit under `infrastructure/`, open a PR — CI syntax-checks the playbook (PRs never
+reach the self-hosted runners); on merge, check mode runs against the live Pis and
+then the apply, one Pi at a time. For an ad-hoc scoped run use the workflow's manual
+dispatch (`tags`, `limit`, `check_only`).
 
 ### Companion-repo changes (azerothcore-image, wow-panel, raidscope)
 

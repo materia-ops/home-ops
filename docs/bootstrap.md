@@ -47,7 +47,7 @@ extensions per node type: `qemu-guest-agent` for the `matalos-c1` VM;
 (mitigations off, SELinux/AppArmor off) and enable IOMMU passthrough.
 
 ```sh
-just talos download-image matalos-c2 v1.13.6   # builds the schematic, fetches the ISO
+just talos download-image matalos-c2 v1.13.8   # builds the schematic, fetches the ISO
 ```
 
 For bare-metal ISO boots the schematic also injects

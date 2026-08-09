@@ -36,9 +36,10 @@ Defence in depth, roughly outermost-in:
 - **HA control plane** — 3 etcd members; any single node can fail. `matalos-c1` runs on
   different hardware (Proxmox VM on the Xeon-D host) than the two P330 Tinys, so a
   model-specific fault can't take all three.
-- **GitOps self-healing** — Flux drift detection re-applies manual/mutated state;
-  HelmRelease remediation retries failed upgrades and cleans up on failure. The cluster
-  converges on Git even after operator mistakes.
+- **GitOps self-healing** — Flux drift detection re-applies manual/mutated state; a
+  failed HelmRelease upgrade cleans up, stops, and alerts (fail-and-hold — upgrade
+  remediation is deliberately unset so DB-migrating apps are never auto-rolled-back;
+  recovery is roll-forward). The cluster converges on Git even after operator mistakes.
 - **Rollout safety** — CI pre-pulls changed images to every node before merge; Spegel
   P2P-mirrors images between nodes, so workloads reschedule even during a registry
   outage; Reloader restarts pods when their ConfigMaps/Secrets rotate.
@@ -73,7 +74,8 @@ automation in place:
 
 - **Scale-to-zero** — the `zeroscaler` component (HPA + `HPAScaleToZero` feature gate)
   parks idle workloads at 0 replicas; prometheus-adapter feeds custom metrics.
-- **CI runners** — ARC scales `home-ops-runner` 1→3 with queue depth.
+- **CI runners** — ARC scales `home-ops-runner` 0→3 with queue depth (no warm runner
+  holds the Talos `os:admin` identity between jobs).
 - **Adding a node** — one new file in `talos/nodes/`, a switch port trunked for
   VLANs 20/70/90, and `just talos apply-node`; Ceph picks up a Micron 7450 OSD via the
   model filter automatically.
@@ -106,6 +108,6 @@ For routine changes the PR checks are the checklist. For **significant** changes
 - [ ] No new alerts after ~15 minutes (Pushover quiet, vmalert clean)
 - [ ] For storage/Talos changes: `ceph status` HEALTH_OK, all nodes Ready
 
-**Rollback triggers** — failed remediation after retries, data-integrity doubt, or a
+**Rollback triggers** — an upgrade that stays failed, data-integrity doubt, or a
 red gatus endpoint that won't recover: revert the Git commit (Flux converges back), or
 for migrated databases roll forward per the runbook above.

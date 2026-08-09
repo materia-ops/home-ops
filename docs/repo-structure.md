@@ -11,7 +11,7 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 | [`kubernetes/apps/`](../kubernetes/apps) | Everything Flux deploys, one directory per namespace |
 | [`kubernetes/components/`](../kubernetes/components) | Reusable Kustomize components apps opt into |
 | [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization) |
-| [`kubernetes/templates/`](../kubernetes/templates) | Manifest templates used by the `kube` just recipes (VolSync restore) |
+| [`kubernetes/templates/`](../kubernetes/templates) | Legacy restic-era VolSync restore template — no longer used; the `just kube restore` recipe now clones the app's live ReplicationDestination |
 | [`talos/`](../talos) | Talos machine configuration (minijinja templates + per-node overrides) |
 | [`bootstrap/`](../bootstrap) | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources |
 | [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability) |
@@ -82,7 +82,8 @@ mixed into apps via `spec.components`:
 [`kubernetes/flux/cluster/ks.yaml`](../kubernetes/flux/cluster/ks.yaml) is the only
 Kustomization the FluxInstance applies directly. It walks `kubernetes/apps` and patches
 defaults into every child Kustomization/HelmRelease: drift detection enabled, CRDs
-`CreateReplace`, rollback cleanup, remediation with retries. Any new `ks.yaml` under
+`CreateReplace`, rollback cleanup on failure (upgrade remediation is deliberately
+unset — failed upgrades fail-and-hold for roll-forward). Any new `ks.yaml` under
 `kubernetes/apps/**` inherits all of that for free.
 
 `ksgate` (in `system/`) supplements `dependsOn` by gating Kustomizations on arbitrary
