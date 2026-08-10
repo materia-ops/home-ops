@@ -74,7 +74,7 @@ Cilium over BGP to route LoadBalancer VIPs.
 │   ├── apps/          # one directory per namespace, one per app (ks.yaml + app/)
 │   ├── components/    # reusable Kustomize components (volsync, alerts, sso, …)
 │   ├── flux/cluster/  # the single Flux entrypoint
-│   └── templates/     # manifest templates used by the kube just recipes (VolSync restore)
+│   └── templates/     # legacy VolSync restore template (unused since the Kopia migration)
 ├── talos/             # machine config templates (minijinja + 1Password refs)
 ├── bootstrap/         # day-0 helmfile bring-up (CRDs → core apps → Flux)
 ├── infrastructure/    # Ansible for the Pi-hole hosts

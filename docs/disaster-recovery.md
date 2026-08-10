@@ -37,7 +37,7 @@ Everything runs from a workstation checkout of this repo:
 If a machine needs reimaging, build its boot media first:
 
 ```sh
-just talos download-image <node> <version>   # e.g. just talos download-image matalos-c2 v1.13.6
+just talos download-image <node> <version>   # e.g. just talos download-image matalos-c2 v1.13.8
 ```
 
 This renders the node's Image Factory schematic (system extensions, bond/VLAN kernel

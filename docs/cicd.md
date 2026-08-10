@@ -34,7 +34,8 @@ Two runner types:
 
 - **GitHub-hosted (`ubuntu-latest`)** for anything that doesn't need LAN access.
 - **Self-hosted (`home-ops-runner`)** — Actions Runner Controller (ARC) in the
-  `actions-runner-system` namespace, min 1 / max 3, autoscaling per queued job. These
+  `actions-runner-system` namespace, min 0 / max 3, autoscaling per queued job (scale
+  from zero — no warm runner holds the Talos `os:admin` identity between jobs). These
   runners are *inside* the cluster and are granted Talos API access
   (`kubernetesTalosAPIAccess` allows `actions-runner-system`), which is what lets CI run
   `talosctl` against the nodes and Ansible against the Pis.
@@ -73,17 +74,24 @@ Self-hosted Renovate run, triggered by:
   schedule.
 
 Auto-merge policy (see [`.renovaterc.json5`](../.renovaterc.json5)): mise tools
-(minor/patch, 3-day cooldown, branch merge), trusted `home-operations` digests, and this
-cluster's own images (semver from release-please). Everything else waits for review.
+(minor/patch, 3-day cooldown), GitHub Actions (minor/patch/digest), trusted
+`home-operations` digests, the raidscope/wow-panel images (semver from
+release-please), and Grafana dashboards — all via PR automerge (the org ruleset
+forbids direct branch pushes). The AzerothCore server and MySQL images never
+auto-merge; everything else waits for review.
 
 ### `ansible.yaml` — Pi-hole infrastructure
 
-Runs on the self-hosted runners (LAN access to the Pis). Three stages:
+PRs run a credential-less **Validate** (playbook syntax check) on a GitHub-hosted
+runner — the self-hosted jobs are gated off the `pull_request` path entirely. On push
+to `main` (and manual dispatch) the self-hosted runners (LAN access to the Pis) run
+three stages:
 
 1. **Plan** — derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
    `inventory/group_vars/` → `observability`, structural files → everything).
-2. **Check** — `ansible-playbook --check --diff` on every PR *and* push.
-3. **Apply** — only on push to `main` (or manual dispatch with `check_only=false`).
+2. **Check** — `ansible-playbook --check --diff` against the live Pis.
+3. **Apply** — gated on Check; runs on push to `main` (or manual dispatch with
+   `check_only=false`).
 
 The dnscrypt play is `serial: 1` + `any_errors_fatal` with a DNS-resolve verification
 between hosts, so a bad change can only take out one Pi-hole before the rollout stops.

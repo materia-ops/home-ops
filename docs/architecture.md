@@ -163,8 +163,8 @@ flowchart TD
 
 | Layer | Choice | Notes |
 | :--- | :--- | :--- |
-| OS | Talos Linux `v1.13.6` | Immutable, API-managed, no SSH; config templated with minijinja + vals |
-| Kubernetes | `v1.36.2` | `HPAScaleToZero` feature gate, topology-spread defaults in the scheduler |
+| OS | Talos Linux `v1.13.8` | Immutable, API-managed, no SSH; config templated with minijinja + vals |
+| Kubernetes | `v1.36.3` | `HPAScaleToZero` feature gate, topology-spread defaults in the scheduler |
 | CNI | Cilium | kube-proxy replacement, BGP control plane, L2 announcements available |
 | Runtime tuning | | BBR congestion control, jumbo frames end-to-end, `nvme_tcp`/`vfio` modules, 5-minute hardware watchdog |
 | Registry mirror | Spegel | Node-to-node P2P image caching — pulls survive registry outages |
@@ -190,14 +190,16 @@ sequenceDiagram
     K->>K: per-app Kustomizations (ks.yaml, dependsOn, components)
     K->>C: HelmReleases / manifests (server-side apply)
     C-->>K: drift detected → re-apply
-    C-->>K: failed upgrade → remediate (2 retries)
+    C-->>K: failed upgrade → fail-and-hold + alert
     K-->>G: Alerts → Alertmanager → Pushover on errors
 ```
 
 The `cluster-apps` Kustomization patches **defaults into every child**: HelmRelease
-drift detection, `CreateReplace` CRD handling, rollback cleanup, and
-remediation-with-retries. Manual `kubectl` changes to Flux-managed resources are
-reverted on the next reconcile — Git is the only durable interface.
+drift detection, `CreateReplace` CRD handling, and rollback cleanup on failure.
+Upgrade remediation is deliberately **not** defaulted — a failed upgrade fails and
+holds (recovery is roll-forward), so apps that migrate a database schema on boot are
+never auto-rolled-back onto an old image. Manual `kubectl` changes to Flux-managed
+resources are reverted on the next reconcile — Git is the only durable interface.
 
 ## Storage architecture
 
