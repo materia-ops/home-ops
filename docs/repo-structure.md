@@ -11,7 +11,6 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 | [`kubernetes/apps/`](../kubernetes/apps) | Everything Flux deploys, one directory per namespace |
 | [`kubernetes/components/`](../kubernetes/components) | Reusable Kustomize components apps opt into |
 | [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization) |
-| [`kubernetes/templates/`](../kubernetes/templates) | Legacy restic-era VolSync restore template — no longer used; the `just kube restore` recipe now clones the app's live ReplicationDestination |
 | [`talos/`](../talos) | Talos machine configuration (minijinja templates + per-node overrides) |
 | [`bootstrap/`](../bootstrap) | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources |
 | [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability) |
