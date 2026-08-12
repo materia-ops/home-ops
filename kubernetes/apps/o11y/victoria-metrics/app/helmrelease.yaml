@@ -232,12 +232,14 @@ spec:
           limits:
             memory: 3Gi
         retentionPeriod: 90d
+        # 90d retention holds 4 monthly partitions at peak (~39G) + ~10G indexdb;
+        # 50Gi breached the 20%-free merge headroom VM needs (DiskRunsOutOfSpace 2026-08).
         storage:
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 50Gi
+              storage: 75Gi
           storageClassName: ceph-block
     additionalVictoriaMetricsMap:
       dockerhub-rules:
