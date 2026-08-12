@@ -100,6 +100,12 @@ spec:
           allowCrossNamespaceImport: true
     defaultRules:
       rules:
+        # Upstream's count(up == 0) matches nothing while every target is
+        # healthy, so the RecordingRulesNoData meta-alert fired whenever the
+        # cluster was fully up. `== bool` keeps a 0-valued series per group.
+        "count:up0":
+          spec:
+            expr: sum(up == bool 0) without(instance,pod,node)
         # Upstream only excludes fixed-size HPAs (max == min). The zeroscaler
         # tier is min 0 / max 1, so every awake app read as "maxed out" —
         # 19 permanently-firing alerts smothered by a blanket silence that
