@@ -24,7 +24,7 @@ jobs:
         id: load-secrets
         uses: 1password/load-secrets-action@e544b780808654ba8ceba5fb2fe2897103d92ff4 # v5.0.0
         with:
-          version: 2.38.1
+          version: 2.39.0
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           GITHUB_BOT_APP_CLIENT_ID: op://ci/github-bot/GITHUB_BOT_APP_CLIENT_ID
