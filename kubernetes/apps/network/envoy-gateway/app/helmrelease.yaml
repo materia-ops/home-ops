@@ -15,6 +15,9 @@ spec:
       envoyGateway:
         extensionApis:
           enableBackend: true
+          # 1.9.0 disables Lua EnvoyExtensionPolicies by default; the
+          # theme-park component (arr-apps, sabnzbd, qbittorrent) is Lua.
+          enableLua: true
         provider:
           type: Kubernetes
           kubernetes:
