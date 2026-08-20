@@ -79,6 +79,16 @@
       schedule: [ "before 6am on Monday" ],
     },
     {
+      description: "Auto-merge the Renovate runner pin daily",
+      matchDatasources: [ "docker" ],
+      matchUpdateTypes: [ "minor", "patch", "digest" ],
+      matchPackageNames: [ "ghcr.io/renovatebot/renovate" ],
+      automerge: true,
+      automergeType: "pr",
+      ignoreTests: false,
+      schedule: [ "before 4am" ],
+    },
+    {
       description: "Auto-merge GitHub Actions",
       matchManagers: [ "github-actions" ],
       matchUpdateTypes: [ "minor", "patch", "digest" ],
