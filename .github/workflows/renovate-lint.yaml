@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Renovate Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+    # Own file included so a container-image bump PR re-validates the
+    # config against the NEW renovate version before it merges.
+    paths:
+      - .renovaterc.json5
+      - .github/workflows/renovate-lint.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  config-validator:
+    name: Renovate Lint - Config Validator
+    runs-on: ubuntu-latest
+    # Same image the runner executes; --user root because the image's
+    # non-root default user can't write the runner-owned workspace mount.
+    container:
+      image: ghcr.io/renovatebot/renovate:44.35.1
+      options: --user root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # No file arg: auto-discovery validates .renovaterc.json5 as REPO
+      # config; an explicit path is validated as (looser) global config.
+      - name: Validate renovate config
+        run: renovate-config-validator --strict
