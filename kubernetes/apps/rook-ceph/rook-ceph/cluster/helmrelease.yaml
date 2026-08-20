@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: rook-ceph-cluster
   interval: 1h
+  timeout: 10m
   values:
     monitoring:
       enabled: true
@@ -57,6 +58,11 @@ spec:
         provider: host
         connections:
           requireMsgr2: true
+      security:
+        cephx:
+          daemon:
+            keyRotationPolicy: KeyGeneration
+            keyGeneration: 2
       storage:
         useAllNodes: true
         useAllDevices: false
