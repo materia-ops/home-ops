@@ -5,10 +5,10 @@
     // earlier tags nest UNPINNED self-references that break when upstream
     // restructures (issue #1381). App presets stay opt-in: extend only what
     // this repo uses: CNPG image pins, GrafanaDashboard CRs, Talos factory.
-    "github>home-operations/renovate-presets#7.0.0",
-    "github>home-operations/renovate-presets//apps/cnpg.json5#7.0.0",
-    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#7.0.0",
-    "github>home-operations/renovate-presets//apps/talosFactory.json5#7.0.0",
+    "github>home-operations/renovate-presets#8.0.0",
+    "github>home-operations/renovate-presets//apps/cnpg.json5#8.0.0",
+    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.0.0",
+    "github>home-operations/renovate-presets//apps/talosFactory.json5#8.0.0",
     ":timezone(Australia/Melbourne)",
     // Org policy — LAST so it wins over the upstream :automergeBranch: forces
     // PR-based automerge. The org ruleset forbids direct pushes to the default
