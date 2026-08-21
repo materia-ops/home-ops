@@ -10,5 +10,6 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
+    # ./prometheusrule.yaml vendors this chart version's rules — re-diff it on bump
     tag: v1.19.10
   url: oci://ghcr.io/rook/rook-ceph-cluster
