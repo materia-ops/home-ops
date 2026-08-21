@@ -10,5 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
+    # helmrelease prometheusRuleOverrides + ./prometheusrule.yaml patch this
+    # chart's alert rules by name — re-check both on bump
     tag: v1.19.10
   url: oci://ghcr.io/rook/rook-ceph-cluster

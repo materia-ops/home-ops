@@ -14,6 +14,90 @@ spec:
     monitoring:
       enabled: true
       createPrometheusRules: true
+      # per-rule tweaks to the chart's shipped PrometheusRule; disabled rules
+      # match nothing this cluster runs, except the two [2d] trend rules which
+      # are re-homed with eval intervals in ./prometheusrule.yaml
+      prometheusRuleOverrides:
+        # cephadm-only certificate checks — never emitted under rook
+        CephCertificateError:
+          disabled: true
+        CephCertificateWarning:
+          disabled: true
+        # no CephFS on this cluster (cephFileSystems: [])
+        CephFilesystemDamaged:
+          disabled: true
+        CephFilesystemDegraded:
+          disabled: true
+        CephFilesystemFailureNoStandby:
+          disabled: true
+        CephFilesystemInsufficientStandby:
+          disabled: true
+        CephFilesystemMDSRanksLow:
+          disabled: true
+        CephFilesystemOffline:
+          disabled: true
+        CephFilesystemReadOnly:
+          disabled: true
+        # upstream's up{job="ceph"} matches nothing under rook (the chart
+        # adapts only PrometheusJobMissing to the rook-ceph-mgr job)
+        CephMgrPrometheusModuleInactive:
+          expr: 'up{job="rook-ceph-mgr"} == 0'
+        # [2d] trend rules re-homed in ./prometheusrule.yaml (growth rule
+        # fixed there — many-to-many mgr-failover join, rook#10691)
+        CephNodeDiskspaceWarning:
+          disabled: true
+        CephPoolGrowthWarning:
+          disabled: true
+        # no RBD mirroring on this cluster
+        CephRBDMirrorImagesNotInSync:
+          disabled: true
+        CephRBDMirrorImagesNotInSyncVeryHigh:
+          disabled: true
+        CephRBDMirrorImagesPerDaemonHigh:
+          disabled: true
+        CephRBDMirrorImageTransferBandwidthHigh:
+          disabled: true
+        # no NVMe-oF gateways on this cluster
+        NVMeoFGatewayOpenSecurity:
+          disabled: true
+        NVMeoFHighClientCount:
+          disabled: true
+        NVMeoFHighGatewayCPU:
+          disabled: true
+        NVMeoFHighHostCPU:
+          disabled: true
+        NVMeoFHighReadLatency:
+          disabled: true
+        NVMeoFHighWriteLatency:
+          disabled: true
+        NVMeoFHostKeepAliveTimeout:
+          disabled: true
+        NVMeoFInterfaceDown:
+          disabled: true
+        NVMeoFInterfaceDuplex:
+          disabled: true
+        NVMeoFMaxGatewayGroups:
+          disabled: true
+        NVMeoFMaxGatewayGroupSize:
+          disabled: true
+        NVMeoFMissingListener:
+          disabled: true
+        NVMeoFMultipleNamespacesOfRBDImage:
+          disabled: true
+        NVMeoFSingleGateway:
+          disabled: true
+        NVMeoFSubsystemNamespaceLimit:
+          disabled: true
+        NVMeoFTooManyGateways:
+          disabled: true
+        NVMeoFTooManyNamespaces:
+          disabled: true
+        NVMeoFTooManySubsystems:
+          disabled: true
+        NVMeoFVersionMismatch:
+          disabled: true
+        NVMeoFZeroListenerSubsystem:
+          disabled: true
     toolbox:
       enabled: true
     route:
