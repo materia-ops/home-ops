@@ -13,6 +13,7 @@ spec:
     image:
       repository: mirror.gcr.io/coredns/coredns
     k8sAppLabelOverride: kube-dns
+    priorityClassName: system-cluster-critical
     serviceAccount:
       create: true
     service:
@@ -45,6 +46,12 @@ spec:
             use_tcp: true
         port: 53
         plugins:
+          # Pod/service CIDRs are v4-only, so AAAA answers are unusable in-pod;
+          # an authoritative empty answer stops the resolver's AAAA round-trips.
+          - name: template
+            parameters: ANY AAAA
+            configBlock: |-
+              authority "{{ .Zone }} 60 IN SOA ns.dns.cluster.local. hostmaster.cluster.local. (1 60 60 60 60)"
           - name: errors
           - name: health
             configBlock: |-
@@ -70,6 +77,7 @@ spec:
             configBlock: |-
               prefetch 20
               serve_stale
+              servfail 0
           - name: loop
           - name: reload
           - name: loadbalance
