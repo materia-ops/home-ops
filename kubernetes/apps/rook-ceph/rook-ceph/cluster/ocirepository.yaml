@@ -12,5 +12,5 @@ spec:
   ref:
     # helmrelease prometheusRuleOverrides + ./prometheusrule.yaml patch this
     # chart's alert rules by name — re-check both on bump
-    tag: v1.19.10
+    tag: v1.20.6
   url: oci://ghcr.io/rook/rook-ceph-cluster

@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ceph-csi-drivers
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: ceph-csi-drivers
+  interval: 1h
+  values:
+    # Rook-compatible values per rook v1.20 deploy/charts/ceph-csi-drivers/
+    # values.yaml. Resource blocks mirror what rook v1.19 wrote into the live
+    # Driver CR so the chart handoff doesn't change the running csi pods.
+    operatorConfig:
+      namespace: rook-ceph
+      driverSpecDefaults:
+        controllerPlugin:
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                memory: 128Mi
+        nodePlugin:
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 250m
+                memory: 128Mi
+            registrar:
+              limits:
+                memory: 256Mi
+              requests:
+                cpu: 50m
+                memory: 16Mi
+    drivers:
+      rbd:
+        enabled: true
+        name: rook-ceph.rbd.csi.ceph.com
+        controllerPlugin:
+          replicas: 2
+      # RBD-only cluster (cephFileSystems: []); v1.19 ignored
+      # enableCephfsDriver: false and ran cephfs csi pods anyway — the chart
+      # migration finally honors it and prunes them.
+      cephfs:
+        enabled: false
+        name: rook-ceph.cephfs.csi.ceph.com
+      nfs:
+        enabled: false
+        name: rook-ceph.nfs.csi.ceph.com
+      nvmeof:
+        enabled: false
+        name: rook-ceph.nvmeof.csi.ceph.com
