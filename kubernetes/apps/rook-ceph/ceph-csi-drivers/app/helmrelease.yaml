@@ -1,0 +1,91 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ceph-csi-drivers
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: ceph-csi-drivers
+  interval: 1h
+  postRenderers:
+    # Adopted Driver/OperatorConfig CRs must outlive this release: a helm
+    # uninstall (e.g. a revert) would otherwise delete them and the csi pods.
+    - kustomize:
+        patches:
+          - patch: |
+              apiVersion: csi.ceph.io/v1
+              kind: Driver
+              metadata:
+                name: any
+                annotations:
+                  helm.sh/resource-policy: keep
+            target:
+              kind: Driver
+          - patch: |
+              apiVersion: csi.ceph.io/v1
+              kind: OperatorConfig
+              metadata:
+                name: any
+                annotations:
+                  helm.sh/resource-policy: keep
+            target:
+              kind: OperatorConfig
+  values:
+    # Rook-compatible values (rook v1.20 deploy/charts/ceph-csi-drivers/values.yaml)
+    # plus the live rbd Driver CR settings the chart adopts; bare chart defaults
+    # render snapshotPolicy none (drops the snapshotter volsync needs), replicas 1.
+    operatorConfig:
+      namespace: rook-ceph
+      driverSpecDefaults:
+        imageSet:
+          name: rook-csi-operator-image-set-configmap
+        log:
+          rotation:
+            enabled: false
+        nodePlugin:
+          priorityClassName: system-node-critical
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 250m
+                memory: 128Mi
+            registrar:
+              limits:
+                memory: 256Mi
+              requests:
+                cpu: 50m
+                memory: 16Mi
+        controllerPlugin:
+          priorityClassName: system-cluster-critical
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                memory: 128Mi
+    drivers:
+      rbd:
+        enabled: true
+        name: rook-ceph.rbd.csi.ceph.com
+        grpcTimeout: 150
+        snapshotPolicy: volumeSnapshot
+        log:
+          rotation:
+            enabled: false
+        controllerPlugin:
+          replicas: 2
+      # RBD-only cluster; the rook-created cephfs Driver CR is not rendered here
+      # and is deleted by hand after the migration.
+      cephfs:
+        enabled: false
+        name: rook-ceph.cephfs.csi.ceph.com
+      nfs:
+        enabled: false
+        name: rook-ceph.nfs.csi.ceph.com
+      nvmeof:
+        enabled: false
+        name: rook-ceph.nvmeof.csi.ceph.com
