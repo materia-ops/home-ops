@@ -1,6 +1,6 @@
 ---
-# Shared (baremetal) schematic; the VM node carries a complete override in
-# nodes/controlplane/matalos-c1.schematic.yaml.j2.
+# VM node (Proxmox): no iGPU, guest agent instead. Complete override of
+# the shared schematic, not a delta.
 customization:
   extraKernelArgs:
     - -init_on_alloc                      # Less security, faster puter
@@ -15,17 +15,10 @@ customization:
     - mitigations=off                     # Less security, faster puter
     - security=none                       # Less security, faster puter
     - talos.auditd.disabled=1             # Less security, faster puter
-    - i915.enable_guc=3                   # Intel iGPU
-    - sysctl.kernel.kexec_load_disabled=1 # Intel iGPU
-    {% if iso == 'true' %}
-    - bond=bond0:enp3s0,enp4s0:mode=802.3ad,xmit_hash_policy=layer3+4:9000
-    - ip={{ node_ip }}::192.168.20.1:255.255.255.0::bond0
-    {% endif %}
   systemExtensions:
     officialExtensions:
       - siderolabs/iscsi-tools            # iSCSI Support
       - siderolabs/util-linux-tools       # Useful Utilities
       - siderolabs/intel-ucode            # Intel CPU Microcode
       - siderolabs/nfsrahead              # NFS Performance
-      - siderolabs/i915                   # Intel GPU
-      - siderolabs/mei                    # Intel GPU
+      - siderolabs/qemu-guest-agent       # QEMU Guest Agent
