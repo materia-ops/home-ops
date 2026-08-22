@@ -55,7 +55,7 @@ shared `schematic.yaml.j2` applies. `matalos-c1` is a VM and carries an override
 iGPU); it also overrides `machine.install.image` in its node file to the generic `installer`
 path, where the baremetal nodes use `metal-installer` from `cluster.yaml.j2`.
 
-`just talos download-image <version> <node> iso=true` bakes the static bond + `ip=` kernel args
+`just talos download-image <node> <version> iso=true` bakes the static bond + `ip=` kernel args
 (from the node file's `# talos:node-ip=` marker) into a baremetal install ISO.
 
 ## Gotchas
@@ -76,7 +76,7 @@ just talos apply-node <node>             # render and apply (talosctl apply-conf
 just talos apply-node <node> --dry-run   # show what would change, apply nothing
 just talos upgrade-node <node>           # upgrade Talos using the node's schematic image
 just talos upgrade-k8s <version>         # upgrade Kubernetes across the cluster
-just talos download-image <version> <node>   # fetch a metal ISO from the Image Factory
+just talos download-image <node> <version>   # fetch a metal ISO from the Image Factory
 ```
 
 Verify a refactor of these templates by diffing rendered output before and after, then confirming
