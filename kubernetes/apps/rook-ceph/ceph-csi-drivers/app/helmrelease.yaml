@@ -10,20 +10,19 @@ spec:
     name: ceph-csi-drivers
   interval: 1h
   values:
-    # Rook-compatible values per rook v1.20 deploy/charts/ceph-csi-drivers/
-    # values.yaml. Resource blocks mirror what rook v1.19 wrote into the live
-    # Driver CR so the chart handoff doesn't change the running csi pods.
+    # Rook-compatible values (rook v1.20 deploy/charts/ceph-csi-drivers/values.yaml)
+    # plus the live rbd Driver CR settings the chart adopts; bare chart defaults
+    # render snapshotPolicy none (drops the snapshotter volsync needs), replicas 1.
     operatorConfig:
       namespace: rook-ceph
       driverSpecDefaults:
-        controllerPlugin:
-          resources:
-            plugin:
-              limits:
-                memory: 1Gi
-              requests:
-                memory: 128Mi
+        imageSet:
+          name: rook-csi-operator-image-set-configmap
+        log:
+          rotation:
+            enabled: false
         nodePlugin:
+          priorityClassName: system-node-critical
           resources:
             plugin:
               limits:
@@ -37,15 +36,27 @@ spec:
               requests:
                 cpu: 50m
                 memory: 16Mi
+        controllerPlugin:
+          priorityClassName: system-cluster-critical
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                memory: 128Mi
     drivers:
       rbd:
         enabled: true
         name: rook-ceph.rbd.csi.ceph.com
+        grpcTimeout: 150
+        snapshotPolicy: volumeSnapshot
+        log:
+          rotation:
+            enabled: false
         controllerPlugin:
           replicas: 2
-      # RBD-only cluster (cephFileSystems: []); v1.19 ignored
-      # enableCephfsDriver: false and ran cephfs csi pods anyway — the chart
-      # migration finally honors it and prunes them.
+      # RBD-only cluster; the rook-created cephfs Driver CR is not rendered here
+      # and is deleted by hand after the migration.
       cephfs:
         enabled: false
         name: rook-ceph.cephfs.csi.ceph.com
