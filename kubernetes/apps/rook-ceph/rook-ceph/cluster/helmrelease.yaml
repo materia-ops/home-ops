@@ -17,7 +17,7 @@ spec:
     # duplicate key. REMOVE this pin in the Tentacle PR.
     cephImage:
       repository: quay.io/ceph/ceph
-      tag: v19.2.6
+      tag: v21.1.0
     monitoring:
       enabled: true
       createPrometheusRules: true
