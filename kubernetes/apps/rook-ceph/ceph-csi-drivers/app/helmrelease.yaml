@@ -46,6 +46,28 @@ spec:
             enabled: false
         nodePlugin:
           priorityClassName: system-node-critical
+        controllerPlugin:
+          priorityClassName: system-cluster-critical
+    drivers:
+      rbd:
+        enabled: true
+        name: rook-ceph.rbd.csi.ceph.com
+        grpcTimeout: 150
+        snapshotPolicy: volumeSnapshot
+        log:
+          rotation:
+            enabled: false
+        # Resources live on the Driver itself: rook fills empty Driver fields with
+        # its 512Mi defaults, which win over OperatorConfig driverSpecDefaults.
+        controllerPlugin:
+          replicas: 2
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                memory: 128Mi
+        nodePlugin:
           resources:
             plugin:
               limits:
@@ -59,25 +81,6 @@ spec:
               requests:
                 cpu: 50m
                 memory: 16Mi
-        controllerPlugin:
-          priorityClassName: system-cluster-critical
-          resources:
-            plugin:
-              limits:
-                memory: 1Gi
-              requests:
-                memory: 128Mi
-    drivers:
-      rbd:
-        enabled: true
-        name: rook-ceph.rbd.csi.ceph.com
-        grpcTimeout: 150
-        snapshotPolicy: volumeSnapshot
-        log:
-          rotation:
-            enabled: false
-        controllerPlugin:
-          replicas: 2
       # RBD-only cluster; the rook-created cephfs Driver CR is not rendered here
       # and is deleted by hand after the migration.
       cephfs:
