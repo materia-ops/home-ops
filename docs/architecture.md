@@ -52,8 +52,8 @@ by the `i915` driver only — the newer `xe` driver does not support Gen 9.5.
 
 ### Storage devices
 
-Disk roles are declared in the Talos configs ([`talos/machineconfig.yaml.j2`](../talos/machineconfig.yaml.j2)
-selects by disk model, [`talos/nodes/`](../talos/nodes) selects the install disk):
+Disk roles are declared in the Talos configs ([`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2)
+selects by disk model, [`talos/nodes/controlplane/`](../talos/nodes/controlplane) selects the install disk):
 
 | Node | Disk | Role |
 | :--- | :--- | :--- |

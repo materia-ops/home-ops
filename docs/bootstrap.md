@@ -63,11 +63,12 @@ One confirmed command runs the whole pipeline. Its stages, in order
 
 ### 1. `nodes` — apply Talos machine configs
 
-For every node in `talosconfig`: render
-[`talos/machineconfig.yaml.j2`](../talos/machineconfig.yaml.j2) through minijinja +
-vals (secrets from 1Password), patch it with the node's file from
-[`talos/nodes/`](../talos/nodes) (install-disk selector, bond/VLAN links, hostname),
-and `talosctl apply-config --insecure`. Idempotent: a node that answers with
+For every node in `talosconfig`: compose its machine config from three
+layers ([`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2) → role patch
+[`talos/controlplane.yaml.j2`](../talos/controlplane.yaml.j2) → the node file
+under [`talos/nodes/<role>/`](../talos/nodes) with install disk, links/bonds,
+hostname), each rendered through minijinja + vals (secrets from 1Password)
+and merged by `talosctl machineconfig patch` — see [`talos/README.md`](../talos/README.md) — then `talosctl apply-config --insecure`. Idempotent: a node that answers with
 "certificate required" is already configured and is skipped.
 
 ### 2. `k8s` — bootstrap etcd

@@ -3,9 +3,6 @@ version: v1alpha1
 machine:
   ca:
     crt: ref+op://kubernetes/talos/MACHINE_CA_CRT
-    {% if ENV.CONTROLPLANE %}
-    key: ref+op://kubernetes/talos/MACHINE_CA_KEY
-    {% endif %}
   features:
     apidCheckExtKeyUsage: true
     diskQuotaSupport: true
@@ -16,22 +13,9 @@ machine:
     kubePrism:
       enabled: true
       port: 7445
-    {% if ENV.CONTROLPLANE %}
-    kubernetesTalosAPIAccess:
-      enabled: true
-      allowedRoles:
-        - os:admin
-      allowedKubernetesNamespaces:
-        - actions-runner-system
-        - system-upgrade
-    {% endif %}
     rbac: true
   install:
-    {% if ENV.NODE_TYPE == 'vm' %}
-    image: factory.talos.dev/installer/{{ ENV.SCHEMATIC }}:v1.13.9
-    {% else %}
-    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.9
-    {% endif %}
+    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.13.9
     wipe: false
     grubUseUKICmdline: true
   files:
@@ -110,9 +94,6 @@ machine:
 cluster:
   ca:
     crt: ref+op://kubernetes/talos/CLUSTER_CA_CRT
-    {% if ENV.CONTROLPLANE %}
-    key: ref+op://kubernetes/talos/CLUSTER_CA_KEY
-    {% endif %}
   clusterName: matalos
   controlPlane:
     endpoint: https://matalos.internal:6443
@@ -134,67 +115,6 @@ cluster:
       - 10.43.0.0/16
   secret: ref+op://kubernetes/talos/CLUSTER_SECRET
   token: ref+op://kubernetes/talos/CLUSTER_TOKEN
-  {% if ENV.CONTROLPLANE %}
-  aggregatorCA:
-    crt: ref+op://kubernetes/talos/CLUSTER_AGGREGATORCA_CRT
-    key: ref+op://kubernetes/talos/CLUSTER_AGGREGATORCA_KEY
-  allowSchedulingOnControlPlanes: true
-  apiServer:
-    auditPolicy:
-      apiVersion: audit.k8s.io/v1
-      kind: Policy
-      rules:
-        - level: Metadata
-    certSANs:
-      - matalos.internal
-    disablePodSecurityPolicy: true
-    extraArgs:
-      enable-aggregator-routing: "true"
-      feature-gates: HPAScaleToZero=true
-    image: registry.k8s.io/kube-apiserver:v1.36.4
-  controllerManager:
-    extraArgs:
-      bind-address: 0.0.0.0
-      feature-gates: HPAScaleToZero=true
-    image: registry.k8s.io/kube-controller-manager:v1.36.4
-  coreDNS:
-    disabled: true
-  etcd:
-    advertisedSubnets:
-      - 192.168.20.0/24
-    ca:
-      crt: ref+op://kubernetes/talos/CLUSTER_ETCD_CA_CRT
-      key: ref+op://kubernetes/talos/CLUSTER_ETCD_CA_KEY
-    extraArgs:
-      listen-metrics-urls: http://0.0.0.0:2381
-  proxy:
-    disabled: true
-    image: registry.k8s.io/kube-proxy:v1.36.4
-  scheduler:
-    config:
-      apiVersion: kubescheduler.config.k8s.io/v1
-      kind: KubeSchedulerConfiguration
-      profiles:
-        - schedulerName: default-scheduler
-          plugins:
-            score:
-              disabled:
-                - name: ImageLocality
-          pluginConfig:
-            - name: PodTopologySpread
-              args:
-                defaultingType: List
-                defaultConstraints:
-                  - maxSkew: 1
-                    topologyKey: kubernetes.io/hostname
-                    whenUnsatisfiable: ScheduleAnyway
-    extraArgs:
-      bind-address: 0.0.0.0
-    image: registry.k8s.io/kube-scheduler:v1.36.4
-  secretboxEncryptionSecret: ref+op://kubernetes/talos/CLUSTER_SECRETBOXENCRYPTIONSECRET
-  serviceAccount:
-    key: ref+op://kubernetes/talos/CLUSTER_SERVICEACCOUNT_KEY
-  {% endif %}
 ---
 apiVersion: v1alpha1
 kind: VLANConfig
