@@ -9,6 +9,29 @@ spec:
     kind: OCIRepository
     name: ceph-csi-drivers
   interval: 1h
+  postRenderers:
+    # Adopted Driver/OperatorConfig CRs must outlive this release: a helm
+    # uninstall (e.g. a revert) would otherwise delete them and the csi pods.
+    - kustomize:
+        patches:
+          - patch: |
+              apiVersion: csi.ceph.io/v1
+              kind: Driver
+              metadata:
+                name: any
+                annotations:
+                  helm.sh/resource-policy: keep
+            target:
+              kind: Driver
+          - patch: |
+              apiVersion: csi.ceph.io/v1
+              kind: OperatorConfig
+              metadata:
+                name: any
+                annotations:
+                  helm.sh/resource-policy: keep
+            target:
+              kind: OperatorConfig
   values:
     # Rook-compatible values (rook v1.20 deploy/charts/ceph-csi-drivers/values.yaml)
     # plus the live rbd Driver CR settings the chart adopts; bare chart defaults
