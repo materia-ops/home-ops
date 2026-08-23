@@ -92,12 +92,17 @@ resource conditions.
 
 ```text
 talos/
-├── machineconfig.yaml.j2    # shared machine config (secrets via ref+op:// vals refs)
-├── nodes/matalos-c{1,2,3}.yaml.j2   # per-node: install disk, links/bonds, VLANs, IPs
-└── schematic.yaml.j2        # Image Factory schematic (system extensions)
+├── cluster.yaml.j2          # documents applied to every node (secrets via ref+op:// vals refs)
+├── controlplane.yaml.j2     # control-plane-only documents, including machine.type
+├── nodes/controlplane/      # per-node: install disk, links/bonds, hostname (+ optional
+│                            #   <node>.schematic.yaml.j2 override — the VM node has one)
+├── schematic.yaml.j2        # shared Image Factory schematic (baremetal)
+└── README.md                # layering, merge rules, gotchas
 ```
 
-Rendering is minijinja + `vals` (1Password resolution) driven by `just talos` recipes.
+Rendering is minijinja + `vals` (1Password resolution) driven by `just talos` recipes; a
+node.s role is the directory its file lives in, and the three layers are merged by
+`talosctl machineconfig patch` (cluster → role → node).
 Disk roles are model-matched (`diskSelector` / `UserVolumeConfig`), so hardware swaps
 mean updating a model string, not device paths.
 

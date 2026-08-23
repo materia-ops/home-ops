@@ -1,11 +1,11 @@
 ---
-# talos:node-type=vm
 # talos:node-ip=192.168.20.10
 machine:
-  type: controlplane
   install:
     diskSelector:
       model: INTEL SSDPE21D280GA
+    # VM node: generic installer path, baremetal nodes use metal-installer (cluster.yaml.j2)
+    image: factory.talos.dev/installer/{{ schematic }}:v1.13.9
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig

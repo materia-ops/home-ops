@@ -76,7 +76,7 @@ automation in place:
   parks idle workloads at 0 replicas; prometheus-adapter feeds custom metrics.
 - **CI runners** — ARC scales `home-ops-runner` 0→3 with queue depth (no warm runner
   holds the Talos `os:admin` identity between jobs).
-- **Adding a node** — one new file in `talos/nodes/`, a switch port trunked for
+- **Adding a node** — one new file in `talos/nodes/<role>/`, a switch port trunked for
   VLANs 20/70/90, and `just talos apply-node`; Ceph picks up a Micron 7450 OSD via the
   model filter automatically.
 - **Network** — 10 GbE core (aggregation switch, LACP everywhere) means east-west
