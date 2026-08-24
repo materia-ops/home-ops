@@ -44,10 +44,33 @@ spec:
         log:
           rotation:
             enabled: false
+        # resources repeated here deliberately: removing previously-applied
+        # OperatorConfig fields makes the helm SSA upgrade fail (resources:
+        # null rejection) and loops the HelmRelease. Keep in sync with the
+        # per-driver blocks below.
         nodePlugin:
           priorityClassName: system-node-critical
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 250m
+                memory: 128Mi
+            registrar:
+              limits:
+                memory: 256Mi
+              requests:
+                cpu: 50m
+                memory: 16Mi
         controllerPlugin:
           priorityClassName: system-cluster-critical
+          resources:
+            plugin:
+              limits:
+                memory: 1Gi
+              requests:
+                memory: 128Mi
     drivers:
       rbd:
         enabled: true
