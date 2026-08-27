@@ -90,13 +90,9 @@ spec:
             nameOverride: worldserver
             image: *image
             env:
-              # Override-only config model: the image ships every .conf.dist
-              # as the live conf, and each Materia deviation is one AC_* env
-              # var. Names come from the fork's IniKeyToEnvVarKey (dots and
-              # camelCase boundaries -> _, digits wrapped, uppercase runs
-              # fused: AOELoot -> AOELOOT) — derive with the generator, never
-              # by hand; a typo'd name silently no-ops. Generator + proof:
-              # materia-vault projects/wow-server/ac-env-equivalence.sh.
+              # Override-only config model: the image ships each .conf.dist as
+              # the live conf; deviations are AC_* env vars. Derive names with
+              # the vault generator (ac-env-equivalence.sh), never by hand.
               AC_ACCOUNT_ACHIEVEMENTS_ANNOUNCE: "0"
               AC_AI_PLAYERBOT_ADD_CLASS_ACCOUNT_POOL_SIZE: "10"
               AC_AI_PLAYERBOT_AUTO_GEAR_BIS_COMMAND: "1"
@@ -105,10 +101,9 @@ spec:
               AC_AI_PLAYERBOT_COMMAND_SERVER_PORT: "0"
               AC_AI_PLAYERBOT_ENABLE_PERIODIC_ONLINE_OFFLINE: "1"
               AC_AI_PLAYERBOT_FREE_METHOD_LOOT: "1"
-              # Level brackets (ex-#1523): dynamic distribution follows the
-              # real players' level ranges; W=10 ≈ 45% of each faction's bots
-              # in the humans' bracket. SyncFactions needs identical bracket
-              # tables (the dist ships them identical).
+              # Level brackets (ex-#1523): bots follow the real players' level
+              # ranges. SyncFactions needs identical faction bracket tables —
+              # the dist ships them identical.
               AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_REAL_PLAYER_WEIGHT: "10.0"
               AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_SYNC_FACTIONS: "1"
               AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_USE_DYNAMIC_DISTRIBUTION: "1"
@@ -130,10 +125,9 @@ spec:
               AC_ALLOW_TWO_SIDE_INTERACTION_GUILD: "1"
               AC_AOELOOT_MESSAGE: "0"
               AC_AOELOOT_RANGE: "30.0"
-              # AH-bot activation: numeric IDs, not secrets — the `ahbot`
-              # account (acore_auth.account.id) and its character
-              # (acore_characters.characters.guid), created by WP9. The bot
-              # is inert while these override the dist's zeros.
+              # AH-bot identity (WP9): acore_auth account 72 + its character
+              # guid 701 — numeric IDs, not secrets. The bot is inert while
+              # these override the dist's zeros.
               AC_AUCTION_HOUSE_BOT_ACCOUNT: "72"
               AC_AUCTION_HOUSE_BOT_CONSIDER_ONLY_BOT_AUCTIONS: "1"
               AC_AUCTION_HOUSE_BOT_DIVISIBLE_STACKS: "1"
