@@ -80,7 +80,7 @@ jobs:
           tool_versions: |
             # Pinned to the cluster's Talos version (see .mise/config.toml);
             # renovate tracks it via the custom manager in .renovaterc.json5.
-            talosctl 1.13.9
+            talosctl 1.14.0-rc.2
 
       - name: Pull Image
         env:
