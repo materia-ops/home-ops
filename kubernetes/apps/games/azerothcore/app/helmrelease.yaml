@@ -97,6 +97,10 @@ spec:
               AC_AI_PLAYERBOT_ADD_CLASS_ACCOUNT_POOL_SIZE: "10"
               AC_AI_PLAYERBOT_AUTO_GEAR_BIS_COMMAND: "1"
               AC_AI_PLAYERBOT_AUTO_GEAR_QUALITY_LIMIT: "4"
+              # Dist-less key the pinned playerbot code still READS (boot
+              # warns otherwise); ac-image's registry can't pin it (the gate
+              # greps the dist). Drop once upstream stops reading it.
+              AC_AI_PLAYERBOT_BOT_ONLY_GROUP_FULL_XP: "1"
               AC_AI_PLAYERBOT_COMBAT_STRATEGIES: "+behind,+threat"
               AC_AI_PLAYERBOT_COMMAND_SERVER_PORT: "0"
               AC_AI_PLAYERBOT_ENABLE_PERIODIC_ONLINE_OFFLINE: "1"
