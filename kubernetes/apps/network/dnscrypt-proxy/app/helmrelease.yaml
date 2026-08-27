@@ -70,16 +70,16 @@ spec:
                         - pihole
                 topologyKey: kubernetes.io/hostname
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app.kubernetes.io/name
-                      operator: In
-                      values:
-                        - dnscrypt-proxy
-                topologyKey: kubernetes.io/hostname
+          # required, not preferred: preferred let all replicas stack on
+          # one node (all on matalos-c3, 2026-08-27), defeating replication
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - dnscrypt-proxy
+              topologyKey: kubernetes.io/hostname
       hostUsers: false
       securityContext:
         runAsNonRoot: true
