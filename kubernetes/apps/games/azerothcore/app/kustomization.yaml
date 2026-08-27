@@ -9,20 +9,6 @@ resources:
   - ./ocirepository.yaml
   - ./prometheusrule.yaml
 configMapGenerator:
-  - name: azerothcore-config
-    files:
-      - ./configs/authserver.conf
-      - ./configs/CFBG.conf
-      - ./configs/mod_account_mount.conf
-      - ./configs/mod_achievements.conf
-      - ./configs/mod_ahbot.conf
-      - ./configs/mod_ale.conf
-      - ./configs/mod_aoe_loot.conf
-      - ./configs/mod_ollama_chat.conf
-      - ./configs/MultiBotBridge.conf
-      - ./configs/playerbots.conf
-      - ./configs/transmog.conf
-      - ./configs/worldserver.conf
   # Mounted at ALE.ScriptPath; add future .lua files here.
   - name: azerothcore-lua-scripts
     files:
