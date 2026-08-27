@@ -36,6 +36,11 @@ spec:
                   secretKeyRef:
                     name: azerothcore-secret
                     key: AC_LOGIN_DATABASE_INFO
+              # Override-only config model: the image ships authserver.conf
+              # as the dist verbatim; the two Materia path deviations ride
+              # as AC_* env overrides (see the worldserver env block).
+              AC_LOGS_DIR: "/azerothcore/logs"
+              AC_SOURCE_DIRECTORY: "/azerothcore/source"
               TZ: Australia/Melbourne
             securityContext: &securityContext
               allowPrivilegeEscalation: false
@@ -85,12 +90,80 @@ spec:
             nameOverride: worldserver
             image: *image
             env:
-              # AH-bot activation (05 §3/§8): numeric IDs, not secrets — the
-              # `ahbot` account (acore_auth.account.id) and its character
-              # (acore_characters.characters.guid), created by WP9. The bot
-              # is inert while these override the conf's zeros.
+              # Override-only config model: the image ships each .conf.dist as
+              # the live conf; deviations are AC_* env vars. Derive names with
+              # the vault generator (ac-env-equivalence.sh), never by hand.
+              AC_ACCOUNT_ACHIEVEMENTS_ANNOUNCE: "0"
+              AC_AI_PLAYERBOT_ADD_CLASS_ACCOUNT_POOL_SIZE: "10"
+              AC_AI_PLAYERBOT_AUTO_GEAR_BIS_COMMAND: "1"
+              AC_AI_PLAYERBOT_AUTO_GEAR_QUALITY_LIMIT: "4"
+              AC_AI_PLAYERBOT_COMBAT_STRATEGIES: "+behind,+threat"
+              AC_AI_PLAYERBOT_COMMAND_SERVER_PORT: "0"
+              AC_AI_PLAYERBOT_ENABLE_PERIODIC_ONLINE_OFFLINE: "1"
+              AC_AI_PLAYERBOT_FREE_METHOD_LOOT: "1"
+              # Level brackets (ex-#1523): bots follow the real players' level
+              # ranges. SyncFactions needs identical faction bracket tables —
+              # the dist ships them identical.
+              AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_REAL_PLAYER_WEIGHT: "10.0"
+              AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_SYNC_FACTIONS: "1"
+              AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_USE_DYNAMIC_DISTRIBUTION: "1"
+              AC_AI_PLAYERBOT_LEVEL_BRACKETS_ENABLED: "1"
+              AC_AI_PLAYERBOT_MAX_RANDOM_BOTS: "300"
+              AC_AI_PLAYERBOT_MIN_RANDOM_BOTS: "300"
+              AC_AI_PLAYERBOT_PREFERRED_SPEC_WEAPONS: "1"
+              AC_AI_PLAYERBOT_PREFER_CLASS_ARMOR_TYPE: "1"
+              AC_AI_PLAYERBOT_RANDOM_BOT_AUTO_JOIN_BG: "1"
+              AC_AI_PLAYERBOT_RANDOM_BOT_COMBAT_STRATEGIES: "+behind,+threat"
+              AC_AI_PLAYERBOT_RANDOM_GEAR_QUALITY_LIMIT: "4"
+              AC_AI_PLAYERBOT_TOXIC_LINKS_REPLIES_CHANCE: "0"
+              AC_ALE_SCRIPT_PATH: "/azerothcore/lua_scripts"
+              AC_ALLOW_TWO_SIDE_INTERACTION_ARENA: "1"
+              AC_ALLOW_TWO_SIDE_INTERACTION_CALENDAR: "1"
+              AC_ALLOW_TWO_SIDE_INTERACTION_CHANNEL: "1"
+              AC_ALLOW_TWO_SIDE_INTERACTION_CHAT: "1"
+              AC_ALLOW_TWO_SIDE_INTERACTION_GROUP: "1"
+              AC_ALLOW_TWO_SIDE_INTERACTION_GUILD: "1"
+              AC_AOELOOT_MESSAGE: "0"
+              AC_AOELOOT_RANGE: "30.0"
+              # AH-bot identity (WP9): acore_auth account 72 + its character
+              # guid 701 — numeric IDs, not secrets. The bot is inert while
+              # these override the dist's zeros.
               AC_AUCTION_HOUSE_BOT_ACCOUNT: "72"
+              AC_AUCTION_HOUSE_BOT_CONSIDER_ONLY_BOT_AUCTIONS: "1"
+              AC_AUCTION_HOUSE_BOT_DIVISIBLE_STACKS: "1"
+              AC_AUCTION_HOUSE_BOT_ELAPSING_TIME_CLASS: "0"
+              AC_AUCTION_HOUSE_BOT_ENABLE_BUYER: "1"
+              AC_AUCTION_HOUSE_BOT_ENABLE_SELLER: "1"
               AC_AUCTION_HOUSE_BOT_GUID: "701"
+              AC_AUCTION_HOUSE_BOT_ITEMS_PER_CYCLE: "250"
+              AC_AUCTION_HOUSE_BOT_OTHER_ITEMS: "1"
+              AC_AUCTION_HOUSE_BOT_OTHER_TRADE_GOODS: "1"
+              AC_AUCTION_HOUSE_BOT_PROFESSION_ITEMS: "1"
+              AC_AUCTION_HOUSE_BOT_USE_BUY_PRICE_FOR_BUYER: "1"
+              AC_AUCTION_HOUSE_BOT_VENDOR_TRADE_GOODS: "1"
+              AC_CONSOLE_ENABLE: "0"
+              AC_DATA_DIR: "/azerothcore/data"
+              AC_LOGS_DIR: "/azerothcore/logs"
+              AC_MAP_UPDATE_THREADS: "4"
+              AC_MAX_PRIMARY_TRADE_SKILL: "11"
+              AC_METRIC_ENABLE: "1"
+              AC_METRIC_INFLUX_DB_CONNECTION: "vmsingle-victoria-metrics.o11y.svc.cluster.local;8428;worldserver"
+              AC_METRIC_INTERVAL: "10"
+              AC_METRIC_OVERALL_STATUS_INTERVAL: "15"
+              AC_OLLAMA_CHAT_ENABLE_CHAT_BOT_SNAPSHOT_TEMPLATE: "1"
+              AC_OLLAMA_CHAT_ENABLE_GUILD_EVENT_CHATTER: "0"
+              AC_OLLAMA_CHAT_ENABLE_RPPERSONALITIES: "1"
+              AC_OLLAMA_CHAT_ENABLE_SENTIMENT_TRACKING: "1"
+              AC_OLLAMA_CHAT_ENABLE_WHISPER_REPLIES: "1"
+              AC_OLLAMA_CHAT_GUILD_RANDOM_CHATTER_CHANCE: "20"
+              AC_OLLAMA_CHAT_MAX_CONCURRENT_QUERIES: "2"
+              AC_OLLAMA_CHAT_MODEL: "llama3.1:8b-instruct-q4_K_M"
+              AC_OLLAMA_CHAT_NUM_PREDICT: "40"
+              AC_OLLAMA_CHAT_SYSTEM_PROMPT: "You are a World of Warcraft: Wrath of the Lich King player character. Always stay in character. Reply like a real player typing in game chat: casual, short (under 15 words), era-appropriate slang, no emojis, no markdown, no narration, never mention being an AI."
+              AC_OLLAMA_CHAT_URL: "http://kiterium.internal:11434/api/generate"
+              AC_SOAP_ENABLED: "1"
+              AC_SOAP_IP: "0.0.0.0"
+              AC_SOURCE_DIRECTORY: "/azerothcore/source"
               TZ: Australia/Melbourne
             envFrom:
               # The four AC_*_DATABASE_INFO DSNs + SOAP_USERNAME/SOAP_PASSWORD
@@ -220,50 +293,6 @@ spec:
           worldserver:
             app:
               - path: /azerothcore/data
-                readOnly: true
-      config:
-        type: configMap
-        name: azerothcore-config
-        advancedMounts:
-          authserver:
-            app:
-              - path: /azerothcore/etc/authserver.conf
-                subPath: authserver.conf
-                readOnly: true
-          worldserver:
-            app:
-              - path: /azerothcore/etc/modules/CFBG.conf
-                subPath: CFBG.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/mod_account_mount.conf
-                subPath: mod_account_mount.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/mod_achievements.conf
-                subPath: mod_achievements.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/mod_ahbot.conf
-                subPath: mod_ahbot.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/mod_ale.conf
-                subPath: mod_ale.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/mod_aoe_loot.conf
-                subPath: mod_aoe_loot.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/mod_ollama_chat.conf
-                subPath: mod_ollama_chat.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/MultiBotBridge.conf
-                subPath: MultiBotBridge.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/playerbots.conf
-                subPath: playerbots.conf
-                readOnly: true
-              - path: /azerothcore/etc/modules/transmog.conf
-                subPath: transmog.conf
-                readOnly: true
-              - path: /azerothcore/etc/worldserver.conf
-                subPath: worldserver.conf
                 readOnly: true
       logs:
         type: emptyDir
