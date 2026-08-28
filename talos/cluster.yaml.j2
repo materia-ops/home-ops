@@ -1,7 +1,6 @@
 ---
-# Deliberately still legacy (no successor kind or kept on purpose): CAs/tokens,
-# machine.install, disableManifestsDirectory, network nameservers, time
-# servers, allowSchedulingOnControlPlanes (all-CP cluster).
+# Deliberately still legacy (no successor kind): CAs/tokens, machine.install,
+# time servers.
 version: v1alpha1
 machine:
   ca:
@@ -14,13 +13,6 @@ machine:
     image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.0-rc.2
     wipe: false
     grubUseUKICmdline: true
-  kubelet:
-    disableManifestsDirectory: true
-  network:
-    disableSearchDomain: true
-    nameservers:
-      - 192.168.1.2
-      - 192.168.20.2
   time:
     servers:
       - 162.159.200.1
@@ -29,7 +21,6 @@ machine:
 cluster:
   ca:
     crt: ref+op://kubernetes/talos/CLUSTER_CA_CRT
-  allowSchedulingOnControlPlanes: true
   clusterName: matalos
   controlPlane:
     endpoint: https://matalos.internal:6443
@@ -51,6 +42,11 @@ mtu: 9000
 ---
 apiVersion: v1alpha1
 kind: ResolverConfig
+nameservers:
+  - address: 192.168.1.2
+  - address: 192.168.20.2
+searchDomains:
+  disableDefault: true
 hostDNS:
   enabled: true
   forwardKubeDNSToHost: true
