@@ -39,10 +39,10 @@ Two conventions keep the layers honest:
 - **Secrets never live in this repo.** All sensitive values are `ref+op://kubernetes/talos/...`
   references resolved at render time.
 
-The cluster runs Talos 1.13, so the content is still the legacy `v1alpha1` `machine:`/`cluster:`
-document plus the multi-document kinds 1.13 supports. Migrating the legacy fields to the 1.14
-document kinds (`KubeletConfig`, `KubeAPIServerConfig`, ...) is part of the 1.14 upgrade, not this
-layout.
+The content uses the Talos 1.14 multi-document kinds. The residual legacy `v1alpha1` document
+carries only what has no successor kind or was kept deliberately: CAs/tokens, `machine.install`
+(per-node diskSelector + grubUseUKICmdline), `machine.kubelet.disableManifestsDirectory`,
+`machine.network` nameservers, time servers, and `cluster.allowSchedulingOnControlPlanes`.
 
 ## Schematics
 

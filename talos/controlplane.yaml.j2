@@ -5,14 +5,6 @@ machine:
   ca:
     crt: ref+op://kubernetes/talos/MACHINE_CA_CRT
     key: ref+op://kubernetes/talos/MACHINE_CA_KEY
-  features:
-    kubernetesTalosAPIAccess:
-      enabled: true
-      allowedRoles:
-        - os:admin
-      allowedKubernetesNamespaces:
-        - actions-runner-system
-        - system-upgrade
 cluster:
   # ca merges as a unit; crt must be repeated alongside key
   ca:
@@ -21,27 +13,6 @@ cluster:
   aggregatorCA:
     crt: ref+op://kubernetes/talos/CLUSTER_AGGREGATORCA_CRT
     key: ref+op://kubernetes/talos/CLUSTER_AGGREGATORCA_KEY
-  allowSchedulingOnControlPlanes: true
-  apiServer:
-    auditPolicy:
-      apiVersion: audit.k8s.io/v1
-      kind: Policy
-      rules:
-        - level: Metadata
-    certSANs:
-      - matalos.internal
-    disablePodSecurityPolicy: true
-    extraArgs:
-      enable-aggregator-routing: "true"
-      feature-gates: HPAScaleToZero=true
-    image: registry.k8s.io/kube-apiserver:v1.37.0
-  controllerManager:
-    extraArgs:
-      bind-address: 0.0.0.0
-      feature-gates: HPAScaleToZero=true
-    image: registry.k8s.io/kube-controller-manager:v1.37.0
-  coreDNS:
-    disabled: true
   etcd:
     advertisedSubnets:
       - 192.168.20.0/24
@@ -50,30 +21,82 @@ cluster:
       key: ref+op://kubernetes/talos/CLUSTER_ETCD_CA_KEY
     extraArgs:
       listen-metrics-urls: http://0.0.0.0:2381
-  proxy:
-    disabled: true
-    image: registry.k8s.io/kube-proxy:v1.37.0
-  scheduler:
-    config:
-      apiVersion: kubescheduler.config.k8s.io/v1
-      kind: KubeSchedulerConfiguration
-      profiles:
-        - schedulerName: default-scheduler
-          plugins:
-            score:
-              disabled:
-                - name: ImageLocality
-          pluginConfig:
-            - name: PodTopologySpread
-              args:
-                defaultingType: List
-                defaultConstraints:
-                  - maxSkew: 1
-                    topologyKey: kubernetes.io/hostname
-                    whenUnsatisfiable: ScheduleAnyway
-    extraArgs:
-      bind-address: 0.0.0.0
-    image: registry.k8s.io/kube-scheduler:v1.37.0
-  secretboxEncryptionSecret: ref+op://kubernetes/talos/CLUSTER_SECRETBOXENCRYPTIONSECRET
   serviceAccount:
     key: ref+op://kubernetes/talos/CLUSTER_SERVICEACCOUNT_KEY
+---
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+certExtraSANs:
+  - matalos.internal
+extraArgs:
+  enable-aggregator-routing: "true"
+  feature-gates: HPAScaleToZero=true
+image: registry.k8s.io/kube-apiserver:v1.36.4
+---
+apiVersion: v1alpha1
+kind: KubeAuditPolicyConfig
+configuration:
+  apiVersion: audit.k8s.io/v1
+  kind: Policy
+  rules:
+    - level: Metadata
+---
+apiVersion: v1alpha1
+kind: KubeControllerManagerConfig
+extraArgs:
+  bind-address: 0.0.0.0
+  feature-gates: HPAScaleToZero=true
+image: registry.k8s.io/kube-controller-manager:v1.36.4
+---
+apiVersion: v1alpha1
+kind: KubeCoreDNSConfig
+enabled: false
+---
+# key1 = the name Talos 1.13 gave the legacy secretboxEncryptionSecret;
+# renaming it makes existing etcd secrets unreadable. Rotation adds key2.
+apiVersion: v1alpha1
+kind: KubeEtcdEncryptionConfig
+config:
+  resources:
+    - providers:
+        - secretbox:
+            keys:
+              - name: key1
+                secret: ref+op://kubernetes/talos/CLUSTER_SECRETBOXENCRYPTIONSECRET
+        - identity: {}
+      resources:
+        - secrets
+---
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+enabled: false
+image: registry.k8s.io/kube-proxy:v1.36.4
+---
+apiVersion: v1alpha1
+kind: KubeSchedulerConfig
+config:
+  profiles:
+    - schedulerName: default-scheduler
+      plugins:
+        score:
+          disabled:
+            - name: ImageLocality
+      pluginConfig:
+        - name: PodTopologySpread
+          args:
+            defaultingType: List
+            defaultConstraints:
+              - maxSkew: 1
+                topologyKey: kubernetes.io/hostname
+                whenUnsatisfiable: ScheduleAnyway
+extraArgs:
+  bind-address: 0.0.0.0
+image: registry.k8s.io/kube-scheduler:v1.36.4
+---
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+  - os:admin
+allowedKubernetesNamespaces:
+  - actions-runner-system
+  - system-upgrade
