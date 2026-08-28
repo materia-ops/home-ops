@@ -36,15 +36,25 @@ cluster:
   token: ref+op://kubernetes/talos/CLUSTER_TOKEN
 ---
 apiVersion: v1alpha1
+kind: VLANConfig
+name: bond0.70
+vlanID: 70
+parent: bond0
+mtu: 9000
+---
+apiVersion: v1alpha1
+kind: VLANConfig
+name: bond0.90
+vlanID: 90
+parent: bond0
+mtu: 9000
+---
+apiVersion: v1alpha1
 kind: ResolverConfig
 hostDNS:
   enabled: true
   forwardKubeDNSToHost: true
   resolveMemberNames: true
----
-apiVersion: v1alpha1
-kind: KubePrismConfig
-port: 7445
 ---
 apiVersion: v1alpha1
 kind: DiscoveryServiceConfig
@@ -57,27 +67,25 @@ clusterID: ref+op://kubernetes/talos/CLUSTER_ID
 clusterSecret: ref+op://kubernetes/talos/CLUSTER_SECRET
 ---
 apiVersion: v1alpha1
-kind: CRICustomizationConfig
-name: containerd
-content: |
-  [plugins."io.containerd.cri.v1.images"]
-    discard_unpacked_layers = false
-  [plugins."io.containerd.cri.v1.runtime"]
-    device_ownership_from_security_context = true
+kind: UserVolumeConfig
+name: local-hostpath
+provisioning:
+  diskSelector:
+    match: disk.model == "Corsair MP600 MINI" && !system_disk
+  minSize: 1TB
 ---
 apiVersion: v1alpha1
-kind: EtcFileConfig
-name: nfsmount.conf
-mode: 0o644
-contents: |
-  [ NFSMount_Global_Options ]
-  nfsvers=4.2
-  hard=True
-  nconnect=16
-  noatime=True
-  nodiratime=True
-  rsize=131072
-  wsize=131072
+kind: FilesystemTrimConfig
+interval: 168h0m0s
+---
+apiVersion: v1alpha1
+kind: FilesystemScrubConfig
+interval: 168h0m0s
+---
+apiVersion: v1alpha1
+kind: WatchdogTimerConfig
+device: /dev/watchdog0
+timeout: 5m
 ---
 apiVersion: v1alpha1
 kind: KernelModuleConfig
@@ -90,33 +98,6 @@ name: vfio_pci
 apiVersion: v1alpha1
 kind: KernelModuleConfig
 name: uio_pci_generic
----
-apiVersion: v1alpha1
-kind: KubeletConfig
-config:
-  crashLoopBackOff:
-    maxContainerRestartPeriod: 60s
-  imageGCHighThresholdPercent: 50
-  imageGCLowThresholdPercent: 40
-  imageMaximumGCAge: 168h
-  maxParallelImagePulls: 3
-  serializeImagePulls: false
-defaultRuntimeSeccompProfileEnabled: true
-image: ghcr.io/siderolabs/kubelet:v1.36.4
----
-apiVersion: v1alpha1
-kind: KubeNodeConfig
-nodeIP:
-  validSubnets:
-    - 192.168.20.0/24
----
-apiVersion: v1alpha1
-kind: KubeNetworkConfig
-dnsDomain: cluster.local
-podSubnets:
-  - 10.42.0.0/16
-serviceSubnets:
-  - 10.43.0.0/16
 ---
 apiVersion: v1alpha1
 kind: SysctlConfig
@@ -145,36 +126,55 @@ params:
   vm.nr_hugepages: "1024"
 ---
 apiVersion: v1alpha1
-kind: FilesystemTrimConfig
-interval: 168h0m0s
+kind: EtcFileConfig
+name: nfsmount.conf
+mode: 0o644
+contents: |
+  [ NFSMount_Global_Options ]
+  nfsvers=4.2
+  hard=True
+  nconnect=16
+  noatime=True
+  nodiratime=True
+  rsize=131072
+  wsize=131072
 ---
 apiVersion: v1alpha1
-kind: FilesystemScrubConfig
-interval: 168h0m0s
+kind: CRICustomizationConfig
+name: containerd
+content: |
+  [plugins."io.containerd.cri.v1.images"]
+    discard_unpacked_layers = false
+  [plugins."io.containerd.cri.v1.runtime"]
+    device_ownership_from_security_context = true
 ---
 apiVersion: v1alpha1
-kind: VLANConfig
-name: bond0.70
-vlanID: 70
-parent: bond0
-mtu: 9000
+kind: KubeNodeConfig
+nodeIP:
+  validSubnets:
+    - 192.168.20.0/24
 ---
 apiVersion: v1alpha1
-kind: VLANConfig
-name: bond0.90
-vlanID: 90
-parent: bond0
-mtu: 9000
+kind: KubeletConfig
+config:
+  crashLoopBackOff:
+    maxContainerRestartPeriod: 60s
+  imageGCHighThresholdPercent: 50
+  imageGCLowThresholdPercent: 40
+  imageMaximumGCAge: 168h
+  maxParallelImagePulls: 3
+  serializeImagePulls: false
+defaultRuntimeSeccompProfileEnabled: true
+image: ghcr.io/siderolabs/kubelet:v1.36.4
 ---
 apiVersion: v1alpha1
-kind: UserVolumeConfig
-name: local-hostpath
-provisioning:
-  diskSelector:
-    match: disk.model == "Corsair MP600 MINI" && !system_disk
-  minSize: 1TB
+kind: KubeNetworkConfig
+dnsDomain: cluster.local
+podSubnets:
+  - 10.42.0.0/16
+serviceSubnets:
+  - 10.43.0.0/16
 ---
 apiVersion: v1alpha1
-kind: WatchdogTimerConfig
-device: /dev/watchdog0
-timeout: 5m
+kind: KubePrismConfig
+port: 7445
