@@ -1,8 +1,7 @@
 ---
-# Deliberately still v1alpha1-legacy: CAs/tokens (no successor kinds),
-# machine.install (per-node diskSelector + grubUseUKICmdline have no
-# UnattendedInstallConfig story yet), machine.network nameservers, time
-# servers, and cluster.allowSchedulingOnControlPlanes (all-CP cluster).
+# Deliberately still legacy (no successor kind or kept on purpose): CAs/tokens,
+# machine.install, disableManifestsDirectory, network nameservers, time
+# servers, allowSchedulingOnControlPlanes (all-CP cluster).
 version: v1alpha1
 machine:
   ca:
@@ -34,7 +33,6 @@ cluster:
   clusterName: matalos
   controlPlane:
     endpoint: https://matalos.internal:6443
-  secret: ref+op://kubernetes/talos/CLUSTER_SECRET
   token: ref+op://kubernetes/talos/CLUSTER_TOKEN
 ---
 apiVersion: v1alpha1
