@@ -80,9 +80,6 @@ apiVersion: v1alpha1
 kind: KubeCoreDNSConfig
 enabled: false
 ---
-# key3 (fresh, first = write key) rotates out key2, the Talos-1.13-named
-# legacy key (terminal-exposed 2026-08-22); key2 stays until the
-# re-encrypt sweep completes, then a follow-up PR removes it.
 apiVersion: v1alpha1
 kind: KubeEtcdEncryptionConfig
 config:
