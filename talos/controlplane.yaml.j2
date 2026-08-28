@@ -24,6 +24,13 @@ cluster:
   serviceAccount:
     key: ref+op://kubernetes/talos/CLUSTER_SERVICEACCOUNT_KEY
 ---
+# Talos labels controlplane machine types itself; explicit for parity with
+# the composed config and easy diffing against upstream layouts.
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+labels:
+  node-role.kubernetes.io/control-plane: ""
+---
 apiVersion: v1alpha1
 kind: KubeAPIServerConfig
 certExtraSANs:
@@ -40,6 +47,16 @@ configuration:
   kind: Policy
   rules:
     - level: Metadata
+---
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: node
+type: Node
+---
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: rbac
+type: RBAC
 ---
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig
