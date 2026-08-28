@@ -80,8 +80,6 @@ apiVersion: v1alpha1
 kind: KubeCoreDNSConfig
 enabled: false
 ---
-# key1 = the name Talos 1.13 gave the legacy secretboxEncryptionSecret;
-# renaming it makes existing etcd secrets unreadable. Rotation adds key2.
 apiVersion: v1alpha1
 kind: KubeEtcdEncryptionConfig
 config:
@@ -89,7 +87,9 @@ config:
     - providers:
         - secretbox:
             keys:
-              - name: key1
+              - name: key3
+                secret: ref+op://kubernetes/talos/CLUSTER_SECRETBOXENCRYPTIONSECRET_KEY3
+              - name: key2
                 secret: ref+op://kubernetes/talos/CLUSTER_SECRETBOXENCRYPTIONSECRET
         - identity: {}
       resources:
