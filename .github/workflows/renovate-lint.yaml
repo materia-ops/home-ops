@@ -22,7 +22,7 @@ jobs:
     # Same image the runner executes; --user root because the image's
     # non-root default user can't write the runner-owned workspace mount.
     container:
-      image: ghcr.io/renovatebot/renovate:44.35.4
+      image: ghcr.io/renovatebot/renovate:44.48.3
       options: --user root
     steps:
       - name: Checkout
