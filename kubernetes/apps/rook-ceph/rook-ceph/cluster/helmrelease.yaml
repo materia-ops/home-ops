@@ -163,8 +163,8 @@ spec:
         cephx:
           csi:
             keyRotationPolicy: KeyGeneration
-            keyGeneration: 2
-            keyType: aes256k
+            keyGeneration: 3
+            keyType: aes
           daemon:
             keyRotationPolicy: KeyGeneration
             keyGeneration: 2
