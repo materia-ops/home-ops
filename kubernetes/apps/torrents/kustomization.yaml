@@ -10,7 +10,5 @@ components:
 resources:
   - ./namespace.yaml
   - ./autobrr/ks.yaml
-  # - ./cross-seed/ks.yaml
-  # - ./qbitmanage/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./qui/ks.yaml
