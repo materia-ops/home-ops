@@ -11,13 +11,6 @@ spec:
   interval: 1h
   timeout: 10m
   values:
-    # Keep Ceph on Squid for the chart migration; Tentacle (v20) lands
-    # separately. The chart derives cephVersion and the toolbox image from
-    # cephImage; setting cephClusterSpec.cephVersion alongside renders a
-    # duplicate key. REMOVE this pin in the Tentacle PR.
-    cephImage:
-      repository: quay.io/ceph/ceph
-      tag: v19.2.6
     monitoring:
       enabled: true
       createPrometheusRules: true
