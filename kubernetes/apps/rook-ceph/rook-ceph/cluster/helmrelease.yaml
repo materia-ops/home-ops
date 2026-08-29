@@ -161,6 +161,10 @@ spec:
           requireMsgr2: true
       security:
         cephx:
+          csi:
+            keyRotationPolicy: KeyGeneration
+            keyGeneration: 2
+            keyType: aes256k
           daemon:
             keyRotationPolicy: KeyGeneration
             keyGeneration: 2
