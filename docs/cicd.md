@@ -162,7 +162,7 @@ How each old-namespace reference was resolved:
 | `ghcr.io/malpractis/azerothcore-wotlk-playerbots` | [`kubernetes/apps/games/azerothcore/app/helmrelease.yaml`](../kubernetes/apps/games/azerothcore/app/helmrelease.yaml) | Moved to `ghcr.io/materia-ops/azerothcore-wotlk-playerbots` (1.5.1, the first release published under the org) |
 | `ghcr.io/malpractis/*` comment | [`kubernetes/apps/games/azerothcore-db/app/pullsecret.yaml`](../kubernetes/apps/games/azerothcore-db/app/pullsecret.yaml) | Comment updated to `ghcr.io/materia-ops/*`; notes the pull PAT stays owned by the personal `malpractis` account |
 | `ghcr.io/malpractis/raidscope` / `wlogs-parser` comment | [`kubernetes/apps/default/raidscope/app/helmrelease.yaml`](../kubernetes/apps/default/raidscope/app/helmrelease.yaml) | Historical comment reworded to point here |
-| `instance: Malpractis` | [`kubernetes/apps/torrents/qbitmanage/app/externalsecret.yaml`](../kubernetes/apps/torrents/qbitmanage/app/externalsecret.yaml) | Notifiarr instance label renamed to `Materia` (cosmetic) |
+| `instance: Malpractis` | `kubernetes/apps/torrents/qbitmanage/app/externalsecret.yaml` | Notifiarr instance label renamed to `Materia` (cosmetic); app has since been removed (replaced by qui) |
 | GHCR host-rule username `malpractis` | [`.github/workflows/renovate.yaml`](../.github/workflows/renovate.yaml) | **Stays as-is** — this is the PAT-owning personal account (which still exists), not the org; the token authenticates against `ghcr.io` regardless of image namespace |
 | Filter for **both** namespaces | [`.github/workflows/image-pull.yaml`](../.github/workflows/image-pull.yaml) | Narrowed to `ghcr.io/materia-ops/` only — see [image-pull](#image-pullyaml--pre-warm-images-on-prs) above |
 
