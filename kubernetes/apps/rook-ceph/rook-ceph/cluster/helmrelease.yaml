@@ -152,6 +152,10 @@ spec:
       security:
         cephx:
           csi:
+            # Keep one prior key generation valid so already-mapped RBD clients can
+            # re-authenticate after a rotation; without it their cephx tickets fail
+            # with -13 once they expire.
+            keepPriorKeyCountMax: 1
             keyRotationPolicy: KeyGeneration
             keyGeneration: 3
             keyType: aes
