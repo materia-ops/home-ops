@@ -161,10 +161,11 @@ entries:
       session_duration: "seconds=0"
       remember_me_offset: "seconds=2592000"
       terminate_other_sessions: false
-      # Bind session to GeoIP continent/country and network ASN.
-      # If the IP moves to a different country or ISP the session is invalidated.
-      geoip_binding: bind_continent_country
-      network_binding: bind_asn
+      # Must stay no_binding: auth.materia.wtf is external-only, so the observed
+      # client IP is a rotating cloudflared pod IP or a LAN address. Neither has
+      # an ASN/GeoIP record and bind_asn fails closed on "network.missing".
+      geoip_binding: no_binding
+      network_binding: no_binding
 
   # ── User Logout ───────────────────────────────────────────────────────────────
   - id: stage_user_logout
