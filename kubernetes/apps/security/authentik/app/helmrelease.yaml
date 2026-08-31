@@ -118,7 +118,9 @@ spec:
         limits:
           memory: 1Gi
     geoip:
-      enabled: false
+      enabled: true
+      # MaxMind rate limit: 1 download per database per server per day.
+      updateInterval: 24
       existingSecret:
         secretName: *secret
         accountId: "AUTHENTIK_GEOIP_ACCOUNT_ID"
