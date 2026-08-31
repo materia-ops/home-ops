@@ -118,7 +118,11 @@ spec:
         limits:
           memory: 1Gi
     geoip:
-      enabled: false
+      enabled: true
+      # MaxMind asks for at most one download per database per server per day;
+      # the chart default of 8h is 3x that, per pod. The DB volume is an
+      # emptyDir, so each pod roll also re-downloads both editions.
+      updateInterval: 24
       existingSecret:
         secretName: *secret
         accountId: "AUTHENTIK_GEOIP_ACCOUNT_ID"
