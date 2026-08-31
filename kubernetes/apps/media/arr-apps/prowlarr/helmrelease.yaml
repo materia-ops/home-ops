@@ -27,7 +27,9 @@ spec:
               PROWLARR__AUTH__REQUIRED: DisabledForLocalAddresses
               PROWLARR__LOG__DBENABLED: "False"
               PROWLARR__LOG__LEVEL: info
+              PROWLARR__SERVER__ALLOWEDHOSTS: prowlarr.materia.wtf,prowlarr.media.svc.cluster.local,localhost
               PROWLARR__SERVER__PORT: &port 80
+              PROWLARR__SERVER__TRUSTEDNETWORKS: 10.42.0.0/16
               PROWLARR__UPDATE__BRANCH: develop
               TZ: Australia/Melbourne
             envFrom:
