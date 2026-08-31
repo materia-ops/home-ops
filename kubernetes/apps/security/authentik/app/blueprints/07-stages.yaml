@@ -161,12 +161,9 @@ entries:
       session_duration: "seconds=0"
       remember_me_offset: "seconds=2592000"
       terminate_other_sessions: false
-      # Session binding must stay off: authentik never observes a public client
-      # IP here. auth.materia.wtf is served by envoy-external behind
-      # cloudflare-tunnel, so the observed address is a cloudflared pod IP
-      # (10.42.0.0/16) or a LAN IP — neither has an ASN or GeoIP record, and
-      # authentik raises SessionBindingBroken("network.missing") whenever a
-      # lookup returns None, logging the user out on the next request.
+      # Must stay no_binding: auth.materia.wtf is external-only, so the observed
+      # client IP is a rotating cloudflared pod IP or a LAN address. Neither has
+      # an ASN/GeoIP record and bind_asn fails closed on "network.missing".
       geoip_binding: no_binding
       network_binding: no_binding
 
