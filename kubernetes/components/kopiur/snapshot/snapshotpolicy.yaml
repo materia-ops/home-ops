@@ -6,15 +6,19 @@ metadata:
   name: ${APP}
 spec:
   compression:
-    compressor: zstd
-  # Pinned: an unset copyMethod can be re-defaulted under SSA.
+    compressor: zstd-fastest
+  # Pinned so an upstream default change cannot flip it under us.
   copyMethod: Snapshot
   mover:
-    # Sized apart from the PVC so a 50Gi app does not get a 50Gi cache.
+    # Sized apart from the PVC so a 50Gi app does not get a 50Gi cache;
+    # kopia's own cache budgets are capped below the volume so it cannot ENOSPC.
     cache:
       capacity: ${KOPIUR_CACHE_CAPACITY:=5Gi}
+      contentCacheSizeMb: 2048
+      metadataCacheSizeMb: 1024
       mode: Ephemeral
-      storageClassName: ${KOPIUR_CACHE_STORAGECLASS:=openebs-hostpath}
+      storageClassName: openebs-hostpath
+    # Mirrors the repository moverDefaults; exists only for the per-app override.
     securityContext:
       runAsUser: ${KOPIUR_PUID:=1000}
       runAsGroup: ${KOPIUR_PGID:=1000}
@@ -29,8 +33,10 @@ spec:
   sources:
     - pvc:
         name: ${APP}
+  upload:
+    maxParallelFileReads: 2
   verification:
     quick:
       schedule:
         cron: H 3 * * *
-  volumeSnapshotClassName: ${KOPIUR_SNAPSHOTCLASS:=csi-ceph-blockpool}
+  volumeSnapshotClassName: csi-ceph-blockpool

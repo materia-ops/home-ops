@@ -5,8 +5,18 @@ kind: Restore
 metadata:
   name: ${APP}
 spec:
-  # Restore movers do not inherit the policy's securityContext.
+  # Restore movers inherit nothing from the policy: cache, uid and fsGroup
+  # (the restored ceph-block volume is group-owned by fsGroup) are set here.
   mover:
+    cache:
+      capacity: ${KOPIUR_CACHE_CAPACITY:=5Gi}
+      contentCacheSizeMb: 2048
+      metadataCacheSizeMb: 1024
+      mode: Ephemeral
+      storageClassName: openebs-hostpath
+    podSecurityContext:
+      fsGroup: ${KOPIUR_PGID:=1000}
+      fsGroupChangePolicy: OnRootMismatch
     securityContext:
       runAsUser: ${KOPIUR_PUID:=1000}
       runAsGroup: ${KOPIUR_PGID:=1000}
@@ -15,6 +25,5 @@ spec:
   source:
     fromPolicy:
       name: ${APP}
-      offset: 0
   target:
     populator: {}

@@ -121,11 +121,11 @@ snapshot-app ns app:
     until kubectl -n "{{ ns }}" get job/volsync-src-"{{ app }}" &>/dev/null; do sleep 5; done
     kubectl -n "{{ ns }}" wait job/volsync-src-"{{ app }}" --for=condition=complete --timeout=120m
 
-[doc('Snapshot a specific kopiur app now')]
+[doc('Snapshot a specific kopiur app now and wait for it')]
 snapshot-kopiur ns app:
-    kubectl kopiur -n "{{ ns }}" snapshot now --policy "{{ app }}"
+    kubectl kopiur -n "{{ ns }}" snapshot now --policy "{{ app }}" --wait --timeout 120m
 
-[doc('Snapshot all kopiur apps now')]
+[doc('Snapshot all kopiur apps now, one at a time')]
 [script]
 snapshot-kopiur-all:
     kubectl get snapshotpolicies.kopiur.home-operations.com --no-headers -A | while read -r ns name _; do
