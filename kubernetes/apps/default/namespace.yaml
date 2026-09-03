@@ -4,6 +4,6 @@ kind: Namespace
 metadata:
   name: _
   annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
     # proton-mail-bridge-relay's backup mover must run as root (the Bridge image hardcodes /root)
     kopiur.home-operations.com/privileged-movers: "true"
+    kustomize.toolkit.fluxcd.io/prune: disabled

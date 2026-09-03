@@ -69,10 +69,13 @@
       ],
     },
     {
-      description: "kopiur chart — never auto-merge; alpha project whose minor bumps change CRD schemas that must be applied before the operator rolls (0.10.0 precedent)",
+      description: "kopiur chart — never auto-merge; alpha project that ships breaking changes in minor releases, and the kubectl-kopiur plugin must move in lockstep with the operator",
       matchDatasources: [ "docker" ],
       matchPackageNames: [ "/charts\\/kopiur/" ],
       automerge: false,
+      prBodyNotes: [
+        "⚠️ **Read the kopiur release notes before merging** (breaking changes land in minor releases), then bump kubectl-kopiur in WSL to the same version.",
+      ],
     },
     {
       description: "Auto-merge high-cadence OCI packages weekly",

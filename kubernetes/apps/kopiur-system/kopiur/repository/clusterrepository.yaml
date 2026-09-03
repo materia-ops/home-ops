@@ -19,6 +19,8 @@ spec:
   # the H-scheduled policies don't all land on the same second.
   concurrency:
     maxConcurrentJobs: 3
+  # Movers read a same-named Secret in their own namespace (components/kopiur/secret)
+  # instead of credentialProjection, which needs cluster-wide Secret write RBAC.
   encryption:
     passwordSecretRef:
       name: kopiur-secret
