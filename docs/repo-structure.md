@@ -70,6 +70,8 @@ mixed into apps via `spec.components`:
 | :--- | :--- |
 | `volsync` | The app PVC **plus** scheduled Kopia backups (`ReplicationSource`) and bootstrap restore (`ReplicationDestination`). Parameterised by `APP`, `VOLSYNC_CAPACITY`, `VOLSYNC_SCHEDULE`. The component owns the PVC — capacity changes happen here, and the VolSync cache is sized from the same value |
 | `alerts` | Flux `Alert`/`Provider` routing reconciliation errors to Alertmanager (plus a GitHub commit-status variant) |
+| `kopiur/snapshot` | Scheduled kopiur backups of the app's existing PVC (`SnapshotPolicy` + `SnapshotSchedule`) into the `materia` repository. Parameterised by `APP`, `KOPIUR_SCHEDULE`, `KOPIUR_CACHE_CAPACITY`, `KOPIUR_PUID`/`KOPIUR_PGID`. Used beside `volsync` while an app is being migrated, and on PVCs the component does not own |
+| `kopiur/backup` | Everything in `kopiur/snapshot` **plus** the app PVC (`KOPIUR_CAPACITY`, owned here) and a bootstrap `Restore` that populates it from the latest snapshot. The successor to `volsync` |
 | `kopiur/secret` | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps |
 | `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC |
 | `cnpg` | A CloudNativePG Postgres cluster for the app |
