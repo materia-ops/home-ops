@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/clusterrepository_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: ClusterRepository
+metadata:
+  name: materia
+spec:
+  allowedNamespaces:
+    all: true
+  backend:
+    filesystem:
+      path: /repo
+      volume:
+        nfs:
+          path: /mnt/apps/kopiur
+          server: nas.internal
+  # One mover-Job pool per repository, across every namespace: bounds the
+  # NFS backend during the migration's restore storm. Spread firings so
+  # the H-scheduled policies don't all land on the same second.
+  concurrency:
+    maxConcurrentJobs: 3
+  encryption:
+    passwordSecretRef:
+      name: kopiur-secret
+      namespace: kopiur-system
+      key: KOPIA_PASSWORD
+  # The share is owned 1000:1000; kopiur's default mover uid (65532)
+  # cannot write it. fsGroup is a no-op on NFS, so uid/gid must match.
+  moverDefaults:
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+  scheduleDefaults:
+    jitter: 10m
+    timezone: Australia/Melbourne

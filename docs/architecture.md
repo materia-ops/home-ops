@@ -215,6 +215,12 @@ and a `ReplicationDestination` (bootstrap restore), parameterised per app with
 `VOLSYNC_CAPACITY` / `VOLSYNC_SCHEDULE` substitutions. The component also owns the app
 PVC, so capacity is defined in exactly one place.
 
+A migration from VolSync to [kopiur](https://github.com/home-operations/kopiur) is in
+progress: the operator and its `ClusterRepository` (`nas.internal:/mnt/apps/kopiur`, a
+fresh repository) live in `kopiur-system` and the `kopiur/secret` component distributes the
+repository password to every namespace that will take backups. Apps move over one at a
+time by swapping the `volsync` component for the `kopiur/*` components.
+
 ## Secrets
 
 1Password is the single source of truth. Two consumption paths:

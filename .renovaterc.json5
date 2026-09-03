@@ -69,6 +69,12 @@
       ],
     },
     {
+      description: "kopiur chart — never auto-merge; alpha project whose minor bumps change CRD schemas that must be applied before the operator rolls (0.10.0 precedent)",
+      matchDatasources: [ "docker" ],
+      matchPackageNames: [ "/charts\\/kopiur/" ],
+      automerge: false,
+    },
+    {
       description: "Auto-merge high-cadence OCI packages weekly",
       matchDatasources: [ "docker" ],
       matchUpdateTypes: [ "minor", "patch" ],
