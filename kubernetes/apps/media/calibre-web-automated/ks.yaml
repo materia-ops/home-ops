@@ -6,6 +6,9 @@ metadata:
   name: &app calibre-web-automated
 spec:
   components:
+    # Pod runs as root (s6 chowns /config to 1000), and the kopiur mover reads
+    # the snapshot clone as 1000 with no fsGroup relabel (volsync's mover has
+    # one) — check the first snapshot before flipping.
     - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
   interval: 30m

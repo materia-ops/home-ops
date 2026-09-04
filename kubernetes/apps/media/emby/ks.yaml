@@ -20,11 +20,12 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # The 5Gi default cache is tight for a 50Gi first upload even with
-      # kopia's cache budgets capped below the volume.
+      # kopia caps its own content+metadata caches at 3Gi; the headroom is for
+      # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
-      # Pinned 20 min apart from plex (:00) and stash (:40) so the three 50Gi
-      # apps never share the NFS backend; the default would be a hashed minute.
+      # Starts 20 min apart from plex (:00) and stash (:40) to keep the three
+      # 50Gi apps' steady-state runs off each other; the default would hash
+      # the minute.
       KOPIUR_SCHEDULE: "20 * * * *"
       VOLSYNC_CAPACITY: 50Gi
       VOLSYNC_SCHEDULE: "5 * * * *"

@@ -7,6 +7,9 @@ metadata:
 spec:
   components:
     # - ../../../../components/gpu
+    # Pod runs as root, and the kopiur mover reads the snapshot clone as 1000
+    # with no fsGroup relabel (volsync's mover has one) — check the first
+    # snapshot before flipping; media has no kopiur privileged-movers.
     - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -20,11 +23,12 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # The 5Gi default cache is tight for a 50Gi first upload even with
-      # kopia's cache budgets capped below the volume.
+      # kopia caps its own content+metadata caches at 3Gi; the headroom is for
+      # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
-      # Pinned 20 min apart from plex (:00) and emby (:20) so the three 50Gi
-      # apps never share the NFS backend; the default would be a hashed minute.
+      # Starts 20 min apart from plex (:00) and emby (:20) to keep the three
+      # 50Gi apps' steady-state runs off each other; the default would hash
+      # the minute.
       KOPIUR_SCHEDULE: "40 * * * *"
       VOLSYNC_CAPACITY: 50Gi
       VOLSYNC_SCHEDULE: "10 * * * *"
