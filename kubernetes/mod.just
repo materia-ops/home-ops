@@ -269,6 +269,8 @@ quiesce ns app:
 # Resume alone does not restore the replica count: an app whose HelmRelease carries a
 # driftDetection ignore for /spec/replicas is never corrected back, and elsewhere
 # helm-controller re-applies replicas only if it upgrades at all. All are single-replica.
+# The scale returns before the controller has made a Pod, and `wait --for=condition=ready`
+# exits 1 on a selector that matches nothing yet, so readiness goes through rollout status.
 [private]
 unquiesce ns app:
     flux -n {{ ns }} resume helmrelease {{ app }}
@@ -276,8 +278,8 @@ unquiesce ns app:
         | xargs -r -I{} kubectl -n {{ ns }} patch {} -p '{"spec":{"suspend":false}}'
     kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
         | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=1
-    if kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
-        kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
+    kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
+        | xargs -r -I{} kubectl -n {{ ns }} rollout status {} --timeout=5m
 
 # flate comes from .mise/config.toml; CI's image-pull.yaml pins the same version.
 [private]
