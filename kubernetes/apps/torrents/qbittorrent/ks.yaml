@@ -6,9 +6,8 @@ metadata:
   name: &app qbittorrent
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
+    - ../../../../components/kopiur/backup
     - ../../../../components/theme-park
-    - ../../../../components/volsync
     - ../../../../components/zeroscaler
   dependsOn:
     - name: multus-networks
@@ -20,15 +19,11 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # Same 6h cadence as VOLSYNC_SCHEDULE below; the kopiur default
-      # (H * * * *) would be hourly.
+      # Every 6h, not the kopiur default (H * * * *). qbittorrent stores
+      # resume data in a single churny SQLite DB (torrents.db), so an hourly
+      # snapshot re-chunks most of it each run — the largest contributor to
+      # shared-repo index-blob growth. A 6h RPO on resume state is ample.
       KOPIUR_SCHEDULE: "50 */6 * * *"
-      VOLSYNC_CAPACITY: 5Gi
-      # Every 6h (was hourly). qbittorrent stores resume data in a single
-      # churny SQLite DB (torrents.db), so an hourly snapshot re-chunks most
-      # of it each run — the largest contributor to shared-repo index-blob
-      # growth. A 6h RPO on torrent resume state is ample.
-      VOLSYNC_SCHEDULE: "50 */6 * * *"
   prune: true
   sourceRef:
     kind: GitRepository

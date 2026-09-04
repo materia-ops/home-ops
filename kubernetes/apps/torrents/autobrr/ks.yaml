@@ -6,8 +6,7 @@ metadata:
   name: &app autobrr
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   dependsOn:
     - name: rook-ceph-cluster
@@ -17,8 +16,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 1Gi
-      VOLSYNC_SCHEDULE: "44 * * * *"
+      KOPIUR_CAPACITY: 1Gi
   prune: true
   sourceRef:
     kind: GitRepository
