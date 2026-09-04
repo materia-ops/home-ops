@@ -4,6 +4,8 @@ kind: Namespace
 metadata:
   name: _
   annotations:
+    # stash and calibre-web-automated run their pods as root, so must their movers
+    kopiur.home-operations.com/privileged-movers: "true"
     kustomize.toolkit.fluxcd.io/prune: disabled
     volsync.backube/privileged-movers: "true"
   labels:

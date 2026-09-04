@@ -7,9 +7,6 @@ metadata:
 spec:
   components:
     # - ../../../../components/gpu
-    # Pod runs as root, and the kopiur mover reads the snapshot clone as 1000
-    # with no fsGroup relabel (volsync's mover has one) — check the first
-    # snapshot before flipping; media has no kopiur privileged-movers.
     - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -26,6 +23,11 @@ spec:
       # kopia caps its own content+metadata caches at 3Gi; the headroom is for
       # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
+      # Root mover: the pod runs as 0/0, so its files are root-only and the
+      # default uid 1000 cannot read the clone kopiur mounts read-only.
+      # Permitted by the privileged-movers annotation on the media namespace.
+      KOPIUR_PGID: "0"
+      KOPIUR_PUID: "0"
       # Starts 20 min apart from plex (:00) and emby (:20) to keep the three
       # 50Gi apps' steady-state runs off each other; the default would hash
       # the minute.
