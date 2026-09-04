@@ -7,6 +7,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -37,6 +38,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -95,6 +97,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -124,6 +127,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -153,6 +157,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -183,6 +188,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -212,6 +218,7 @@ metadata:
   name: &app recyclarr
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
   dependsOn:
@@ -240,6 +247,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -269,6 +277,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
