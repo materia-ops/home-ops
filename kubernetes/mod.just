@@ -250,8 +250,13 @@ wait-restore ns name timeout='3600':
         sleep 10
     done
 
+# Every caller suspends the Kustomization first, so deleting the zeroscaler HPA is
+# safe and Flux recreates it on resume. Left in place it reverses the scale to 0
+# within a sync (its probe metric still reads healthy) and the PVC delete then
+# blocks on pvc-protection behind the pod it brought back.
 [private]
 quiesce ns app:
+    kubectl -n {{ ns }} delete hpa {{ app }} --ignore-not-found
     kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
         | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=0
     if kubectl -n {{ ns }} get pod -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
