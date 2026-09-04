@@ -51,8 +51,16 @@ with `gh pr create` and merged by the maintainer, not by sessions.
   kubectl/flux mutations unless the task explicitly asks for them.
 - NEVER `kubectl delete --force --grace-period=0` a stateful pod:
   preStop hooks (e.g. the game server's world save) must finish.
-- The volsync component OWNS the `${APP}` PVC — don't declare a second
-  one; its cacheCapacity must stay >= VOLSYNC_CAPACITY on size bumps.
+- The backup component OWNS the `${APP}` PVC — `volsync` today,
+  `kopiur/backup` for migrated apps. Never declare a second PVC and never
+  mix the two on one app. volsync: cacheCapacity must stay >=
+  VOLSYNC_CAPACITY on size bumps. kopiur: KOPIUR_CAPACITY sizes the PVC
+  and KOPIUR_CACHE_CAPACITY is deliberately independent of it.
+- A kopiur flip PR (an app's ks swapping to `components/kopiur/backup`)
+  merges ONLY after `just kube kopiur-flip-prepare <ns> <app>` has
+  suspended the app — merged unsuspended it wedges the Kustomization on
+  the PVC's immutable dataSourceRef. Runbook: the migration plan in
+  materia-vault.
 - Flux Kustomizations with `substitute: disabled` skip `${VAR}`
   substitution — check before relying on variables in that app.
 - app-template 5.x needs `createDefaultServiceAccount: false` plus an

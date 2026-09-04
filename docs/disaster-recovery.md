@@ -101,20 +101,27 @@ just kube reconcile        # flux reconcile kustomization flux-system --with-sou
 **During a rebuild this is automatic.** Every stateful app that opts into the `volsync`
 component runs its `ReplicationDestination` before the app starts, so application data
 restores from the Kopia repository on the NAS as part of Stage 3 — no per-app action
-needed.
+needed. Apps migrated to the `kopiur/backup` component get the same treatment from the
+kopiur `Restore` populator, which fills their PVC from the `materia` repository
+(`nas.internal:/mnt/apps/kopiur`) as the PVC is provisioned.
 
 For an app that needs a *manual* restore afterwards (bad restore, or rolling a single
 app back to an older snapshot):
 
 ```sh
-just kube restore <namespace> <app> [previous]   # previous defaults to 0 (latest snapshot)
+just kube restore <namespace> <app> [previous]         # volsync apps
+just kube kopiur-restore <namespace> <app> [previous]  # kopiur apps
+# previous defaults to 0 (latest snapshot)
 ```
 
 The recipe ([`kubernetes/mod.just`](../kubernetes/mod.just)) suspends the app's Flux
 Kustomization and HelmRelease, scales the workload to zero, runs a one-off Kopia
 `ReplicationDestination` directly into the app PVC (`previous` selects how many
 snapshots back), then resumes Flux, force-reconciles the HelmRelease, and waits for the
-pod to come back Ready. To inspect data without restoring:
+pod to come back Ready. `kopiur-restore` does the same with a one-off `Restore`
+(`source.fromPolicy` at that offset, `target.pvcRef` on the live PVC) and refuses to
+restart the app unless the restore completed against a real snapshot. To inspect data
+without restoring:
 
 ```sh
 just kube browse-pvc <namespace> <claim>
