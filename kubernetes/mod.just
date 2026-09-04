@@ -44,9 +44,7 @@ prune-pods:
 restore ns app previous='0':
     flux -n {{ ns }} suspend kustomization {{ app }}
     flux -n {{ ns }} suspend helmrelease {{ app }}
-    kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
-        | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=0
-    kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m
+    just kube quiesce "{{ ns }}" "{{ app }}"
     kubectl -n {{ ns }} get replicationdestination {{ app }}-dst -o json \
         | jq 'del(.status)
             | .metadata = {name: "{{ app }}-manual", namespace: .metadata.namespace}
@@ -58,9 +56,7 @@ restore ns app previous='0':
     kubectl -n {{ ns }} wait job/volsync-dst-{{ app }}-manual --for=condition=complete --timeout=120m
     kubectl -n {{ ns }} delete replicationdestination {{ app }}-manual
     flux -n {{ ns }} resume kustomization {{ app }}
-    flux -n {{ ns }} resume helmrelease {{ app }}
-    flux -n {{ ns }} reconcile helmrelease {{ app }} --force
-    kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m
+    just kube unquiesce "{{ ns }}" "{{ app }}"
 
 [doc('Force a VolSync Kopia repo maintenance pass (compaction + GC)')]
 [script]
@@ -132,29 +128,55 @@ snapshot-kopiur-all:
         just kube snapshot-kopiur "$ns" "$name"
     done
 
-[doc('Cut an app over to kopiur, step 1: quiesce, final snapshot, delete the VolSync PVC (then merge the flip PR)')]
-[script]
+[doc('Kopiur flip step 1: suspend the app so its flip PR merges inertly')]
 kopiur-flip-prepare ns app:
     flux -n {{ ns }} suspend kustomization {{ app }}
     flux -n {{ ns }} suspend helmrelease {{ app }}
+    just log info "{{ app }} suspended. Merge its flip PR, then: just kube kopiur-flip {{ ns }} {{ app }}"
+
+[doc('Kopiur flip step 2: snapshot, drop the VolSync PVC, repopulate from kopiur, restart')]
+[script]
+kopiur-flip ns app:
+    # Preconditions first: the flip PR must already be applied to the (suspended) Kustomization spec.
+    flux -n flux-system reconcile source git flux-system
+    flux -n flux-system reconcile kustomization cluster-apps
+    components="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.components}')"
+    [[ "$components" == *kopiur/backup* && "$components" != *volsync* ]] \
+        || { just log error "{{ app }}: Kustomization does not carry kopiur/backup without volsync; merge the flip PR first" components "$components"; exit 1; }
+    want="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.postBuild.substitute.KOPIUR_CAPACITY}')"
+    have="$(kubectl -n {{ ns }} get pvc {{ app }} -o jsonpath='{.spec.resources.requests.storage}')"
+    [[ "${want:-5Gi}" == "$have" ]] \
+        || { just log error "{{ app }}: KOPIUR_CAPACITY (${want:-5Gi}) does not match the live PVC ($have)"; exit 1; }
+    # Warm snapshot while running, so the quiesced one below is a short incremental.
+    just kube snapshot-kopiur "{{ ns }}" "{{ app }}"
+    just kube quiesce "{{ ns }}" "{{ app }}"
+    just kube snapshot-kopiur "{{ ns }}" "{{ app }}"
+    # Keep the old RBD image (Released PV) as the rollback until the app checks out.
+    pv="$(kubectl -n {{ ns }} get pvc {{ app }} -o jsonpath='{.spec.volumeName}')"
+    kubectl patch pv "$pv" -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
+    kubectl -n {{ ns }} delete pvc {{ app }} --timeout=5m
+    flux -n {{ ns }} resume kustomization {{ app }}
+    until kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }} &>/dev/null; do sleep 5; done
+    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ app }} --for=jsonpath='{.status.phase}'=Completed --timeout=120m
+    snap="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }} -o jsonpath='{.status.resolved.kopiaSnapshotID}')"
+    [[ -n "$snap" ]] \
+        || { just log error "{{ app }}: Restore completed WITHOUT a snapshot (empty volume); HelmRelease left suspended, roll back from the retained PV" pv "$pv"; exit 1; }
+    kubectl -n {{ ns }} wait pvc/{{ app }} --for=jsonpath='{.status.phase}'=Bound --timeout=10m
+    just kube unquiesce "{{ ns }}" "{{ app }}"
+    just log info "{{ app }} is on kopiur" snapshot "$snap" retained-pv "$pv" cleanup "kubectl delete pv $pv"
+
+[private]
+quiesce ns app:
     kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
         | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=0
-    kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m
-    # Quiesced: this snapshot is the one the Restore repopulates from.
-    just kube snapshot-kopiur "{{ ns }}" "{{ app }}"
-    kubectl -n {{ ns }} delete pvc {{ app }} --wait --timeout=5m
-    echo "{{ app }} is down with no PVC. Merge its flip PR, then: just kube kopiur-flip-finish {{ ns }} {{ app }}"
+    if kubectl -n {{ ns }} get pod -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
+        kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
-[doc('Cut an app over to kopiur, step 2: repopulate the PVC from kopiur and bring the app back')]
-[script]
-kopiur-flip-finish ns app:
-    flux -n {{ ns }} resume kustomization {{ app }}
-    flux -n {{ ns }} reconcile kustomization {{ app }} --with-source
-    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ app }} --for=jsonpath='{.status.phase}'=Completed --timeout=120m
-    kubectl -n {{ ns }} wait pvc/{{ app }} --for=jsonpath='{.status.phase}'=Bound --timeout=10m
+[private]
+unquiesce ns app:
     flux -n {{ ns }} resume helmrelease {{ app }}
-    flux -n {{ ns }} reconcile helmrelease {{ app }} --force
-    kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m
+    if kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
+        kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
 [private]
 render-local-ks ns ks:
