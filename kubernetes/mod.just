@@ -266,9 +266,9 @@ quiesce ns app:
     if kubectl -n {{ ns }} get pod -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
-# Resume alone does not restore the replica count: zeroscaler apps carry a
-# driftDetection ignore for /spec/replicas, and helm-controller re-applies replicas only
-# if it upgrades at all. Scale back explicitly — every app these recipes touch is 1 replica.
+# Resume alone does not restore the replica count: an app whose HelmRelease carries a
+# driftDetection ignore for /spec/replicas is never corrected back, and elsewhere
+# helm-controller re-applies replicas only if it upgrades at all. All are single-replica.
 [private]
 unquiesce ns app:
     flux -n {{ ns }} resume helmrelease {{ app }}
