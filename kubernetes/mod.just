@@ -132,6 +132,7 @@ snapshot-kopiur-all:
         just kube snapshot-kopiur "$ns" "$name"
     done
 
+# flate comes from .mise/config.toml; CI's image-pull.yaml pins the same version.
 [private]
 render-local-ks ns ks:
     flate build ks --namespace "{{ ns }}" --path "{{ justfile_directory() }}/kubernetes" --output yaml "{{ ks }}"
