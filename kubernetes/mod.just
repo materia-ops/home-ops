@@ -156,8 +156,8 @@ kopiur-flip ns app:
     kubectl patch pv "$pv" -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
     kubectl -n {{ ns }} delete pvc {{ app }} --timeout=5m
     flux -n {{ ns }} resume kustomization {{ app }}
-    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ app }} --for=create --timeout=2m
-    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ app }} --for=jsonpath='{.status.phase}'=Completed --timeout=60m
+    just kube wait-restore "{{ ns }}" "{{ app }}" \
+        || { just log error "{{ app }}: the populator Restore did not complete; HelmRelease left suspended, roll back from the retained PV" pv "$pv"; exit 1; }
     snap="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }} -o jsonpath='{.status.resolved.kopiaSnapshotID}')"
     [[ -n "$snap" ]] \
         || { just log error "{{ app }}: Restore completed WITHOUT a snapshot (empty volume); HelmRelease left suspended, roll back from the retained PV" pv "$pv"; exit 1; }
@@ -170,8 +170,9 @@ kopiur-flip ns app:
 kopiur-restore ns app previous='0':
     # For apps already on components/kopiur/backup; the volsync `restore` recipe cannot
     # reach their data. Additive restore: files written since the snapshot survive.
-    kubectl -n {{ ns }} get snapshotpolicies.kopiur.home-operations.com/{{ app }} >/dev/null \
-        || { just log error "{{ app }}: no kopiur SnapshotPolicy in {{ ns }}; this recipe only serves apps on components/kopiur/backup"; exit 1; }
+    components="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.components}')"
+    [[ "$components" == *kopiur/backup* ]] \
+        || { just log error "{{ app }}: Kustomization does not carry kopiur/backup; volsync apps restore with just kube restore" components "$components"; exit 1; }
     # The one-off Restore inherits nothing from the policy, so mirror the app's own
     # mover identity and cache budget from the Kustomization it is rendered with.
     puid="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.postBuild.substitute.KOPIUR_PUID}')"
@@ -181,6 +182,9 @@ kopiur-restore ns app previous='0':
     flux -n {{ ns }} suspend helmrelease {{ app }}
     # The mover has to mount the target PVC, so the app must be off it first.
     just kube quiesce "{{ ns }}" "{{ app }}"
+    # A Restore pins its snapshot at admission, so a leftover from a previous run would
+    # keep serving that snapshot (and its stale terminal status) under the new offset.
+    kubectl -n {{ ns }} delete restores.kopiur.home-operations.com/{{ app }}-manual --ignore-not-found
     # onMissingSnapshot Fail: fromPolicy defaults to Continue, which would silently
     # "succeed" against nothing when the offset is past the end of the retention.
     kubectl apply --server-side -f - <<EOF
@@ -214,26 +218,37 @@ kopiur-restore ns app previous='0':
         pvcRef:
           name: {{ app }}
     EOF
-    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ app }}-manual --for=create --timeout=2m
-    # Poll for a terminal phase: waiting only on Completed would burn the whole timeout
-    # on a Failed restore, which is exactly when the operator wants to be told.
-    deadline=$((SECONDS + 3600))
-    while :; do
-        phase="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }}-manual -o jsonpath='{.status.phase}')"
-        if [[ "$phase" == Completed || "$phase" == Failed ]]; then break; fi
-        if (( SECONDS >= deadline )); then
-            just log error "{{ app }}: Restore has not finished after 60m; app left suspended" phase "${phase:-Pending}"
-            exit 1
-        fi
-        sleep 10
-    done
+    # Every failure below leaves the app suspended and the Restore in place, so
+    # `kubectl -n {{ ns }} describe restore {{ app }}-manual` still explains itself.
+    just kube wait-restore "{{ ns }}" "{{ app }}-manual"
     snap="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }}-manual -o jsonpath='{.status.resolved.kopiaSnapshotID}')"
-    [[ "$phase" == Completed && -n "$snap" ]] \
-        || { just log error "{{ app }}: Restore did not complete against a snapshot; app left suspended, Restore kept for kubectl -n {{ ns }} describe restore {{ app }}-manual" phase "$phase" snapshot "${snap:-none}"; exit 1; }
+    [[ -n "$snap" ]] \
+        || { just log error "{{ app }}: Restore completed without resolving a snapshot; app left suspended"; exit 1; }
     kubectl -n {{ ns }} delete restores.kopiur.home-operations.com/{{ app }}-manual
     flux -n {{ ns }} resume kustomization {{ app }}
     just kube unquiesce "{{ ns }}" "{{ app }}"
     just log info "{{ app }} restored from kopiur at offset {{ previous }}" snapshot "$snap"
+
+# kubectl wait on phase=Completed alone would sit out the whole timeout on a Failed
+# restore — the case the caller most needs to hear about — so poll for either.
+[private]
+[script]
+wait-restore ns name timeout='3600':
+    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ name }} --for=create --timeout=2m
+    deadline=$((SECONDS + {{ timeout }}))
+    while :; do
+        phase="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ name }} -o jsonpath='{.status.phase}')"
+        if [[ "$phase" == Completed ]]; then break; fi
+        if [[ "$phase" == Failed ]]; then
+            just log error "{{ name }}: Restore Failed" namespace "{{ ns }}"
+            exit 1
+        fi
+        if (( SECONDS >= deadline )); then
+            just log error "{{ name }}: Restore has not reached a terminal phase within {{ timeout }}s" phase "${phase:-Pending}"
+            exit 1
+        fi
+        sleep 10
+    done
 
 [private]
 quiesce ns app:
