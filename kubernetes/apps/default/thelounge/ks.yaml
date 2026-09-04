@@ -6,8 +6,7 @@ metadata:
   name: thelounge
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
