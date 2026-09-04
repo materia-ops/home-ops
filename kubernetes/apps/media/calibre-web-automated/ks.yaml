@@ -6,6 +6,7 @@ metadata:
   name: &app calibre-web-automated
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
   interval: 30m
   path: ./kubernetes/apps/media/calibre-web-automated/app

@@ -6,6 +6,7 @@ metadata:
   name: &app shelfmark
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
   dependsOn:
     - name: multus-networks

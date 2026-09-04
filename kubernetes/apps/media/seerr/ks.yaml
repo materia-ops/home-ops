@@ -6,6 +6,7 @@ metadata:
   name: &app seerr
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
   dependsOn:

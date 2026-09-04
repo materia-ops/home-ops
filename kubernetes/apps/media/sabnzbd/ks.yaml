@@ -6,6 +6,7 @@ metadata:
   name: &app sabnzbd
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
