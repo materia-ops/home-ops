@@ -7,8 +7,7 @@ metadata:
 spec:
   components:
     - ../../../../components/gpu
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   dependsOn:
     - name: intel-gpu-resource-driver
@@ -23,12 +22,11 @@ spec:
       # kopia caps its own content+metadata caches at 3Gi; the headroom is for
       # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
+      KOPIUR_CAPACITY: 50Gi
       # Starts 20 min apart from plex (:00) and stash (:40) to keep the three
       # 50Gi apps' steady-state runs off each other; the default would hash
       # the minute.
       KOPIUR_SCHEDULE: "20 * * * *"
-      VOLSYNC_CAPACITY: 50Gi
-      VOLSYNC_SCHEDULE: "5 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository

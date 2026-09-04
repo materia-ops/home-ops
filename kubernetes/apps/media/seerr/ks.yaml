@@ -6,8 +6,7 @@ metadata:
   name: &app seerr
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   dependsOn:
     - name: rook-ceph-cluster
@@ -17,8 +16,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 5Gi
-      VOLSYNC_SCHEDULE: "36 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository

@@ -6,8 +6,7 @@ metadata:
   name: &app calibre-web-automated
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   interval: 30m
   path: ./kubernetes/apps/media/calibre-web-automated/app
   postBuild:
@@ -16,8 +15,6 @@ spec:
       # No KOPIUR_PUID/PGID: the pod runs as 0/1000 with fsGroup 1000, so every
       # file on the PVC is group-1000 — the default 1000/1000 mover reads them
       # all, while a caps-less root mover is bound by the same mode bits.
-      VOLSYNC_CAPACITY: 5Gi
-      VOLSYNC_SCHEDULE: "16 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository

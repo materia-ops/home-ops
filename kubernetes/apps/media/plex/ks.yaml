@@ -7,8 +7,7 @@ metadata:
 spec:
   components:
     - ../../../../components/gpu
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   dependsOn:
     - name: intel-gpu-resource-driver
@@ -23,12 +22,11 @@ spec:
       # kopia caps its own content+metadata caches at 3Gi; the headroom is for
       # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
+      KOPIUR_CAPACITY: 50Gi
       # Starts 20 min apart from emby (:20) and stash (:40) to keep the three
-      # 50Gi apps' steady-state runs off each other (the default hashes the
-      # minute). Coincides with VOLSYNC_SCHEDULE below until plex flips.
+      # 50Gi apps' steady-state runs off each other; the default would hash
+      # the minute.
       KOPIUR_SCHEDULE: "0 * * * *"
-      VOLSYNC_CAPACITY: 50Gi
-      VOLSYNC_SCHEDULE: "0 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -44,8 +42,7 @@ metadata:
   name: &app tautulli
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: plex
       namespace: media
@@ -54,8 +51,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 10Gi
-      VOLSYNC_SCHEDULE: "42 * * * *"
+      KOPIUR_CAPACITY: 10Gi
   prune: true
   sourceRef:
     kind: GitRepository

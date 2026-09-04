@@ -7,8 +7,7 @@ metadata:
 spec:
   components:
     - ../../../../components/authentik-forward-auth
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
@@ -17,8 +16,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 5Gi
-      VOLSYNC_SCHEDULE: "20 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository

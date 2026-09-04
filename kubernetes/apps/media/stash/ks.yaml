@@ -7,8 +7,7 @@ metadata:
 spec:
   components:
     # - ../../../../components/gpu
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   dependsOn:
     # - name: intel-gpu-resource-driver
@@ -23,6 +22,7 @@ spec:
       # kopia caps its own content+metadata caches at 3Gi; the headroom is for
       # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
+      KOPIUR_CAPACITY: 50Gi
       # No KOPIUR_PUID/PGID: the pod runs as root, but fsGroup 1000 + setgid
       # dirs make its files group-1000 mode 0660 — unreadable by a caps-less
       # root mover, readable by the default 1000/1000 one.
@@ -30,8 +30,6 @@ spec:
       # 50Gi apps' steady-state runs off each other; the default would hash
       # the minute.
       KOPIUR_SCHEDULE: "40 * * * *"
-      VOLSYNC_CAPACITY: 50Gi
-      VOLSYNC_SCHEDULE: "10 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository

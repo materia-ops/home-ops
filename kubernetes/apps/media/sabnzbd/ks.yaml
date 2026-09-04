@@ -6,9 +6,8 @@ metadata:
   name: &app sabnzbd
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
+    - ../../../../components/kopiur/backup
     - ../../../../components/theme-park
-    - ../../../../components/volsync
     - ../../../../components/zeroscaler
   dependsOn:
     - name: rook-ceph-cluster
@@ -18,8 +17,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 10Gi
-      VOLSYNC_SCHEDULE: "34 * * * *"
+      KOPIUR_CAPACITY: 10Gi
   prune: true
   sourceRef:
     kind: GitRepository
