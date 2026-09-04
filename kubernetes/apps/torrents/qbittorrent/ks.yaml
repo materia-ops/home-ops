@@ -6,6 +6,7 @@ metadata:
   name: &app qbittorrent
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/theme-park
     - ../../../../components/volsync
     - ../../../../components/zeroscaler
@@ -19,6 +20,9 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      # Same 6h cadence as VOLSYNC_SCHEDULE below; the kopiur default
+      # (H * * * *) would be hourly.
+      KOPIUR_SCHEDULE: "50 */6 * * *"
       VOLSYNC_CAPACITY: 5Gi
       # Every 6h (was hourly). qbittorrent stores resume data in a single
       # churny SQLite DB (torrents.db), so an hourly snapshot re-chunks most
