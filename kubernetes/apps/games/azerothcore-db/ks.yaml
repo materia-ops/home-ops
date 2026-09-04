@@ -28,6 +28,7 @@ metadata:
   name: &app azerothcore-db-backups
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
   dependsOn:
     # dump CronJobs read the DB credentials secret created by azerothcore-db
@@ -40,8 +41,10 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # Kopia snapshot of the dump PVC, daily after both dump schedules have run
-      # (nightly 03:00 + weekly Sun 04:00) so dumps also leave the PVC.
+      # Both KOPIUR_SCHEDULE and VOLSYNC_SCHEDULE snapshot the dump PVC daily
+      # after both dump schedules have run (nightly 03:00 + weekly Sun 04:00) so
+      # dumps also leave the PVC; the kopiur default (H * * * *) would be hourly.
+      KOPIUR_SCHEDULE: "30 4 * * *"
       VOLSYNC_CAPACITY: 20Gi
       VOLSYNC_SCHEDULE: "30 4 * * *"
   prune: true
