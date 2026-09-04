@@ -77,9 +77,9 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     persistence:
       backups:
-        # Created by the volsync component on the azerothcore-db-backups
+        # Created by the kopiur/backup component on the azerothcore-db-backups
         # Kustomization — deliberately NOT a volumeClaimTemplate, so dumps
-        # outlive the DB app, and volsync copies them off-PVC to the NAS.
+        # outlive the DB app, and kopiur copies them off-PVC to the NAS.
         existingClaim: azerothcore-db-backups
         globalMounts:
           - path: /backups

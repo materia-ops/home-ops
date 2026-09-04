@@ -28,8 +28,7 @@ metadata:
   name: &app azerothcore-db-backups
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     # dump CronJobs read the DB credentials secret created by azerothcore-db
     - name: azerothcore-db
@@ -41,14 +40,12 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # Same daily cadence as VOLSYNC_SCHEDULE below, but evaluated in
-      # Australia/Melbourne with the repository's 10m jitter; the kopiur
-      # default (H * * * *) would be hourly.
+      KOPIUR_CAPACITY: 20Gi
+      # Daily, not the kopiur default (H * * * *): the dumps must land first.
+      # Fires 04:30-04:40 Australia/Melbourne (repository jitter) — 90min after
+      # the nightly dump but only ~30min after the Sunday world one, which it can
+      # catch mid-write; backup-world.sh retains the previous complete dump.
       KOPIUR_SCHEDULE: "30 4 * * *"
-      # Kopia snapshot of the dump PVC, daily after both dump schedules have run
-      # (nightly 03:00 + weekly Sun 04:00) so dumps also leave the PVC.
-      VOLSYNC_CAPACITY: 20Gi
-      VOLSYNC_SCHEDULE: "30 4 * * *"
   prune: true
   sourceRef:
     kind: GitRepository

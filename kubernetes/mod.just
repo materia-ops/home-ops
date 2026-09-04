@@ -250,21 +250,27 @@ wait-restore ns name timeout='3600':
         sleep 10
     done
 
-# Every caller suspends the Kustomization first, so deleting the zeroscaler HPA is
-# safe and Flux recreates it on resume. Left in place it reverses the scale to 0
-# within a sync (its probe metric still reads healthy) and the PVC delete then
-# blocks on pvc-protection behind the pod it brought back.
+# Every caller suspends the Kustomization and HelmRelease first, but that stops neither
+# the HPA nor the CronJob controller. The zeroscaler HPA reverses the scale to 0 within a
+# sync (Flux recreates it on resume); a CronJob pod — running, or kept by
+# successfulJobsHistory — never leaves, so the wait below sits out its timeout and the
+# PVC delete blocks on pvc-protection. Deleting the Jobs clears both.
 [private]
 quiesce ns app:
     kubectl -n {{ ns }} delete hpa {{ app }} --ignore-not-found
+    kubectl -n {{ ns }} get cronjob -l app.kubernetes.io/name={{ app }} -o name \
+        | xargs -r -I{} kubectl -n {{ ns }} patch {} -p '{"spec":{"suspend":true}}'
     kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
         | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=0
+    kubectl -n {{ ns }} delete job -l app.kubernetes.io/name={{ app }}
     if kubectl -n {{ ns }} get pod -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
 [private]
 unquiesce ns app:
     flux -n {{ ns }} resume helmrelease {{ app }}
+    kubectl -n {{ ns }} get cronjob -l app.kubernetes.io/name={{ app }} -o name \
+        | xargs -r -I{} kubectl -n {{ ns }} patch {} -p '{"spec":{"suspend":false}}'
     if kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
