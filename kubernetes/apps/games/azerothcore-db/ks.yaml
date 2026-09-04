@@ -41,10 +41,12 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # Both KOPIUR_SCHEDULE and VOLSYNC_SCHEDULE snapshot the dump PVC daily
-      # after both dump schedules have run (nightly 03:00 + weekly Sun 04:00) so
-      # dumps also leave the PVC; the kopiur default (H * * * *) would be hourly.
+      # Same daily cadence as VOLSYNC_SCHEDULE below, but evaluated in
+      # Australia/Melbourne with the repository's 10m jitter; the kopiur
+      # default (H * * * *) would be hourly.
       KOPIUR_SCHEDULE: "30 4 * * *"
+      # Kopia snapshot of the dump PVC, daily after both dump schedules have run
+      # (nightly 03:00 + weekly Sun 04:00) so dumps also leave the PVC.
       VOLSYNC_CAPACITY: 20Gi
       VOLSYNC_SCHEDULE: "30 4 * * *"
   prune: true
