@@ -10,7 +10,7 @@ Documentation for the **matalos** cluster and this repository.
 | [cicd.md](./cicd.md) | CI/CD — every GitHub Actions workflow, the self-hosted runners, Renovate, konflate PR gating, and the companion image-repo pipelines |
 | [repo-workflow.md](./repo-workflow.md) | How to interact with the repository — the change lifecycle, keeping the pipelines green, adding apps and secrets, and upgrade procedures |
 | [operations.md](./operations.md) | Operations — monitoring and logging strategy, reliability, scaling, backup/restore, and the production deployment checklist |
-| [disaster-recovery.md](./disaster-recovery.md) | Disaster recovery — the ordered total-loss runbook: node reset/reimage, `just bootstrap cluster`, Flux convergence, and VolSync/Kopia data restore |
+| [disaster-recovery.md](./disaster-recovery.md) | Disaster recovery — the ordered total-loss runbook: node reset/reimage, `just bootstrap cluster`, Flux convergence, and kopiur/Kopia data restore |
 
 ## Scope notes
 

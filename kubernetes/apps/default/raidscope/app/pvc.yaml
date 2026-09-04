@@ -1,6 +1,6 @@
 ---
 # Generated reports live here so they survive image bumps / reschedules.
-# No volsync: the app expires reports after 8h, so this is cache-tier data.
+# No kopiur backup: the app expires reports after 8h, so this is cache-tier data.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

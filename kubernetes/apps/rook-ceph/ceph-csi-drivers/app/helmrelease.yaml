@@ -35,7 +35,7 @@ spec:
   values:
     # Rook-compatible values (rook v1.20 deploy/charts/ceph-csi-drivers/values.yaml)
     # plus the live rbd Driver CR settings the chart adopts; bare chart defaults
-    # render snapshotPolicy none (drops the snapshotter volsync needs), replicas 1.
+    # render snapshotPolicy none (drops the snapshotter kopiur needs), replicas 1.
     operatorConfig:
       namespace: rook-ceph
       driverSpecDefaults:

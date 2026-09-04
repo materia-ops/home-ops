@@ -88,9 +88,9 @@ spec:
                   "path": "/repository"
                 }
               },
-              "hostname": "volsync.{{ .Release.Namespace }}.svc.cluster.local",
-              "username": "volsync",
-              "description": "volsync",
+              "hostname": "kopia.{{ .Release.Namespace }}.svc.cluster.local",
+              "username": "kopia-ui",
+              "description": "kopia-ui",
               "enableActions": false
             }
     persistence:
@@ -103,7 +103,7 @@ spec:
       repository:
         type: nfs
         server: nas.internal
-        path: /mnt/apps/kopia
+        path: /mnt/apps/kopiur
         globalMounts:
           - path: /repository
       tmp:

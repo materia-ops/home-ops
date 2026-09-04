@@ -23,9 +23,9 @@ metadata:
 spec:
   dependsOn:
     - name: ceph-csi-drivers
+    - name: kopiur
+      namespace: kopiur-system
     - name: rook-ceph
-    - name: volsync
-      namespace: volsync-system
   healthCheckExprs:
     - apiVersion: ceph.rook.io/v1
       kind: CephCluster

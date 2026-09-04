@@ -21,7 +21,7 @@
 -- `ahbotoptions percentages ...` — both persist to this table themselves.)
 --
 -- Idempotent: safe to re-run, and must be re-applied after any from-scratch
--- dbimport rebuild (volsync restore already covers it).
+-- dbimport rebuild (a kopiur restore of the dump PVC already covers it).
 
 -- All houses (2 = Alliance, 6 = Horde, 7 = Neutral): white trade goods
 -- 27 → 40, funded by green items 30 → 17.

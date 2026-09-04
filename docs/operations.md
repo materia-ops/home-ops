@@ -45,10 +45,10 @@ Defence in depth, roughly outermost-in:
   outage; Reloader restarts pods when their ConfigMaps/Secrets rotate.
 - **Storage** — Ceph replicates across the three NVMe OSDs (one per node); a node
   failure keeps every `ceph-block` PVC available.
-- **Backups** — VolSync snapshots every stateful app to Kopia on the NAS on its own
-  schedule; restore is one `just kube restore` command. Apps migrated to kopiur use
-  `just kube snapshot-kopiur` / `just kube kopiur-restore` instead (same NAS, the
-  `materia` repository). MySQL (AzerothCore) additionally dumps ahead of snapshots.
+- **Backups** — kopiur snapshots every stateful app into the `materia` Kopia repository on
+  the NAS on its own schedule; snapshot on demand with `just kube snapshot-kopiur` and
+  restore with `just kube kopiur-restore`. MySQL (AzerothCore) additionally dumps ahead of
+  snapshots.
 - **DNS resilience** — two Pi-holes on separate Pis; Ansible rolls DNS changes
   one Pi at a time with a resolve check between hosts.
 - **Node-level** — hardware watchdog (5 min) reboots a hung node; the descheduler
@@ -65,8 +65,8 @@ Defence in depth, roughly outermost-in:
 - **App boots on an empty volume after node disruption** (looks wiped) → usually a
   stale ceph-csi staging path making kubelet skip NodeStage; data is intact. Scale to
   zero, clean the stale staging dirs from a node debug pod, restart kubelet.
-- **PVC capacity bump on a volsync app** → delete the app's hostpath cache PVC once so
-  it's recreated at the new size.
+- **PVC capacity bump** → bump `KOPIUR_CAPACITY` in the app's `ks.yaml`; the mover cache is
+  `Ephemeral` and sized separately, so there is no cache PVC to clean up.
 
 ## Scaling
 
@@ -92,9 +92,8 @@ For routine changes the PR checks are the checklist. For **significant** changes
 
 - [ ] konflate diff read and matches intent — no surprise deletions or unrelated churn
 - [ ] Image Pull check green (images exist and are pullable)
-- [ ] Stateful app? Confirm a fresh snapshot exists (or trigger one — `just kube
-      snapshot-app` on volsync, `just kube snapshot-kopiur` on kopiur) before a risky
-      upgrade; know which restore command the app takes
+- [ ] Stateful app? Confirm a fresh snapshot exists (or trigger one with `just kube
+      snapshot-kopiur`) before a risky upgrade
 - [ ] DB migration in the release? Plan is roll-forward; don't merge right before
       walking away
 - [ ] New namespace behind forward-auth? Authentik ReferenceGrant/SecurityPolicy updated

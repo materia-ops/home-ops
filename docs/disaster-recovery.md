@@ -2,7 +2,7 @@
 
 The total-loss runbook: every node down or wiped → cluster rebuilt → application data
 restored. Nothing here is unique to a disaster — it is the normal
-[bootstrap](./bootstrap.md) pipeline plus VolSync/Kopia restore, in order. Because the
+[bootstrap](./bootstrap.md) pipeline plus kopiur/Kopia restore, in order. Because the
 whole cluster is declared in Git and every stateful app is snapshotted to the Kopia
 repository on the NAS, the recovery inputs are: this repository, 1Password, and the NAS.
 
@@ -11,7 +11,7 @@ flowchart LR
     prep[Stage 0<br/>Workstation + media] --> reset[Stage 1<br/>Reset / reimage nodes]
     reset --> boot["Stage 2<br/>just bootstrap cluster"]
     boot --> flux[Stage 3<br/>Flux converges on Git]
-    flux --> data[Stage 4<br/>Data restore<br/>automatic via VolSync]
+    flux --> data[Stage 4<br/>Data restore<br/>automatic via kopiur]
     data --> verify[Verification]
 ```
 
@@ -61,7 +61,7 @@ hardware, boot the ISO from Stage 0 instead (PiKVM for the P330s, Proxmox consol
 > the Ceph OSDs (the Micron 7450s). Either zap them separately for a genuine
 > from-scratch rebuild, or leave them intact and let Rook re-adopt the existing Ceph
 > cluster — but decide *before* running Stage 2. App data is recoverable either way via
-> VolSync/Kopia from the NAS.
+> kopiur/Kopia from the NAS.
 
 > [!NOTE]
 > Repeated rebuilds in a short window can hit Docker Hub / Let's Encrypt rate limits;
@@ -98,30 +98,25 @@ just kube reconcile        # flux reconcile kustomization flux-system --with-sou
 
 ## Stage 4 — Application data restore
 
-**During a rebuild this is automatic.** Every stateful app that opts into the `volsync`
-component runs its `ReplicationDestination` before the app starts, so application data
-restores from the Kopia repository on the NAS as part of Stage 3 — no per-app action
-needed. Apps migrated to the `kopiur/backup` component get the same treatment from the
-kopiur `Restore` populator, which fills their PVC from the `materia` repository
-(`nas.internal:/mnt/apps/kopiur`) as the PVC is provisioned.
+**During a rebuild this is automatic.** Every stateful app that opts into the
+`kopiur/backup` component gets a `Restore` populator that fills its PVC from the `materia`
+repository (`nas.internal:/mnt/apps/kopiur`) as the PVC is provisioned, so application data
+restores as part of Stage 3 — no per-app action needed.
 
 For an app that needs a *manual* restore afterwards (bad restore, or rolling a single
 app back to an older snapshot):
 
 ```sh
-just kube restore <namespace> <app> [previous]         # volsync apps
-just kube kopiur-restore <namespace> <app> [previous]  # kopiur apps
+just kube kopiur-restore <namespace> <app> [previous]
 # previous defaults to 0 (latest snapshot)
 ```
 
 The recipe ([`kubernetes/mod.just`](../kubernetes/mod.just)) suspends the app's Flux
-Kustomization and HelmRelease, scales the workload to zero, runs a one-off Kopia
-`ReplicationDestination` directly into the app PVC (`previous` selects how many
-snapshots back), then resumes Flux, force-reconciles the HelmRelease, and waits for the
-pod to come back Ready. `kopiur-restore` does the same with a one-off `Restore`
-(`source.fromPolicy` at that offset, `target.pvcRef` on the live PVC) and refuses to
-restart the app unless the restore completed against a real snapshot. To inspect data
-without restoring:
+Kustomization and HelmRelease, scales the workload to zero, runs a one-off kopiur `Restore`
+into the live app PVC (`source.fromPolicy` at that offset, `target.pvcRef` on the PVC;
+`previous` selects how many snapshots back), then resumes Flux and waits for the pod to
+come back Ready. It refuses to restart the app unless the restore completed against a real
+snapshot. To inspect data without restoring:
 
 ```sh
 just kube browse-pvc <namespace> <claim>

@@ -62,8 +62,8 @@ spec:
 # spec:
 #   components:
 #     - ../../../../components/authentik-forward-auth
+#     - ../../../../components/kopiur/backup
 #     - ../../../../components/theme-park
-#     - ../../../../components/volsync
 #     - ../../../../components/zeroscaler
 #   dependsOn:
 #     - name: rook-ceph-cluster
@@ -73,8 +73,6 @@ spec:
 #   postBuild:
 #     substitute:
 #       APP: *app
-#       VOLSYNC_CAPACITY: 5Gi
-#       VOLSYNC_SCHEDULE: "18 * * * *"
 #   prune: true
 #   sourceRef:
 #     kind: GitRepository
