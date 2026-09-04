@@ -178,6 +178,7 @@ unquiesce ns app:
     if kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
+# flate comes from .mise/config.toml; CI's image-pull.yaml pins the same version.
 [private]
 render-local-ks ns ks:
     flate build ks --namespace "{{ ns }}" --path "{{ justfile_directory() }}/kubernetes" --output yaml "{{ ks }}"
