@@ -41,11 +41,9 @@ spec:
     substitute:
       APP: *app
       KOPIUR_CAPACITY: 20Gi
-      # Daily, not the kopiur default (H * * * *): the dumps must land first.
-      # Fires 04:30-04:40 Australia/Melbourne (repository jitter) — 90min after
-      # the nightly dump but only ~30min after the Sunday world one, which it can
-      # catch mid-write; backup-world.sh retains the previous complete dump.
-      KOPIUR_SCHEDULE: "30 4 * * *"
+      # Daily, not the kopiur default (H * * * *): both dumps (nightly 03:00,
+      # Sunday world 04:00, Australia/Melbourne) must have finished writing.
+      KOPIUR_SCHEDULE: "30 6 * * *"
   prune: true
   sourceRef:
     kind: GitRepository
