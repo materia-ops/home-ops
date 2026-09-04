@@ -197,6 +197,13 @@
       matchPackageNames: [ "/rook-ceph/", "/rook-ceph-cluster/" ],
       allowedVersions: "<1.20.0",
     },
+    {
+      description: "Bump both flate pins (.mise/config.toml + image-pull.yaml) in one PR",
+      groupName: "flate",
+      matchDepNames: [ "github:home-operations/flate", "home-operations/flate" ],
+      minimumGroupSize: 2,
+      minimumReleaseAge: "3 days",
+    },
     // Labeling rules
     {
       matchUpdateTypes: [ "major" ],
