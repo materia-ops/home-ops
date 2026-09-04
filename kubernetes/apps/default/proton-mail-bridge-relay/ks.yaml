@@ -6,6 +6,7 @@ metadata:
   name: proton-mail-bridge-relay
 spec:
   components:
+    - ../../../../components/kopiur/snapshot
     - ../../../../components/volsync
   dependsOn:
     - name: rook-ceph-cluster
@@ -15,6 +16,11 @@ spec:
   postBuild:
     substitute:
       APP: proton-mail-bridge-relay
+      # Same root mover as VOLSYNC_PUID/PGID below: the Bridge image hardcodes
+      # /root, so its data is root-owned and the default uid 1000 cannot read it.
+      # Permitted by the privileged-movers annotation on the default namespace.
+      KOPIUR_PGID: "0"
+      KOPIUR_PUID: "0"
       VOLSYNC_PUID: "0"
       VOLSYNC_PGID: "0"
       VOLSYNC_CAPACITY: 5Gi
