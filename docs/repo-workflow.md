@@ -79,21 +79,27 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
   merging a held-back update (e.g. MySQL is pinned `<9`; the iGPU nodes are i915-only,
   so driver-related bumps that assume `xe` don't apply).
 
-### Changing PVC capacity (volsync apps)
+### Changing PVC capacity
 
-Change `VOLSYNC_CAPACITY` in the app's `ks.yaml` — the component sizes both the PVC and
-the VolSync cache from it. After a bump, delete the app's hostpath **cache PVC** once so
-it's recreated at the new size.
+**volsync apps** — change `VOLSYNC_CAPACITY` in the app's `ks.yaml`; the component sizes
+both the PVC and the VolSync cache from it. After a bump, delete the app's hostpath
+**cache PVC** once so it's recreated at the new size.
+
+**kopiur apps** — change `KOPIUR_CAPACITY`. The kopia cache is `Ephemeral` and sized
+separately by `KOPIUR_CACHE_CAPACITY`, so there is no cache PVC to delete.
 
 ### Restoring app data
 
 ```sh
-just kube restore <namespace> <app> [previous]
+just kube restore <namespace> <app> [previous]         # volsync apps
+just kube kopiur-restore <namespace> <app> [previous]  # kopiur apps
 ```
 
-Suspends Flux for the app, scales it down, runs a Kopia restore from
-`nas.internal:/mnt/apps/kopia` into the app PVC, then resumes Flux and waits for the
-pod to come back Ready. Browse any PVC with `just kube browse-pvc <ns> <claim>`.
+Both suspend Flux for the app, scale it down, restore from the NAS into the app PVC
+(`/mnt/apps/kopia` for volsync, the `materia` repository at `/mnt/apps/kopiur` for
+kopiur), then resume Flux and wait for the pod to come back Ready. Use the recipe that
+matches the app's backup component — `just kube restore` cannot reach a kopiur app's
+data. Browse any PVC with `just kube browse-pvc <ns> <claim>`.
 
 ### Talos / Kubernetes changes
 

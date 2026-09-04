@@ -46,8 +46,9 @@ Defence in depth, roughly outermost-in:
 - **Storage** — Ceph replicates across the three NVMe OSDs (one per node); a node
   failure keeps every `ceph-block` PVC available.
 - **Backups** — VolSync snapshots every stateful app to Kopia on the NAS on its own
-  schedule; restore is one `just kube restore` command. MySQL (AzerothCore) additionally
-  dumps ahead of snapshots.
+  schedule; restore is one `just kube restore` command. Apps migrated to kopiur use
+  `just kube snapshot-kopiur` / `just kube kopiur-restore` instead (same NAS, the
+  `materia` repository). MySQL (AzerothCore) additionally dumps ahead of snapshots.
 - **DNS resilience** — two Pi-holes on separate Pis; Ansible rolls DNS changes
   one Pi at a time with a resolve check between hosts.
 - **Node-level** — hardware watchdog (5 min) reboots a hung node; the descheduler
@@ -91,8 +92,9 @@ For routine changes the PR checks are the checklist. For **significant** changes
 
 - [ ] konflate diff read and matches intent — no surprise deletions or unrelated churn
 - [ ] Image Pull check green (images exist and are pullable)
-- [ ] Stateful app? Confirm a fresh VolSync snapshot exists (or trigger one) before a
-      risky upgrade; know the restore command
+- [ ] Stateful app? Confirm a fresh snapshot exists (or trigger one — `just kube
+      snapshot-app` on volsync, `just kube snapshot-kopiur` on kopiur) before a risky
+      upgrade; know which restore command the app takes
 - [ ] DB migration in the release? Plan is roll-forward; don't merge right before
       walking away
 - [ ] New namespace behind forward-auth? Authentik ReferenceGrant/SecurityPolicy updated
