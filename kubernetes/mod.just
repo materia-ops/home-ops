@@ -266,11 +266,16 @@ quiesce ns app:
     if kubectl -n {{ ns }} get pod -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
+# Resume alone does not restore the replica count: zeroscaler apps carry a
+# driftDetection ignore for /spec/replicas, and helm-controller re-applies replicas only
+# if it upgrades at all. Scale back explicitly — every app these recipes touch is 1 replica.
 [private]
 unquiesce ns app:
     flux -n {{ ns }} resume helmrelease {{ app }}
     kubectl -n {{ ns }} get cronjob -l app.kubernetes.io/name={{ app }} -o name \
         | xargs -r -I{} kubectl -n {{ ns }} patch {} -p '{"spec":{"suspend":false}}'
+    kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
+        | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=1
     if kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
