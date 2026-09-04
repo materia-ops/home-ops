@@ -132,6 +132,30 @@ snapshot-kopiur-all:
         just kube snapshot-kopiur "$ns" "$name"
     done
 
+[doc('Cut an app over to kopiur, step 1: quiesce, final snapshot, delete the VolSync PVC (then merge the flip PR)')]
+[script]
+kopiur-flip-prepare ns app:
+    flux -n {{ ns }} suspend kustomization {{ app }}
+    flux -n {{ ns }} suspend helmrelease {{ app }}
+    kubectl -n {{ ns }} get deploy,sts -l app.kubernetes.io/name={{ app }} -o name \
+        | xargs -r -I{} kubectl -n {{ ns }} scale {} --replicas=0
+    kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m
+    # Quiesced: this snapshot is the one the Restore repopulates from.
+    just kube snapshot-kopiur "{{ ns }}" "{{ app }}"
+    kubectl -n {{ ns }} delete pvc {{ app }} --wait --timeout=5m
+    echo "{{ app }} is down with no PVC. Merge its flip PR, then: just kube kopiur-flip-finish {{ ns }} {{ app }}"
+
+[doc('Cut an app over to kopiur, step 2: repopulate the PVC from kopiur and bring the app back')]
+[script]
+kopiur-flip-finish ns app:
+    flux -n {{ ns }} resume kustomization {{ app }}
+    flux -n {{ ns }} reconcile kustomization {{ app }} --with-source
+    kubectl -n {{ ns }} wait restores.kopiur.home-operations.com/{{ app }} --for=jsonpath='{.status.phase}'=Completed --timeout=120m
+    kubectl -n {{ ns }} wait pvc/{{ app }} --for=jsonpath='{.status.phase}'=Bound --timeout=10m
+    flux -n {{ ns }} resume helmrelease {{ app }}
+    flux -n {{ ns }} reconcile helmrelease {{ app }} --force
+    kubectl -n {{ ns }} wait pod --for=condition=ready --selector="app.kubernetes.io/name={{ app }}" --timeout=5m
+
 [private]
 render-local-ks ns ks:
     flate build ks --namespace "{{ ns }}" --path "{{ justfile_directory() }}/kubernetes" --output yaml "{{ ks }}"
