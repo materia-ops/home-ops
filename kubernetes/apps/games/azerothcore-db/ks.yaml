@@ -41,9 +41,10 @@ spec:
     substitute:
       APP: *app
       KOPIUR_CAPACITY: 20Gi
-      # Daily, not the kopiur default (H * * * *): the snapshot runs after both
-      # dump schedules (nightly 03:00 + weekly Sun 04:00) so dumps also leave
-      # the PVC. Evaluated in Australia/Melbourne with the repository's jitter.
+      # Daily, not the kopiur default (H * * * *): the dumps must land first.
+      # Fires 04:30-04:40 Australia/Melbourne (repository jitter) — 90min after
+      # the nightly dump but only ~30min after the Sunday world one, which it can
+      # catch mid-write; backup-world.sh retains the previous complete dump.
       KOPIUR_SCHEDULE: "30 4 * * *"
   prune: true
   sourceRef:

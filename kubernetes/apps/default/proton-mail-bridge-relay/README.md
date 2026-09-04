@@ -52,7 +52,7 @@ pkill bridge          # stop the auto-started instance
 
 Bridge generates its **own** SMTP username/password (not your Proton login).
 These are what Postfix uses upstream. The encrypted keychain is written to the
-volsync-backed PVC mounted at `/root`, so it survives pod restarts.
+kopiur-backed PVC mounted at `/root`, so it survives pod restarts.
 
 ### 4. Store the credentials and refresh
 
