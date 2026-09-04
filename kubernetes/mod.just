@@ -155,12 +155,15 @@ kopiur-flip ns app:
     pv="$(kubectl -n {{ ns }} get pvc {{ app }} -o jsonpath='{.spec.volumeName}')"
     kubectl patch pv "$pv" -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
     kubectl -n {{ ns }} delete pvc {{ app }} --timeout=5m
+    # The resume recreates the app's zeroscaler HPA, which scales a suspended
+    # HelmRelease's Deployment back to 1 on its own — so both aborts below re-quiesce
+    # before returning, or the app starts writing to the half-restored volume.
     flux -n {{ ns }} resume kustomization {{ app }}
     just kube wait-restore "{{ ns }}" "{{ app }}" \
-        || { just log error "{{ app }}: the populator Restore did not complete; HelmRelease left suspended, roll back from the retained PV" pv "$pv"; exit 1; }
+        || { just kube quiesce "{{ ns }}" "{{ app }}"; just log error "{{ app }}: the populator Restore did not complete; app left quiesced, roll back from the retained PV" pv "$pv"; exit 1; }
     snap="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }} -o jsonpath='{.status.resolved.kopiaSnapshotID}')"
     [[ -n "$snap" ]] \
-        || { just log error "{{ app }}: Restore completed WITHOUT a snapshot (empty volume); HelmRelease left suspended, roll back from the retained PV" pv "$pv"; exit 1; }
+        || { just kube quiesce "{{ ns }}" "{{ app }}"; just log error "{{ app }}: Restore completed WITHOUT a snapshot (empty volume); app left quiesced, roll back from the retained PV" pv "$pv"; exit 1; }
     kubectl -n {{ ns }} wait pvc/{{ app }} --for=jsonpath='{.status.phase}'=Bound --timeout=10m
     just kube unquiesce "{{ ns }}" "{{ app }}"
     just log info "{{ app }} is on kopiur; once the app checks out: kubectl delete pv $pv" snapshot "$snap" retained-pv "$pv"
