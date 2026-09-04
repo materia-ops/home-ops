@@ -6,8 +6,7 @@ metadata:
   name: &app shelfmark
 spec:
   components:
-    - ../../../../components/kopiur/snapshot
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: multus-networks
       namespace: network
@@ -18,8 +17,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 5Gi
-      VOLSYNC_SCHEDULE: "40 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository
