@@ -215,10 +215,18 @@
       addLabels: [ "type/digest" ],
     },
   ],
-  // Track the two CI version pins that no standard manager covers:
-  // talosctl in image-pull.yaml (pinned to the cluster's Talos version)
-  // and the renovate runner's own version.
+  // Track the CI version pins that no standard manager covers: flate and
+  // talosctl in image-pull.yaml (pinned to .mise/config.toml and the
+  // cluster's Talos version respectively) and the renovate runner's own version.
   customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: [ ".github/workflows/image-pull.yaml" ],
+      matchStrings: [ "github:home-operations/flate (?<currentValue>[0-9.]+)" ],
+      datasourceTemplate: "github-releases",
+      depNameTemplate: "home-operations/flate",
+      extractVersionTemplate: "^v(?<version>.*)$",
+    },
     {
       customType: "regex",
       managerFilePatterns: [ ".github/workflows/image-pull.yaml" ],
