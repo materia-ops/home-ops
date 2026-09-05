@@ -58,9 +58,9 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
    existing app in the same namespace (see
    [repo-structure.md](./repo-structure.md#anatomy-of-an-app)).
 2. Add the app to the namespace `kustomization.yaml` (alphabetical slot).
-3. Opt into components in `ks.yaml`: `volsync` if it has state (set `VOLSYNC_CAPACITY`
-   and a staggered `VOLSYNC_SCHEDULE`), `alerts`, `authentik-forward-auth` if it needs
-   SSO without native OIDC, etc.
+3. Opt into components in `ks.yaml`: `kopiur/backup` if it has state (set
+   `KOPIUR_CAPACITY`; `KOPIUR_SCHEDULE` defaults to `H * * * *`, which kopiur staggers on
+   its own), `alerts`, `authentik-forward-auth` if it needs SSO without native OIDC, etc.
 4. Secrets: create the 1Password item, add an `externalsecret.yaml`.
 5. Routing: `httproute.yaml` against `envoy-internal` (LAN-only) or `envoy-external`
    (public via the tunnel). external-dns handles the records.
@@ -81,25 +81,19 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
 
 ### Changing PVC capacity
 
-**volsync apps** — change `VOLSYNC_CAPACITY` in the app's `ks.yaml`; the component sizes
-both the PVC and the VolSync cache from it. After a bump, delete the app's hostpath
-**cache PVC** once so it's recreated at the new size.
-
-**kopiur apps** — change `KOPIUR_CAPACITY`. The kopia cache is `Ephemeral` and sized
-separately by `KOPIUR_CACHE_CAPACITY`, so there is no cache PVC to delete.
+Change `KOPIUR_CAPACITY` in the app's `ks.yaml`; the `kopiur/backup` component owns the
+PVC and sizes it from that value. The kopia mover cache is `Ephemeral` and sized separately
+by `KOPIUR_CACHE_CAPACITY`, so there is no cache PVC to clean up.
 
 ### Restoring app data
 
 ```sh
-just kube restore <namespace> <app> [previous]         # volsync apps
-just kube kopiur-restore <namespace> <app> [previous]  # kopiur apps
+just kube kopiur-restore <namespace> <app> [previous]
 ```
 
-Both suspend Flux for the app, scale it down, restore from the NAS into the app PVC
-(`/mnt/apps/kopia` for volsync, the `materia` repository at `/mnt/apps/kopiur` for
-kopiur), then resume Flux and wait for the pod to come back Ready. Use the recipe that
-matches the app's backup component — `just kube restore` cannot reach a kopiur app's
-data. Browse any PVC with `just kube browse-pvc <ns> <claim>`.
+It suspends Flux for the app, scales it down, restores from the `materia` repository on the
+NAS (`/mnt/apps/kopiur`) into the app PVC, then resumes Flux and waits for the pod to come
+back Ready. Browse any PVC with `just kube browse-pvc <ns> <claim>`.
 
 ### Talos / Kubernetes changes
 

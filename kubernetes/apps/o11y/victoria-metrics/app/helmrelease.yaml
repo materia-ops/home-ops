@@ -332,7 +332,7 @@ spec:
               - alert: MediaDatabaseMalformed
                 annotations:
                   summary: >-
-                    {{ $labels.app }} SQLite database is malformed — likely corruption; restore the config PVC from the latest volsync snapshot.
+                    {{ $labels.app }} SQLite database is malformed — likely corruption; restore the config PVC from the latest kopiur snapshot.
                 expr: |-
                   kubernetes.pod_namespace:=media i("database disk image is malformed") | rename kubernetes.container_name as app | stats by (app) count() as hits | filter hits:>0
                 labels:

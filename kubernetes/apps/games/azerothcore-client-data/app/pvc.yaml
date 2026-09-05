@@ -5,7 +5,8 @@
 # Flux-managed as its own app so the data survives any game-app lifecycle.
 # Mounted read-only by the
 # worldserver (WP4); RWO, so the extract Job must be gone before worldserver
-# starts. No volsync: contents are reproducible by re-running the extraction.
+# starts. No kopiur backup: contents are reproducible by re-running the
+# extraction.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

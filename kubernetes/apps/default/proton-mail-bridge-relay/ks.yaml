@@ -15,9 +15,7 @@ spec:
   postBuild:
     substitute:
       APP: proton-mail-bridge-relay
-      # Root mover: the Bridge image hardcodes /root, so its data is root-owned
-      # and the default uid 1000 cannot read it. Permitted by the
-      # privileged-movers annotation on the default namespace.
+      # mover must run as root: the Bridge data is root-only
       KOPIUR_PGID: "0"
       KOPIUR_PUID: "0"
   prune: true

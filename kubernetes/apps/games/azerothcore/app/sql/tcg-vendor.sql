@@ -11,7 +11,7 @@
 -- boot) and wipe client Cache\WDB so new buy prices display.
 --
 -- Idempotent: safe to re-run, and must be re-applied after any from-scratch
--- dbimport rebuild (volsync restore already covers it).
+-- dbimport rebuild (a kopiur restore of the dump PVC already covers it).
 
 -- ---------------------------------------------------------------------------
 -- Buy prices (copper = gold * 10000). All these items ship with BuyPrice 0.

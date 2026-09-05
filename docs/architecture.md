@@ -206,20 +206,19 @@ resources are reverted on the next reconcile — Git is the only durable interfa
 | Class | Backend | Use |
 | :--- | :--- | :--- |
 | `ceph-block` (default) | Rook-Ceph, 3 × Micron 7450 NVMe OSDs (`devicePathFilter`, host networking, msgr2) | App state (PVCs) |
-| `openebs-hostpath` | OpenEBS LocalPV on the 1 TB Corsair `local-hostpath` user volume | Scratch, VolSync cache |
+| `openebs-hostpath` | OpenEBS LocalPV on the 1 TB Corsair `local-hostpath` user volume | Scratch, kopiur mover cache |
 | NFS | TrueNAS SCALE (`nas.internal`), NFS v4.2 | Bulk media, Kopia backup repository |
 
-**Backups:** the shared [`volsync` component](../kubernetes/components/volsync) gives any
-app a `ReplicationSource` (scheduled Kopia snapshot to `nas.internal:/mnt/apps/kopia`)
-and a `ReplicationDestination` (bootstrap restore), parameterised per app with
-`VOLSYNC_CAPACITY` / `VOLSYNC_SCHEDULE` substitutions. The component also owns the app
-PVC, so capacity is defined in exactly one place.
-
-A migration from VolSync to [kopiur](https://github.com/home-operations/kopiur) is in
-progress: the operator and its `ClusterRepository` (`nas.internal:/mnt/apps/kopiur`, a
-fresh repository) live in `kopiur-system` and the `kopiur/secret` component distributes the
-repository password to every namespace that will take backups. Apps move over one at a
-time by swapping the `volsync` component for the `kopiur/*` components.
+**Backups:** [kopiur](https://github.com/home-operations/kopiur) runs in `kopiur-system`
+and owns one `ClusterRepository` (`materia`, a Kopia repository on
+`nas.internal:/mnt/apps/kopiur`); the `kopiur/secret` component distributes the repository
+password to every namespace that takes backups. The shared
+[`kopiur/backup` component](../kubernetes/components/kopiur/backup) gives any app a
+`SnapshotPolicy` + `SnapshotSchedule` (scheduled snapshot into that repository) and a
+`Restore` that populates the PVC on a rebuild, parameterised per app with `KOPIUR_CAPACITY`
+/ `KOPIUR_SCHEDULE` substitutions. The component also owns the app PVC, so capacity is
+defined in exactly one place. Mover caches are `Ephemeral` on `openebs-hostpath` and sized
+independently by `KOPIUR_CACHE_CAPACITY`.
 
 ## Secrets
 
@@ -247,6 +246,6 @@ Databases are deployed per-application, not as a shared tier:
 
 - **CloudNativePG operator** (`database/` namespace) for apps that need Postgres.
 - **MySQL 8.4 LTS** (`games/azerothcore-db`) for AzerothCore, with its own scheduled
-  dumps and VolSync protection.
+  dumps and kopiur protection of the dump volume.
 
 Schema ownership stays with the upstream applications.

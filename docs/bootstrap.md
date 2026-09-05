@@ -130,8 +130,9 @@ The moment the `FluxInstance` is ready, Flux clones `main`, applies
 [`kubernetes/flux/cluster/ks.yaml`](../kubernetes/flux/cluster/ks.yaml), and reconciles
 everything under `kubernetes/apps/` — including the eight bootstrap releases, which it
 adopts cleanly because helmfile installed them from the very same values. Stateful apps
-with the `volsync` component run their `ReplicationDestination` first, so **application
-data restores automatically from the Kopia repository on the NAS** during a rebuild.
+with the `kopiur/backup` component have their PVC populated by a kopiur `Restore` as it is
+provisioned, so **application data restores automatically from the Kopia repository on the
+NAS** during a rebuild.
 
 Bootstrap artifacts are never touched again; day-2 changes all flow through Git
 (see [repo-workflow.md](./repo-workflow.md)).
@@ -162,6 +163,6 @@ maintenance mode. Note:
 - **Ceph OSDs are not wiped** by the reset. For a genuine from-scratch rebuild, zap the
   Micron 7450s separately (or let Rook re-adopt the existing cluster — decide *before*
   you bootstrap).
-- App data is recoverable regardless via VolSync/Kopia from the NAS.
+- App data is recoverable regardless via kopiur/Kopia from the NAS.
 - Repeated rebuilds in a short window can hit Docker Hub / Let's Encrypt rate limits;
   Spegel only helps while at least one node still has the images.

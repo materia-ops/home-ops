@@ -37,13 +37,13 @@
     "default": "home",
     "external-secrets": "secure",
     "flux-system": "pipe",
+    "kopiur-system": "aws",
     "kube-system": "kubernetes",
     "network": "connection",
     "o11y": "event",
     "openebs-system": "base",
     "rook-ceph": "dump",
-    "system-upgrade": "update",
-    "volsync-system": "aws"
+    "system-upgrade": "update"
   },
   "terminal.integrated.fontSize": 14,
   "vs-kubernetes": {

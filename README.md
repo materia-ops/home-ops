@@ -59,7 +59,7 @@ Cilium over BGP to route LoadBalancer VIPs.
 | ☁️ | [Cloudflare](https://www.cloudflare.com/) + cloudflared | Public DNS + tunnel for external apps |
 | 🔍 | [external-dns](https://github.com/kubernetes-sigs/external-dns) ×3 + [k8s-gateway](https://github.com/ori-edge/k8s_gateway) | DNS records in Cloudflare, UniFi, and Pi-hole; split-horizon DNS |
 | 🗄️ | [Rook-Ceph](https://rook.io/) / [OpenEBS](https://openebs.io/) / NFS | Replicated block, local hostpath, bulk media |
-| 💾 | [VolSync](https://volsync.readthedocs.io/) + [Kopia](https://kopia.io/) | Scheduled PVC backups to the NAS, one-command restore |
+| 💾 | [kopiur](https://github.com/home-operations/kopiur) + [Kopia](https://kopia.io/) | Scheduled PVC backups to the NAS, one-command restore |
 | 🔐 | [External Secrets](https://external-secrets.io/) + [1Password Connect](https://developer.1password.com/docs/connect/) | Secrets from 1Password, none in Git |
 | 🛡️ | [Authentik](https://goauthentik.io/) | SSO — OIDC + Envoy forward-auth, blueprint-managed |
 | 📈 | [VictoriaMetrics](https://victoriametrics.com/) / VictoriaLogs / [Grafana](https://grafana.com/) | Metrics (90 d), logs, dashboards-as-code, Pushover alerting |
@@ -72,7 +72,7 @@ Cilium over BGP to route LoadBalancer VIPs.
 ```text
 ├── kubernetes/
 │   ├── apps/          # one directory per namespace, one per app (ks.yaml + app/)
-│   ├── components/    # reusable Kustomize components (volsync, alerts, sso, …)
+│   ├── components/    # reusable Kustomize components (kopiur, alerts, sso, …)
 │   └── flux/cluster/  # the single Flux entrypoint
 ├── talos/             # machine config templates (minijinja + 1Password refs)
 ├── bootstrap/         # day-0 helmfile bring-up (CRDs → core apps → Flux)
