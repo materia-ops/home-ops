@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kopiur-absent
+spec:
+  groups:
+    - name: kopiur-absent.rules
+      rules:
+        # Every rule the chart ships is a kopiur_* expression, so a dead
+        # controller resolves them all instead of firing. Inherited from the
+        # VolSyncComponentAbsent alert this replaces.
+        - alert: KopiurComponentAbsent
+          expr: |-
+            absent(up{job="kopiur-controller-metrics"})
+          annotations:
+            summary: >-
+              kopiur controller has disappeared from Prometheus target discovery
+          for: 5m
+          labels:
+            severity: critical

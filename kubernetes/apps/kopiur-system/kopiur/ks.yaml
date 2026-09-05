@@ -5,6 +5,11 @@ kind: Kustomization
 metadata:
   name: kopiur
 spec:
+  # Mover caches are openebs-hostpath; inherited from the volsync ks this
+  # replaces in rook-ceph-cluster's dependsOn chain.
+  dependsOn:
+    - name: openebs
+      namespace: openebs-system
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

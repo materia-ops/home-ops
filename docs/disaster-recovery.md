@@ -122,6 +122,13 @@ snapshot. To inspect data without restoring:
 just kube browse-pvc <namespace> <claim>
 ```
 
+> [!NOTE]
+> **Legacy repository, retained until 2026-10-05.** Every app's kopiur history starts at
+> its own migration in early September 2026; anything older lives only in the retired
+> VolSync repository at `nas.internal:/mnt/apps/kopia`, which nothing in the cluster mounts
+> any more. To reach it before it is deleted, run `kopia` against that path directly with
+> the `volsync-template` 1Password password. Delete this note once the share is gone.
+
 ## Verification
 
 At each stage, from [bootstrap.md](./bootstrap.md#verification) and the

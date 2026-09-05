@@ -80,6 +80,8 @@ spec:
     configMaps:
       config:
         data:
+          # This is the UI's own client identity, not a filter: the movers write
+          # under `<policy>@<ns>:/pvc/<name>`, so open "All Snapshots" to see them.
           repository.config: |-
             {
               "storage": {
