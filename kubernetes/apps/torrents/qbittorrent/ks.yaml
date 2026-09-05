@@ -19,8 +19,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # 6-hourly: an hourly run re-chunks the churny resume DB every time
-      KOPIUR_SCHEDULE: "50 */6 * * *"
   prune: true
   sourceRef:
     kind: GitRepository
