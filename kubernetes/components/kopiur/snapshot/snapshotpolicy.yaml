@@ -7,18 +7,16 @@ metadata:
 spec:
   compression:
     compressor: zstd-fastest
-  # Pinned so an upstream default change cannot flip it under us.
+  # pinned against an upstream default change
   copyMethod: Snapshot
   mover:
-    # Sized apart from the PVC so a 50Gi app does not get a 50Gi cache;
-    # kopia's own cache budgets are capped below the volume so it cannot ENOSPC.
+    # sized apart from the PVC
     cache:
       capacity: ${KOPIUR_CACHE_CAPACITY:=5Gi}
       contentCacheSizeMb: 2048
       metadataCacheSizeMb: 1024
       mode: Ephemeral
       storageClassName: openebs-hostpath
-    # Mirrors the repository moverDefaults; exists only for the per-app override.
     securityContext:
       runAsUser: ${KOPIUR_PUID:=1000}
       runAsGroup: ${KOPIUR_PGID:=1000}

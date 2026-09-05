@@ -12,9 +12,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # No KOPIUR_PUID/PGID: the pod runs as 0/1000 with fsGroup 1000, so every
-      # file on the PVC is group-1000 — the default 1000/1000 mover reads them
-      # all, while a caps-less root mover is bound by the same mode bits.
   prune: true
   sourceRef:
     kind: GitRepository

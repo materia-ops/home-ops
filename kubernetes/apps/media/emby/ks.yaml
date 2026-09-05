@@ -19,13 +19,9 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # kopia caps its own content+metadata caches at 3Gi; the headroom is for
-      # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
       KOPIUR_CAPACITY: 50Gi
-      # Starts 20 min apart from plex (:00) and stash (:40) to keep the three
-      # 50Gi apps' steady-state runs off each other; the default would hash
-      # the minute.
+      # pinned 20 min apart so the 50Gi apps do not overlap
       KOPIUR_SCHEDULE: "20 * * * *"
   prune: true
   sourceRef:

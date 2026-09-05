@@ -14,20 +14,18 @@ spec:
         nfs:
           path: /mnt/apps/kopiur
           server: nas.internal
-  # One mover-Job pool per repository, across every namespace: bounds the
-  # NFS backend during the migration's restore storm. Spread firings so
-  # the H-scheduled policies don't all land on the same second.
+  # one mover pool for every namespace: bounds the NFS backend
   concurrency:
     maxConcurrentJobs: 3
-  # Movers read a same-named Secret in their own namespace (components/kopiur/secret)
-  # instead of credentialProjection, which needs cluster-wide Secret write RBAC.
+  # movers read this Secret from their own namespace: every namespace with a
+  # backup needs components/kopiur/secret mixed in
   encryption:
     passwordSecretRef:
       name: kopiur-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
-  # The share is owned 1000:1000; kopiur's default mover uid (65532)
-  # cannot write it. fsGroup is a no-op on NFS, so uid/gid must match.
+  # the share is owned 1000:1000 and fsGroup is a no-op on NFS, so the mover
+  # uid/gid must match it
   moverDefaults:
     podSecurityContext:
       runAsUser: 1000

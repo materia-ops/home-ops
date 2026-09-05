@@ -73,8 +73,7 @@ kopiur-restore ns app previous='0':
     components="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.components}')"
     [[ "$components" == *kopiur/backup* ]] \
         || { just log error "{{ app }}: Kustomization does not carry kopiur/backup, so the app has no snapshots to restore" components "$components"; exit 1; }
-    # The one-off Restore inherits nothing from the policy, so mirror the app's own
-    # mover identity and cache budget from the Kustomization it is rendered with.
+    # the one-off Restore inherits nothing from the policy
     puid="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.postBuild.substitute.KOPIUR_PUID}')"
     pgid="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.postBuild.substitute.KOPIUR_PGID}')"
     cache="$(kubectl -n {{ ns }} get kustomization {{ app }} -o jsonpath='{.spec.postBuild.substitute.KOPIUR_CACHE_CAPACITY}')"
@@ -82,11 +81,9 @@ kopiur-restore ns app previous='0':
     flux -n {{ ns }} suspend helmrelease {{ app }}
     # The mover has to mount the target PVC, so the app must be off it first.
     just kube quiesce "{{ ns }}" "{{ app }}"
-    # A Restore pins its snapshot at admission, so a leftover from a previous run would
-    # keep serving that snapshot (and its stale terminal status) under the new offset.
+    # a Restore pins its snapshot at admission, so a leftover would serve the old one
     kubectl -n {{ ns }} delete restores.kopiur.home-operations.com/{{ app }}-manual --ignore-not-found
-    # onMissingSnapshot Fail: fromPolicy defaults to Continue, which would silently
-    # "succeed" against nothing when the offset is past the end of the retention.
+    # onMissingSnapshot Fail: the default Continue "succeeds" against nothing
     kubectl apply --server-side -f - <<EOF
     ---
     apiVersion: kopiur.home-operations.com/v1alpha1
@@ -118,8 +115,7 @@ kopiur-restore ns app previous='0':
         pvcRef:
           name: {{ app }}
     EOF
-    # Every failure below leaves the app suspended and the Restore in place, so
-    # `kubectl -n {{ ns }} describe restore {{ app }}-manual` still explains itself.
+    # failures below deliberately leave the app suspended and the Restore in place
     just kube wait-restore "{{ ns }}" "{{ app }}-manual"
     snap="$(kubectl -n {{ ns }} get restores.kopiur.home-operations.com/{{ app }}-manual -o jsonpath='{.status.resolved.kopiaSnapshotID}')"
     [[ -n "$snap" ]] \
@@ -129,8 +125,8 @@ kopiur-restore ns app previous='0':
     just kube unquiesce "{{ ns }}" "{{ app }}"
     just log info "{{ app }} restored from kopiur at offset {{ previous }}" snapshot "$snap"
 
-# kubectl wait on phase=Completed alone would sit out the whole timeout on a Failed
-# restore — the case the caller most needs to hear about — so poll for either.
+# poll for either terminal phase: waiting on Completed alone sits out the whole
+# timeout when the Restore has already Failed
 [private]
 [script]
 wait-restore ns name timeout='3600':
@@ -150,11 +146,8 @@ wait-restore ns name timeout='3600':
         sleep 10
     done
 
-# Every caller suspends the Kustomization and HelmRelease first, but that stops neither
-# the HPA nor the CronJob controller. The zeroscaler HPA reverses the scale to 0 within a
-# sync (Flux recreates it on resume); a CronJob pod — running, or kept by
-# successfulJobsHistory — never leaves, so the wait below sits out its timeout and the
-# PVC delete blocks on pvc-protection. Deleting the Jobs clears both.
+# Suspending Flux stops neither the zeroscaler HPA nor the CronJob controller: the HPA
+# reverses the scale and a leftover CronJob pod holds the PVC open.
 [private]
 quiesce ns app:
     kubectl -n {{ ns }} delete hpa {{ app }} --ignore-not-found
@@ -166,11 +159,8 @@ quiesce ns app:
     if kubectl -n {{ ns }} get pod -l app.kubernetes.io/name={{ app }} -o name | grep -q .; then \
         kubectl -n {{ ns }} wait pod --for=delete --selector="app.kubernetes.io/name={{ app }}" --timeout=5m; fi
 
-# Resume alone does not restore the replica count: an app whose HelmRelease carries a
-# driftDetection ignore for /spec/replicas is never corrected back, and elsewhere
-# helm-controller re-applies replicas only if it upgrades at all. All are single-replica.
-# The scale returns before the controller has made a Pod, and `wait --for=condition=ready`
-# exits 1 on a selector that matches nothing yet, so readiness goes through rollout status.
+# Resume alone does not restore the replica count (drift correction is not guaranteed), and
+# `wait --for=condition=ready` exits 1 before the controller has made a Pod.
 [private]
 unquiesce ns app:
     flux -n {{ ns }} resume helmrelease {{ app }}

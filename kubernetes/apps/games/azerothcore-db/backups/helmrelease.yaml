@@ -11,7 +11,6 @@ spec:
   interval: 1h
   values:
     controllers:
-      # Nightly: the small, precious databases (auth/characters/playerbots).
       main:
         type: cronjob
         cronjob:
@@ -26,8 +25,7 @@ spec:
         containers:
           app:
             image: &image
-              # Same digest as the azerothcore-db StatefulSet — dump with the
-              # exact client version the server runs.
+              # keep this digest in step with the azerothcore-db StatefulSet
               repository: docker.io/library/mysql
               tag: 8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
             command: ["bash", "/scripts/backup-main.sh"]
@@ -49,7 +47,6 @@ spec:
                 memory: 128Mi
               limits:
                 memory: 512Mi
-      # Weekly: acore_world — huge but reproducible; a dump keeps restores one-step.
       world:
         type: cronjob
         cronjob:
@@ -77,9 +74,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     persistence:
       backups:
-        # Created by the kopiur/backup component on the azerothcore-db-backups
-        # Kustomization — deliberately NOT a volumeClaimTemplate, so dumps
-        # outlive the DB app, and kopiur copies them off-PVC to the NAS.
+        # owned by the kopiur/backup component on this app's Kustomization
         existingClaim: azerothcore-db-backups
         globalMounts:
           - path: /backups

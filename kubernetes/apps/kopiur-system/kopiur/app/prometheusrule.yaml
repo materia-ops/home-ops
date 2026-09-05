@@ -8,9 +8,7 @@ spec:
   groups:
     - name: kopiur-absent.rules
       rules:
-        # Every rule the chart ships is a kopiur_* expression, so a dead
-        # controller resolves them all instead of firing. Inherited from the
-        # VolSyncComponentAbsent alert this replaces.
+        # a dead controller resolves every chart rule instead of firing
         - alert: KopiurComponentAbsent
           expr: |-
             absent(up{job="kopiur-controller-metrics"})

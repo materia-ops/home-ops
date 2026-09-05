@@ -5,8 +5,7 @@ kind: Restore
 metadata:
   name: ${APP}
 spec:
-  # Restore movers inherit nothing from the policy: cache, uid and fsGroup
-  # (the restored ceph-block volume is group-owned by fsGroup) are set here.
+  # restore movers inherit nothing from the policy: keep this in step with it
   mover:
     cache:
       capacity: ${KOPIUR_CACHE_CAPACITY:=5Gi}

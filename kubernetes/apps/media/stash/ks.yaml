@@ -19,16 +19,9 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      # kopia caps its own content+metadata caches at 3Gi; the headroom is for
-      # the unbudgeted index and own-writes caches during a 50Gi first upload.
       KOPIUR_CACHE_CAPACITY: 10Gi
       KOPIUR_CAPACITY: 50Gi
-      # No KOPIUR_PUID/PGID: the pod runs as root, but fsGroup 1000 + setgid
-      # dirs make its files group-1000 mode 0660 — unreadable by a caps-less
-      # root mover, readable by the default 1000/1000 one.
-      # Starts 20 min apart from plex (:00) and emby (:20) to keep the three
-      # 50Gi apps' steady-state runs off each other; the default would hash
-      # the minute.
+      # pinned 20 min apart so the 50Gi apps do not overlap
       KOPIUR_SCHEDULE: "40 * * * *"
   prune: true
   sourceRef:

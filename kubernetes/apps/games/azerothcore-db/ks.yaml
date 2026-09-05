@@ -30,7 +30,6 @@ spec:
   components:
     - ../../../../components/kopiur/backup
   dependsOn:
-    # dump CronJobs read the DB credentials secret created by azerothcore-db
     - name: azerothcore-db
       namespace: games
     - name: rook-ceph-cluster
@@ -41,8 +40,7 @@ spec:
     substitute:
       APP: *app
       KOPIUR_CAPACITY: 20Gi
-      # Daily, not the kopiur default (H * * * *): both dumps (nightly 03:00,
-      # Sunday world 04:00, Australia/Melbourne) must have finished writing.
+      # after both dumps (03:00 nightly, Sun 04:00 world) have finished
       KOPIUR_SCHEDULE: "30 6 * * *"
   prune: true
   sourceRef:
