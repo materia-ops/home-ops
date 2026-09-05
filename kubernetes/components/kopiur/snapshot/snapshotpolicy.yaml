@@ -34,6 +34,9 @@ spec:
   upload:
     maxParallelFileReads: 2
   verification:
+    deep:
+      schedule:
+        cron: H 5 1 * *
     quick:
       schedule:
         cron: H 3 * * *

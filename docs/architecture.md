@@ -216,7 +216,10 @@ password to every namespace that takes backups. The shared
 [`kopiur/backup` component](../kubernetes/components/kopiur/backup) gives any app a
 `SnapshotPolicy` + `SnapshotSchedule` (scheduled snapshot into that repository) and a
 `Restore` that populates the PVC on a rebuild, parameterised per app with `KOPIUR_CAPACITY`
-/ `KOPIUR_SCHEDULE` substitutions. The component also owns the app PVC, so capacity is
+/ `KOPIUR_SCHEDULE` substitutions. Every app takes the hashed default (`H * * * *`, kopiur
+spreads the minute per policy) except `azerothcore-db-backups`, which waits for the nightly
+SQL dumps. Each policy also verifies the repository — a quick check daily (`H 3 * * *`) and a
+deep one monthly (`H 5 1 * *`). The component also owns the app PVC, so capacity is
 defined in exactly one place. Mover caches are `Ephemeral` on `openebs-hostpath` and sized
 independently by `KOPIUR_CACHE_CAPACITY`.
 

@@ -21,8 +21,6 @@ spec:
       APP: *app
       KOPIUR_CACHE_CAPACITY: 10Gi
       KOPIUR_CAPACITY: 50Gi
-      # pinned 20 min apart so the 50Gi apps do not overlap
-      KOPIUR_SCHEDULE: "40 * * * *"
   prune: true
   sourceRef:
     kind: GitRepository

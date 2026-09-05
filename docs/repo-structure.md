@@ -54,7 +54,6 @@ spec:
     substitute:                      # parameterise the components
       APP: *app
       KOPIUR_CAPACITY: 5Gi
-      KOPIUR_SCHEDULE: "50 * * * *"
   targetNamespace: torrents
 ```
 
