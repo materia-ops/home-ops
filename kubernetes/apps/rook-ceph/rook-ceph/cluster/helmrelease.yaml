@@ -145,8 +145,6 @@ spec:
         modules:
           - name: insights
             enabled: true
-          # rook force-disables its own module on Ceph 20.2.2-20.2.4 (mgr crash);
-          # the orchestrator returns on the next Ceph patch, keep the entry
           - name: rook
             enabled: true
       network:
