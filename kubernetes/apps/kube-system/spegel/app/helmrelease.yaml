@@ -25,7 +25,6 @@ spec:
       enabled: true
     grafanaDashboard:
       enabled: true
-      mode: GrafanaOperator
-      grafanaOperator:
-        matchLabels:
-          dashboards: grafana
+      # Sidecar emits the spegel-dashboard ConfigMap that grafanadashboard.yaml
+      # reads; GrafanaOperator would emit a second, unmapped CR of the same name
+      mode: Sidecar
