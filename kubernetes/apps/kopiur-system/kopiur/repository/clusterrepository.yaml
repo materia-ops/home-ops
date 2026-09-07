@@ -21,10 +21,6 @@ spec:
       name: kopiur-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
-  # the operator defaults, written down: <policy>@<namespace>:/pvc/<pvc>
-  identityDefaults:
-    hostnameExpr: namespace
-    usernameExpr: policyName
   maintenance:
     schedule:
       full:
