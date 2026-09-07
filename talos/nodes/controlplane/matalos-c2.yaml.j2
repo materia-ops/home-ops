@@ -18,8 +18,13 @@ selector:
 apiVersion: v1alpha1
 kind: LinkConfig
 name: ipmi
-up: true
+up: false
 addresses: []
+---
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  net.ipv6.conf.eno1.disable_ipv6: "1"
 ---
 apiVersion: v1alpha1
 kind: LinkAliasConfig
