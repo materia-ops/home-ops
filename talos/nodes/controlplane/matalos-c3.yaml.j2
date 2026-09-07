@@ -34,6 +34,20 @@ selector:
   match: link.driver == "igc" && mac(link.permanent_addr) == "02:76:c6:01:2b:be"
 ---
 apiVersion: v1alpha1
+kind: EthernetConfig
+name: enp3s0
+rings:
+  rx: 4096
+  tx: 1024
+---
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: enp4s0
+rings:
+  rx: 4096
+  tx: 1024
+---
+apiVersion: v1alpha1
 kind: BondConfig
 name: bond0
 links:
