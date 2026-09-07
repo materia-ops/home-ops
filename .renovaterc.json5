@@ -134,15 +134,6 @@
     },
     // Version constraint rules
     {
-      // The annotation, mise and CI-regex managers default to semver-coerced,
-      // which folds v1.14.0-rc.2 into v1.14.0 and never offers the release;
-      // only the talosFactory manager sets semver, so #1632 bumped talos/ and
-      // left the tuppr CR, the mise pin and the CI talosctl pin on rc.2.
-      description: "Talos pins compare as strict semver so prerelease → release is an update",
-      matchPackageNames: [ "siderolabs/talos" ],
-      versioning: "semver",
-    },
-    {
       description: "Proton Mail Bridge - only track v-prefixed release tags (repo mixes schemes)",
       matchDatasources: [ "docker" ],
       matchPackageNames: [ "/videocurio\\/proton-mail-bridge/" ],
@@ -258,7 +249,7 @@
     {
       customType: "regex",
       managerFilePatterns: [ ".github/workflows/image-pull.yaml" ],
-      matchStrings: [ "talosctl (?<currentValue>[0-9]\\S*)" ],
+      matchStrings: [ "talosctl (?<currentValue>[0-9.]+)" ],
       datasourceTemplate: "github-releases",
       depNameTemplate: "siderolabs/talos",
       extractVersionTemplate: "^v(?<version>.*)$",
