@@ -10,9 +10,6 @@ components:
 
 resources:
   - ./descheduler/ks.yaml
-  - ./k8tz/ks.yaml
   - ./ksgate/ks.yaml
   - ./kube-cleanup-operator/ks.yaml
   - ./reloader/ks.yaml
-  - ./snapshot-controller/ks.yaml
-  - ./spegel/ks.yaml

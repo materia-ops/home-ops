@@ -8,11 +8,11 @@ spec:
     - name: cert-manager
       namespace: security
   interval: 30m
-  path: ./kubernetes/apps/system/k8tz/app
+  path: ./kubernetes/apps/kube-system/k8tz/app
   prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: system
+  targetNamespace: kube-system
   wait: false

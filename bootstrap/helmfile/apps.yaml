@@ -54,7 +54,7 @@ releases:
       - kube-system/cilium
 
   - name: spegel
-    namespace: system
+    namespace: kube-system
     needs:
       - kube-system/coredns
 
@@ -72,7 +72,7 @@ releases:
           - --wait=true
         showlogs: true
     needs:
-      - system/spegel
+      - kube-system/spegel
 
   - name: external-secrets
     namespace: security

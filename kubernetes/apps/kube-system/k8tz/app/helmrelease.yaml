@@ -15,7 +15,7 @@ spec:
       retries: 3
   interval: 1h
   values:
-    namespace: system
+    namespace: kube-system
     replicaCount: 2
     timezone: Australia/Melbourne
     cronJobTimeZone: true
