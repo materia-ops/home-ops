@@ -205,9 +205,6 @@
       minimumReleaseAge: "3 days",
     },
     {
-      // After the mise auto-merge rule so talos wins its own group: unites the
-      // mise pin, the CI talosctl pin, the factory installer images and the
-      // tuppr TalosUpgrade version in one PR (mirrors onedr0p/home-ops).
       description: "Talos Group",
       groupName: "talos",
       matchPackageNames: [ "siderolabs/talos" ],
