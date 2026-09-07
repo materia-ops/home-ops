@@ -8,6 +8,10 @@ spec:
   chartRef:
     kind: OCIRepository
     name: spegel
+  # stateless: retry a failed install instead of holding
+  install:
+    remediation:
+      retries: 3
   interval: 1h
   values:
     spegel:
@@ -20,7 +24,6 @@ spec:
       enabled: true
     grafanaDashboard:
       enabled: true
-      mode: GrafanaOperator
-      grafanaOperator:
-        matchLabels:
-          dashboards: grafana
+      # Sidecar emits the spegel-dashboard ConfigMap that grafanadashboard.yaml
+      # reads; GrafanaOperator would emit a second, unmapped CR of the same name
+      mode: Sidecar

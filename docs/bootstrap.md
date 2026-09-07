@@ -112,7 +112,7 @@ then applies two things:
 | :-- | :--- | :--- |
 | 1 | **cilium** (kube-system) | CNI — nodes go `Ready`. Post-sync hooks wait for the BGP CRDs, then apply the app's own `networks.yaml` (BGP peering to the UDM Pro + the LB IP pool), which brings the `192.168.10.x` VIPs alive |
 | 2 | **coredns** (kube-system) | Cluster DNS |
-| 3 | **spegel** (system) | P2P registry mirror before the image-pull storm |
+| 3 | **spegel** (kube-system) | P2P registry mirror before the image-pull storm |
 | 4 | **cert-manager** (security) | Post-sync hook applies the ClusterIssuers |
 | 5 | **external-secrets** (security) | ESO operator |
 | 6 | **onepassword-connect** (security) | Consumes the seed Secrets; from here `ExternalSecret`s work |

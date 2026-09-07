@@ -12,8 +12,12 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: lwolf-charts
-        namespace: system-controllers
+        namespace: system
       interval: 15m
+  # stateless: retry a failed install instead of holding
+  install:
+    remediation:
+      retries: 3
   interval: 15m
   values:
     securityContext:

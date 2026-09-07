@@ -8,12 +8,25 @@ spec:
   chartRef:
     kind: OCIRepository
     name: k8tz
+  # stateless: retry a failed install instead of holding
+  install:
+    remediation:
+      retries: 3
   interval: 1h
   values:
-    namespace: system-controllers
+    # let the chart use the release namespace instead of templating its own Namespace
+    namespace: null
+    createNamespace: false
     replicaCount: 2
     timezone: Australia/Melbourne
     cronJobTimeZone: true
+    webhook:
+      # stable cert via cert-manager; the chart's default regenerates it on every upgrade
+      certManager:
+        enabled: true
+        issuerRef:
+          kind: Issuer
+          name: k8tz-webhook-issuer
     affinity:
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -23,15 +36,3 @@ spec:
                 matchLabels:
                   app.kubernetes.io/name: k8tz
               topologyKey: kubernetes.io/hostname
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              version: v1
-              kind: Namespace
-            patch: |-
-              $patch: delete
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: not-used
