@@ -8,8 +8,7 @@ spec:
   chartRef:
     kind: OCIRepository
     name: k8tz
-  # namespace move: the old release's cluster-scoped objects can still exist
-  # when this one first installs; retry instead of fail-and-hold
+  # stateless: retry a failed install instead of holding
   install:
     remediation:
       retries: 3
