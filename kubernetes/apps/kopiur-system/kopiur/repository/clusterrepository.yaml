@@ -24,6 +24,16 @@ spec:
       name: kopiur-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
+  # the override needs both entries; full runs in the 02:00 hour to clear the
+  # 03:00 verification window and the azerothcore-db dump
+  maintenance:
+    schedule:
+      full:
+        cron: 0 2 * * *
+        jitter: 1h
+      quick:
+        cron: 0 * * * *
+        jitter: 10m
   # the share is owned 1000:1000 and fsGroup is a no-op on NFS, so the mover
   # uid/gid must match it
   moverDefaults:
@@ -33,6 +43,11 @@ spec:
     securityContext:
       runAsUser: 1000
       runAsGroup: 1000
+  # hourly policies need hourly epochs or index blobs pile past the 1000
+  # threshold; 1h is the floor for the default 20m refresh (refresh x3 <= this)
+  parameters:
+    epoch:
+      minDuration: 1h
   scheduleDefaults:
     jitter: 10m
     timezone: Australia/Melbourne
