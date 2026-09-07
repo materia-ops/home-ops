@@ -204,6 +204,15 @@
       minimumGroupSize: 2,
       minimumReleaseAge: "3 days",
     },
+    {
+      description: "Talos Group",
+      groupName: "talos",
+      matchPackageNames: [ "siderolabs/talos" ],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
+    },
     // Labeling rules
     {
       matchUpdateTypes: [ "major" ],
