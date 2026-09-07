@@ -68,12 +68,6 @@ of a `ks.yaml`, listing its members' `ks.yaml` files; each member is a normal
 `<app>/{ks.yaml, app/}` one level deeper (so component paths gain one `../`). The
 namespace kustomization lists the group directory itself.
 
-A namespace may also hold a **group directory** for a family of near-identical apps
-(`media/arr-apps/` is the one today). A group has a plain `kustomization.yaml` instead
-of a `ks.yaml`, listing its members' `ks.yaml` files; each member is a normal
-`<app>/{ks.yaml, app/}` one level deeper (so component paths gain one `../`). The
-namespace kustomization lists the group directory itself.
-
 ## Components
 
 Shared behavior lives in [`kubernetes/components/`](../kubernetes/components) and is
