@@ -5,9 +5,18 @@ namespace: kube-system
 
 components:
   - ../../components/alerts
+  - ../../components/namespace
+
+patches:
+  - target:
+      kind: Namespace
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          resource.kubernetes.io/admin-access: "true"
 
 resources:
-  - ./namespace.yaml
   - ./cilium/ks.yaml
   - ./coredns/ks.yaml
   - ./crd-schema-publisher/ks.yaml

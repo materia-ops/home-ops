@@ -6,7 +6,7 @@ namespace: openebs-system
 
 components:
   - ../../components/alerts
+  - ../../components/namespace
 
 resources:
-  - ./namespace.yaml
   - ./openebs/ks.yaml

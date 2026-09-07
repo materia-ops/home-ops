@@ -57,8 +57,10 @@ spec:
   targetNamespace: torrents
 ```
 
-Namespace directories carry a `namespace.yaml` and a `kustomization.yaml` listing their
-apps' `ks.yaml` files.
+Namespace directories carry only a `kustomization.yaml`: its `namespace:` field names the
+namespace, the `namespace` component (below) supplies the Namespace object, and its
+`resources:` list the apps' `ks.yaml` files. Namespace-specific labels or annotations
+are a `patches:` entry targeting `kind: Namespace`.
 
 A namespace may also hold a **group directory** for a family of near-identical apps
 (`media/arr-apps/` is the one today). A group has a plain `kustomization.yaml` instead
@@ -76,6 +78,7 @@ mixed into apps via `spec.components`:
 | `alerts` | Flux `Alert`/`Provider` routing reconciliation errors to Alertmanager (plus a GitHub commit-status variant) |
 | `kopiur/backup` | The standard backup opt-in: everything in `kopiur/snapshot` **plus** the app PVC (`KOPIUR_CAPACITY`, `KOPIUR_STORAGECLASS`, owned here) and a bootstrap `Restore` that populates it from the latest snapshot. The component owns the PVC, so capacity changes happen here; a bound PVC cannot be re-pointed at the `Restore` afterwards (`dataSourceRef` is immutable) |
 | `kopiur/snapshot` | Scheduled kopiur backups of an **existing** PVC the component does not own (`SnapshotPolicy` + `SnapshotSchedule`) into the `materia` repository. Parameterised by `APP`, `KOPIUR_SCHEDULE`, `KOPIUR_CACHE_CAPACITY`, `KOPIUR_PUID`/`KOPIUR_PGID` |
+| `namespace` | The Namespace object itself (`name: _`, renamed by the kustomization's `namespace:` field) with `prune: disabled`, so no namespace directory carries its own `namespace.yaml`. Mixed into namespace-level kustomizations, not apps |
 | `kopiur/secret` | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps |
 | `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC |
 | `cnpg` | A CloudNativePG Postgres cluster for the app |

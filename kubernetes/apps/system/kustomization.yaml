@@ -6,9 +6,9 @@ namespace: system
 
 components:
   - ../../components/alerts
+  - ../../components/namespace
 
 resources:
-  - ./namespace.yaml
   - ./descheduler/ks.yaml
   - ./ksgate/ks.yaml
   - ./reloader/ks.yaml

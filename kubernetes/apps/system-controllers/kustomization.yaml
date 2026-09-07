@@ -6,9 +6,9 @@ namespace: system-controllers
 
 components:
   - ../../components/alerts
+  - ../../components/namespace
 
 resources:
-  - ./namespace.yaml
   - ./k8tz/ks.yaml
   - ./kube-cleanup-operator/ks.yaml
   - ./snapshot-controller/ks.yaml
