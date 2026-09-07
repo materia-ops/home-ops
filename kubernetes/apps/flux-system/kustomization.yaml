@@ -5,9 +5,9 @@ namespace: flux-system
 
 components:
   - ../../components/alerts
+  - ../../components/namespace
 
 resources:
-  - ./namespace.yaml
   - ./flux-instance/ks.yaml
   - ./flux-operator/ks.yaml
   - ./konflate/ks.yaml

@@ -1,0 +1,9 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/v1/namespace.json
+apiVersion: v1
+kind: Namespace
+metadata:
+  # renamed by the namespace: field of the kustomization that mixes this in
+  name: _
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled

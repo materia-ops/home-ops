@@ -7,9 +7,18 @@ namespace: torrents
 components:
   - ../../components/alerts
   - ../../components/kopiur/secret
+  - ../../components/namespace
+
+patches:
+  - target:
+      kind: Namespace
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          resource.kubernetes.io/admin-access: "true"
 
 resources:
-  - ./namespace.yaml
   - ./autobrr/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./qui/ks.yaml

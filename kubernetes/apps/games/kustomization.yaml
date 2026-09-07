@@ -7,9 +7,9 @@ namespace: games
 components:
   - ../../components/alerts
   - ../../components/kopiur/secret
+  - ../../components/namespace
 
 resources:
-  - ./namespace.yaml
   - ./azerothcore/ks.yaml
   - ./azerothcore-client-data/ks.yaml
   - ./azerothcore-db/ks.yaml

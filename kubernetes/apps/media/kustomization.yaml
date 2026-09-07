@@ -7,9 +7,18 @@ namespace: media
 components:
   - ../../components/alerts
   - ../../components/kopiur/secret
+  - ../../components/namespace
+
+patches:
+  - target:
+      kind: Namespace
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          resource.kubernetes.io/admin-access: "true"
 
 resources:
-  - ./namespace.yaml
   - ./arr-apps
   - ./calibre-web-automated/ks.yaml
   - ./emby/ks.yaml
