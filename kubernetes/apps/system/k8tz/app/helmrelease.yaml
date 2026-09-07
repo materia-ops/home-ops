@@ -8,9 +8,14 @@ spec:
   chartRef:
     kind: OCIRepository
     name: k8tz
+  # namespace move: the old release's cluster-scoped objects can still exist
+  # when this one first installs; retry instead of fail-and-hold
+  install:
+    remediation:
+      retries: 3
   interval: 1h
   values:
-    namespace: system-controllers
+    namespace: system
     replicaCount: 2
     timezone: Australia/Melbourne
     cronJobTimeZone: true

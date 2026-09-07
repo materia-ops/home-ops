@@ -8,6 +8,11 @@ spec:
   chartRef:
     kind: OCIRepository
     name: snapshot-controller
+  # namespace move: the old release's cluster-scoped objects can still exist
+  # when this one first installs; retry instead of fail-and-hold
+  install:
+    remediation:
+      retries: 3
   interval: 1h
   postRenderers:
     # One-time migration prep: bake helm.sh/resource-policy=keep into the

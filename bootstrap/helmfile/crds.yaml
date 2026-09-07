@@ -34,4 +34,4 @@ releases:
     namespace: o11y
 
   - name: snapshot-controller
-    namespace: system-controllers
+    namespace: system

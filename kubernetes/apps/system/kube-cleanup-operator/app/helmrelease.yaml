@@ -12,8 +12,13 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: lwolf-charts
-        namespace: system-controllers
+        namespace: system
       interval: 15m
+  # namespace move: the old release's cluster-scoped objects can still exist
+  # when this one first installs; retry instead of fail-and-hold
+  install:
+    remediation:
+      retries: 3
   interval: 15m
   values:
     securityContext:
