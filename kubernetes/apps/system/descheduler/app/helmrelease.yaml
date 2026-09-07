@@ -41,6 +41,7 @@ spec:
               args:
                 reasons:
                   - ContainerStatusUnknown
+                  - Evicted
                   - NodeAffinity
                   - NodeShutdown
                   - Terminated
