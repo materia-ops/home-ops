@@ -33,6 +33,10 @@ spec:
             probes:
               liveness:
                 enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
                 enabled: true
                 custom: true
@@ -114,5 +118,8 @@ spec:
           kopia:
             app:
               - path: /config/cache
+                subPath: cache
               - path: /config/logs
+                subPath: logs
               - path: /tmp
+                subPath: tmp
