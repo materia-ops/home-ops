@@ -57,7 +57,8 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
 1. Create `kubernetes/apps/<namespace>/<app>/` with `ks.yaml` + `app/` following an
    existing app in the same namespace (see
    [repo-structure.md](./repo-structure.md#anatomy-of-an-app)).
-2. Add the app to the namespace `kustomization.yaml` (alphabetical slot).
+2. Add the app to the namespace `kustomization.yaml` (alphabetical slot), or to the
+   group's `kustomization.yaml` when it joins one (e.g. `media/arr-apps/`).
 3. Opt into components in `ks.yaml`: `kopiur/backup` if it has state (set
    `KOPIUR_CAPACITY`; `KOPIUR_SCHEDULE` defaults to `H * * * *`, which kopiur staggers on
    its own), `alerts`, `authentik-forward-auth` if it needs SSO without native OIDC, etc.
