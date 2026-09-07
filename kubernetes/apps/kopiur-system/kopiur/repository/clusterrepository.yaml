@@ -14,18 +14,20 @@ spec:
         nfs:
           path: /mnt/apps/kopiur
           server: nas.internal
-  # one mover pool for every namespace: bounds the NFS backend
   concurrency:
     maxConcurrentJobs: 3
-  # movers read this Secret from their own namespace: every namespace with a
-  # backup needs components/kopiur/secret mixed in
   encryption:
     passwordSecretRef:
       name: kopiur-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
-  # the share is owned 1000:1000 and fsGroup is a no-op on NFS, so the mover
-  # uid/gid must match it
+  maintenance:
+    schedule:
+      full:
+        cron: 0 2 * * *
+        jitter: 30m
+      quick:
+        cron: H * * * *
   moverDefaults:
     podSecurityContext:
       runAsUser: 1000
@@ -33,6 +35,9 @@ spec:
     securityContext:
       runAsUser: 1000
       runAsGroup: 1000
+  parameters:
+    epoch:
+      minDuration: 1h
   scheduleDefaults:
     jitter: 10m
     timezone: Australia/Melbourne
