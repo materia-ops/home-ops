@@ -48,7 +48,7 @@ jobs:
           tool_versions: |
             # Pinned to the flate version in .mise/config.toml (what render-local-ks
             # runs); renovate tracks it via the custom manager in .renovaterc.json5.
-            github:home-operations/flate 0.6.2
+            github:home-operations/flate 0.6.5
 
       - name: Extract Images
         id: extract
