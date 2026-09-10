@@ -88,17 +88,6 @@
       schedule: [ "before 6am on Monday" ],
     },
     {
-      description: "Auto-merge the Renovate runner pin daily after a soak: a broken runner cannot open the PR that fixes itself (44.64.0 shipped without `tar`; every run died silently for six days, #1681)",
-      matchDatasources: [ "github-releases" ],
-      matchUpdateTypes: [ "minor", "patch" ],
-      matchPackageNames: [ "renovatebot/renovate" ],
-      automerge: true,
-      automergeType: "pr",
-      minimumReleaseAge: "3 days",
-      ignoreTests: false,
-      schedule: [ "before 4am" ],
-    },
-    {
       description: "Auto-merge GitHub Actions",
       matchManagers: [ "github-actions" ],
       matchUpdateTypes: [ "minor", "patch", "digest" ],
@@ -116,6 +105,27 @@
       automergeType: "pr",
       minimumReleaseAge: "1 minute",
       ignoreTests: true,
+    },
+    {
+      // After the github-actions rules so its ignoreTests/soak win for the
+      // lint image: those rules match it too (the trusted-actions rule by its
+      // overridden name, renovatebot/renovate, on the later passes).
+      description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 3-day soak: a broken runner cannot open the PR that fixes itself (#1681)",
+      matchPackageNames: [ "ghcr.io/renovatebot/renovate", "renovatebot/renovate" ],
+      matchUpdateTypes: [ "minor", "patch" ],
+      groupName: "Renovate runner",
+      automerge: true,
+      automergeType: "pr",
+      minimumReleaseAge: "3 days",
+      ignoreTests: false,
+      schedule: [ "before 4am" ],
+    },
+    {
+      description: "Look the renovate-lint container image up as the runner's GitHub release: a GHCR tag carries no release timestamp, so the soak above would hold it forever",
+      matchManagers: [ "github-actions" ],
+      matchPackageNames: [ "ghcr.io/renovatebot/renovate" ],
+      overrideDatasource: "github-releases",
+      overridePackageName: "renovatebot/renovate",
     },
     {
       description: "Auto-merge Grafana dashboards",
@@ -250,7 +260,7 @@
     {
       customType: "regex",
       managerFilePatterns: [ ".github/workflows/renovate.yaml" ],
-      matchStrings: [ "renovate-version: .+ '(?<currentValue>[0-9.]+)' }}" ],
+      matchStrings: [ "RUNNER_VERSION: '(?<currentValue>[0-9.]+)'" ],
       // github-releases, not docker: ghcr.io returns no release timestamps, so
       // minimumReleaseAge on the docker datasource would hold the pin forever.
       datasourceTemplate: "github-releases",

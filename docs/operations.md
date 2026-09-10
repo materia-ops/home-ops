@@ -67,6 +67,16 @@ Defence in depth, roughly outermost-in:
   zero, clean the stale staging dirs from a node debug pod, restart kubelet.
 - **PVC capacity bump** → bump `KOPIUR_CAPACITY` in the app's `ks.yaml`; the mover cache is
   `Ephemeral` and sized separately, so there is no cache PVC to clean up.
+- **Renovate workflow red** → read the failing step. `Run Renovate` red with an
+  uncaught rejection at startup, or `Assert every repository finished` red with
+  "wrote no log": the runner pin is broken — revert `RUNNER_VERSION` in
+  `.github/workflows/renovate.yaml` to the last green run's version, or dispatch the
+  workflow with `version` set to a known-good release
+  ([#1681](https://github.com/materia-ops/home-ops/pull/1681)). The assertion red with
+  `repo=result`: `missing` means Renovate never reached that repository (github-bot
+  App uninstalled, repository gone — prune it from `RENOVATE_AUTODISCOVER_FILTER`);
+  any other value is Renovate's abort reason, detailed in the `Run Renovate` log. A
+  yellow warning names transient or by-design skips and needs no action.
 
 ## Scaling
 
