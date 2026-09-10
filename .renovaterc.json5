@@ -108,7 +108,8 @@
     },
     {
       // After the github-actions rules so its ignoreTests/soak win for the
-      // lint image, which those rules also match.
+      // lint image: those rules match it too (the trusted-actions rule by its
+      // overridden name, renovatebot/renovate, on the later passes).
       description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 3-day soak: a broken runner cannot open the PR that fixes itself (#1681)",
       matchPackageNames: [ "ghcr.io/renovatebot/renovate", "renovatebot/renovate" ],
       matchUpdateTypes: [ "minor", "patch" ],
@@ -120,7 +121,7 @@
       schedule: [ "before 4am" ],
     },
     {
-      description: "Look the renovate-lint container image up as the runner's GitHub release: a GHCR tag carries no release timestamp, so the soak above would hold it forever (stuck at 44.48.3 from 2026-08-28)",
+      description: "Look the renovate-lint container image up as the runner's GitHub release: a GHCR tag carries no release timestamp, so the soak above would hold it forever",
       matchManagers: [ "github-actions" ],
       matchPackageNames: [ "ghcr.io/renovatebot/renovate" ],
       overrideDatasource: "github-releases",
