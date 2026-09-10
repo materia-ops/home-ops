@@ -6,8 +6,9 @@ on:
   pull_request:
     branches:
       - main
-    # Own file included so a container-image bump PR re-validates the
-    # config against the NEW renovate version before it merges.
+    # Own file included so the grouped runner-pin PR (which bumps the image
+    # below) re-validates the config against the NEW renovate version
+    # before it merges.
     paths:
       - .renovaterc.json5
       - .github/workflows/renovate-lint.yaml
@@ -19,7 +20,8 @@ jobs:
   config-validator:
     name: Renovate Lint - Config Validator
     runs-on: ubuntu-latest
-    # Same image the runner executes; --user root because the image's
+    # The image renovate.yaml executes, kept in lockstep by the "Renovate
+    # runner" group in .renovaterc.json5; --user root because the image's
     # non-root default user can't write the runner-owned workspace mount.
     container:
       image: ghcr.io/renovatebot/renovate:44.48.3
