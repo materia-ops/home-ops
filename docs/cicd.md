@@ -82,7 +82,7 @@ auto-merge; everything else waits for review.
 
 The Renovate runner pin (`RUNNER_VERSION` in the workflow) is the one
 self-update Renovate cannot recover from on its own, so it auto-merges only after
-a 3-day soak (tracked as a GitHub release: GHCR carries no release timestamps),
+a 1-day soak (tracked as a GitHub release: GHCR carries no release timestamps),
 and a PR that moves it is **canaried**: the same workflow runs the candidate
 image as a full dry run on `pull_request` and the automerge waits for that
 check. Before every run the image's keyless signature is verified against
