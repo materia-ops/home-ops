@@ -9,9 +9,10 @@ on:
     paths:
       - .renovaterc.json5
       - .renovate/**.json5
-  # Canary: a PR that moves the runner pin runs the candidate image in
-  # lookup-only mode through the same assertion; the pin's automerge waits
-  # on it (ignoreTests: false). Any base branch, so a stacked PR is canaried.
+  # Canary: a PR that moves the runner pin runs the candidate image as a
+  # full dry run through the same assertion (lookup mode sets no per-repo
+  # result); the pin's automerge waits on it (ignoreTests: false). Any base
+  # branch, so a stacked PR is canaried.
   pull_request:
     paths:
       - .github/workflows/renovate.yaml
@@ -141,7 +142,7 @@ jobs:
           # left this step green. strict raises it as an uncaught exception.
           NODE_OPTIONS: --unhandled-rejections=strict
           RENOVATE_AUTODISCOVER: true
-          RENOVATE_DRY_RUN: ${{ github.event_name == 'pull_request' && 'lookup' || inputs.dryRun }}
+          RENOVATE_DRY_RUN: ${{ github.event_name == 'pull_request' && 'full' || inputs.dryRun }}
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           # info is load-bearing: the assertion reads an info-level record.
           # LOG_LEVEL (the dispatch input) shapes stdout only.
