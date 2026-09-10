@@ -44,6 +44,30 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[BODY].workflow_runs[0].conclusion == success"
+  # Dead-man for the fleet's Renovate runner (home-ops renovate.yaml): the
+  # hourly schedule must still be active and the latest completed run on
+  # main must be green — a red run notifies nobody on its own. branch=main
+  # keeps feature-branch dispatches (used to trial runner versions) out; no
+  # event filter, because a dispatch that cancels the in-flight scheduled
+  # run becomes the latest completed run itself.
+  - name: renovate-cron-enabled
+    group: ci
+    url: https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml
+    interval: 30m
+    headers:
+      Authorization: Bearer ${GATUS_STATUS_TOKEN}
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].state == active"
+  - name: renovate-last-run
+    group: ci
+    url: "https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml/runs?status=completed&branch=main&per_page=1"
+    interval: 30m
+    headers:
+      Authorization: Bearer ${GATUS_STATUS_TOKEN}
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].workflow_runs[0].conclusion == success"
   - name: Cloudflare
     group: connectivity
     url: icmp://1.1.1.1
