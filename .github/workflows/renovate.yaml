@@ -83,16 +83,19 @@ jobs:
         with:
           client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
           private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
-          permission-checks: write
-          permission-contents: write
-          permission-issues: write
-          permission-pull-requests: write
-          permission-statuses: write
+          # A canary (pull_request) is a dry run: read-only scopes, and no
+          # workflows permission (write-only; an empty input is skipped), so a
+          # PR that edits this file cannot spend a write token before review.
+          permission-checks: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-contents: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-issues: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-pull-requests: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-statuses: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
           permission-vulnerability-alerts: read
           # workflows:write is load-bearing: the github-actions manager bumps
           # SHA-pinned actions inside .github/workflows/** (audited 2026-07-18,
           # security review #8 - do not drop without disabling that manager).
-          permission-workflows: write
+          permission-workflows: ${{ github.event_name != 'pull_request' && 'write' || '' }}
           # Renovate also manages the azerothcore-image source pins
           # (versions.json git-refs manager), wow-panel's npm/actions/base
           # image, raidscope's pip/actions/base image, materia-core's
