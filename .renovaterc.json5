@@ -110,13 +110,13 @@
       // After the github-actions rules so its ignoreTests/soak win for the
       // lint image: those rules match it too (the trusted-actions rule by its
       // overridden name, renovatebot/renovate, on the later passes).
-      description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 3-day soak: a broken runner cannot open the PR that fixes itself (#1681)",
+      description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 1-day soak, canaried on its PR (#1715): a broken runner cannot open the PR that fixes itself (#1681)",
       matchPackageNames: [ "ghcr.io/renovatebot/renovate", "renovatebot/renovate" ],
       matchUpdateTypes: [ "minor", "patch" ],
       groupName: "Renovate runner",
       automerge: true,
       automergeType: "pr",
-      minimumReleaseAge: "3 days",
+      minimumReleaseAge: "1 day",
       ignoreTests: false,
       schedule: [ "before 4am" ],
     },

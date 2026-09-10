@@ -82,7 +82,8 @@ auto-merge; everything else waits for review.
 
 The Renovate runner pin (`renovate-version` in the workflow) is the one
 self-update Renovate cannot recover from on its own, so it auto-merges only after
-a 3-day soak (tracked as a GitHub release: GHCR carries no release timestamps).
+a 1-day soak, canaried on its own PR (tracked as a GitHub release: GHCR carries no
+release timestamps).
 Two guards make a bad runner loud instead of silent
 ([#1681](https://github.com/materia-ops/home-ops/pull/1681)): `NODE_OPTIONS`
 strict mode turns a startup crash into a red **Run Renovate** step, and **Assert
