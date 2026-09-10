@@ -127,7 +127,7 @@ jobs:
           RENOVATE_HOST_RULES: '[{"matchHost": "ghcr.io", "hostType": "docker", "username": "malpractis", "password": "${{ steps.load-secrets.outputs.RENOVATE_GHCR_TOKEN }}"}]'
         with:
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: ${{ inputs.version || '44.74.0' }}
+          renovate-version: ${{ inputs.version || '44.75.1' }}
 
       - name: Assert every repository finished
         # Renovate logs "Repository finished" for aborted repositories too,
