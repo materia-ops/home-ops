@@ -28,13 +28,14 @@ spec:
           labels:
             severity: critical
 
-        - alert: GatusReleasePipelineBroken
+        - alert: GatusCiPipelineBroken
           expr: |
             gatus_results_endpoint_success{group="ci"} == 0
-          for: 1h
+          # 2h: two consecutive bad hourly Renovate runs, never one transient.
+          for: 2h
           annotations:
             summary: >-
-              CI dead-man check {{ $labels.name }} is failing (cron disabled, last scheduled run failed, or the monitoring PAT expired)
+              CI dead-man check {{ $labels.name }} is failing (cron disabled, latest run failed, or the monitoring PAT died)
           labels:
             severity: critical
 

@@ -44,24 +44,27 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[BODY].workflow_runs[0].conclusion == success"
-  # Dead-man for the fleet's Renovate runner (home-ops renovate.yaml, the
-  # dependency-update path for six repos): the hourly schedule must still be
-  # active, and the latest completed SCHEDULED run must be green - a crashed
-  # runner exits 0, only the workflow's own assertion step turns it red, and a
-  # red run notifies nobody (#1681/#1699). event=schedule so a green manual
-  # dry run cannot mask a broken schedule. Unauthenticated: home-ops is
-  # public, 4 req/h against the 60/h/IP limit.
+  # Dead-man for the fleet's Renovate runner (home-ops renovate.yaml): the
+  # hourly schedule must still be active and the latest completed run on
+  # main must be green — a red run notifies nobody on its own. branch=main
+  # keeps feature-branch dispatches (used to trial runner versions) out; no
+  # event filter, because a dispatch that cancels the in-flight scheduled
+  # run becomes the latest completed run itself.
   - name: renovate-cron-enabled
     group: ci
     url: https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml
     interval: 30m
+    headers:
+      Authorization: Bearer ${GATUS_STATUS_TOKEN}
     conditions:
       - "[STATUS] == 200"
       - "[BODY].state == active"
   - name: renovate-last-run
     group: ci
-    url: "https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml/runs?status=completed&event=schedule&per_page=1"
+    url: "https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml/runs?status=completed&branch=main&per_page=1"
     interval: 30m
+    headers:
+      Authorization: Bearer ${GATUS_STATUS_TOKEN}
     conditions:
       - "[STATUS] == 200"
       - "[BODY].workflow_runs[0].conclusion == success"
