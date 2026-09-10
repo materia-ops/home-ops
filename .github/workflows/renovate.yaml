@@ -49,6 +49,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: read
+    env:
+      # Job-level so the assertion step can read them. The filter is a
+      # literal list: the assertion walks it, so a glob here breaks the gate.
+      RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }},${{ github.repository_owner }}/azerothcore-image,${{ github.repository_owner }}/raidscope,${{ github.repository_owner }}/materia-core,${{ github.repository_owner }}/wow-panel,${{ github.repository_owner }}/wow-realmchat
+      # Run-unique because Renovate appends; the action bind-mounts the host
+      # /tmp into the container, and Renovate lowercases this value.
+      RENOVATE_LOG_FILE: /tmp/renovate-${{ github.run_id }}-${{ github.run_attempt }}.log
     steps:
       - name: Load Secrets
         id: load-secrets
@@ -104,33 +111,62 @@ jobs:
       - name: Run Renovate
         uses: renovatebot/github-action@37beffda261423addd537c33f2d126df7f6ffbab # v46.2.6
         env:
-          # The runner mounts /tmp into the container (docker-volumes default),
-          # so the assertion step below can read this file.
-          LOG_FILE: /tmp/renovate.log
-          LOG_FILE_LEVEL: info
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
+          # Renovate's unhandledRejection handler only logs, so a rejection
+          # outside start() - a broken runner build (#1681) - exited 0 and
+          # left this step green. strict raises it as an uncaught exception.
+          NODE_OPTIONS: --unhandled-rejections=strict
           RENOVATE_AUTODISCOVER: true
-          RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }},${{ github.repository_owner }}/azerothcore-image,${{ github.repository_owner }}/raidscope,${{ github.repository_owner }}/materia-core,${{ github.repository_owner }}/wow-panel,${{ github.repository_owner }}/wow-realmchat
           RENOVATE_DRY_RUN: ${{ inputs.dryRun }}
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
+          # info is load-bearing: the assertion reads an info-level record.
+          # LOG_LEVEL (the dispatch input) shapes stdout only.
+          RENOVATE_LOG_FILE_LEVEL: info
           RENOVATE_PLATFORM: github
           RENOVATE_PLATFORM_COMMIT: true
           RENOVATE_HOST_RULES: '[{"matchHost": "ghcr.io", "hostType": "docker", "username": "malpractis", "password": "${{ steps.load-secrets.outputs.RENOVATE_GHCR_TOKEN }}"}]'
         with:
-          # The action default plus LOG_FILE*, which it does not forward.
-          env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|LOG_FILE|LOG_FILE_LEVEL|GITHUB_COM_TOKEN|NODE_OPTIONS|NO_COLOR|(?:HTTPS?|NO)_PROXY|(?:https?|no)_proxy)$'
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: ${{ inputs.version || '44.74.0' }}
+          renovate-version: ${{ inputs.version || '44.75.1' }}
 
-      - name: Assert repositories were processed
-        # The runner exits 0 even when it dies at startup (44.64.0 imported a
-        # missing `tar` package; every run stayed green for six days, #1681).
-        # A run that finished no repository is a failure whatever its exit code.
+      - name: Assert every repository finished
+        # Renovate logs "Repository finished" for aborted repositories too,
+        # so the gate reads each listed repository's result: a hard abort or
+        # a repository missing from the log fails the run, a transient or
+        # by-design result only warns. No readable log is itself a failure.
         run: |
-          finished=$(grep -c 'Repository finished' /tmp/renovate.log || true)
-          crashed=$(grep -cE 'unhandledRejection|ERR_MODULE_NOT_FOUND' /tmp/renovate.log || true)
-          echo "repositories finished: ${finished}, crash markers: ${crashed}"
-          if [ "${finished}" -eq 0 ] || [ "${crashed}" -ne 0 ]; then
-            echo "::error::Renovate processed no repository - read the Run Renovate step log"
+          log="${RENOVATE_LOG_FILE}"
+          if ! [ -r "${log}" ] || ! [ -s "${log}" ]; then
+            echo "::error title=Renovate wrote no log::${log} is missing, empty or unreadable - Renovate never started (a broken runner pin: revert renovate-version or dispatch with a known-good version, #1681) or RENOVATE_LOG_FILE stopped reaching the container"
+            exit 1
+          fi
+          IFS=, read -ra fleet <<<"${RENOVATE_AUTODISCOVER_FILTER}"
+          if [ "${#fleet[@]}" -eq 0 ] || [ -z "${fleet[0]}" ]; then
+            echo "::error title=Renovate fleet list is empty::RENOVATE_AUTODISCOVER_FILTER must be a literal comma-separated repository list for this gate"
+            exit 1
+          fi
+          declare -A result
+          # ${res//$'\r'/}: a Windows jq emits CRLF when the step is run locally.
+          while IFS=$'\t' read -r repo res; do result["${repo}"]="${res//$'\r'/}"; done \
+            < <(jq -r 'select(.msg == "Repository finished") | [(.repository // "unknown"), (.result // "unknown")] | @tsv' "${log}")
+          failed=() warned=()
+          for repo in "${fleet[@]}"; do
+            res="${result[${repo}]:-missing}"
+            case "${res}" in
+              done|automerged|onboarding) ;;
+              # A PR merged under the run, a registry blip, a paused or
+              # archived repository: the next run heals or the list needs pruning.
+              repository-changed|external-host-error|rate-limit-exceeded|temporary-error|disabled*|archived|renamed|mirror|blocked|empty) warned+=("${repo}=${res}") ;;
+              *) failed+=("${repo}=${res}") ;;
+            esac
+          done
+          summary="repositories: $(( ${#fleet[@]} - ${#failed[@]} - ${#warned[@]} ))/${#fleet[@]} succeeded${warned[*]:+; warned: ${warned[*]}}${failed[*]:+; failed: ${failed[*]}}"
+          echo "${summary}"
+          echo "Renovate - ${summary}" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          if [ "${#warned[@]}" -ne 0 ]; then
+            echo "::warning title=Renovate skipped a repository::${warned[*]} - transient or by-design; prune archived or renamed repositories from RENOVATE_AUTODISCOVER_FILTER"
+          fi
+          if [ "${#failed[@]}" -ne 0 ]; then
+            echo "::error title=Renovate did not finish every repository::${failed[*]} - 'missing' means never autodiscovered (github-bot App uninstalled, repository gone) or Renovate died before reaching it; any other value is Renovate's abort reason, detailed in the Run Renovate step log"
             exit 1
           fi

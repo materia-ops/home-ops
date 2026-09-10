@@ -80,10 +80,18 @@ release-please), and Grafana dashboards — all via PR automerge (the org rulese
 forbids direct branch pushes). The AzerothCore server and MySQL images never
 auto-merge; everything else waits for review.
 
-The Renovate runner pin itself auto-merges only after a 3-day soak, and the run
-fails unless Renovate's log shows at least one repository finished: the runner
-exits 0 even when it crashes at startup, which is how 44.64.0 (missing `tar`)
-kept every run green for six days with no PRs opened (#1681).
+The Renovate runner pin (`renovate-version` in the workflow) is the one
+self-update Renovate cannot recover from on its own, so it auto-merges only after
+a 3-day soak (tracked as a GitHub release: GHCR carries no release timestamps).
+Two guards make a bad runner loud instead of silent
+([#1681](https://github.com/materia-ops/home-ops/pull/1681)): `NODE_OPTIONS`
+strict mode turns a startup crash into a red **Run Renovate** step, and **Assert
+every repository finished** reads Renovate's log and fails the run when any
+repository in the autodiscover list is missing from it or aborted hard —
+transient or by-design results (a PR merged under the run, a paused repository)
+only warn. To trial a newer runner before its soak elapses, dispatch the
+workflow with the `version` input; the runbook is in
+[operations.md](operations.md#known-failure-modes-and-their-runbooks).
 
 ### `ansible.yaml` — Pi-hole infrastructure
 
