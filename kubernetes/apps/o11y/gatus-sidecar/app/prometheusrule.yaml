@@ -34,7 +34,7 @@ spec:
           for: 1h
           annotations:
             summary: >-
-              ATT release pipeline check {{ $labels.name }} is failing (cron disabled, release run failed, or the monitoring PAT expired)
+              CI dead-man check {{ $labels.name }} is failing (cron disabled, last scheduled run failed, or the monitoring PAT expired)
           labels:
             severity: critical
 
