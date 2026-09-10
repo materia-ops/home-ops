@@ -4,13 +4,16 @@ connectivity:
     target: 1.1.1.1:53
     interval: 1m
 endpoints:
-  # Dead-man switch for the ATT release pipeline (AllTheThings-WotLK):
-  # pull-based via the GitHub API because Cloudflare Bot Fight Mode would eat
-  # a push from GitHub Actions runners. Token: GATUS_STATUS_TOKEN via gatus-sidecar-secret (ESO).
-  - name: att-release-cron-enabled
+  # Dead-man checks for GitHub Actions pipelines, pulled via the API because
+  # Cloudflare Bot Fight Mode would eat a push from GitHub runners. One
+  # fine-grained PAT covers them all (GATUS_STATUS_TOKEN via
+  # gatus-sidecar-secret, ESO). Two shapes, extended by name and url:
+  #   *ci-cron-enabled - the schedule must still be active: GitHub disables
+  #     crons after 60 idle days and the last run then stays green forever
+  #   *ci-last-run - the latest completed run must have succeeded
+  - &ci-cron-enabled
+    name: att-release-cron-enabled
     group: ci
-    # state must be "active" - GitHub silently disables scheduled workflows
-    # after 60 days without repo activity (state becomes disabled_inactivity)
     url: https://api.github.com/repos/materia-ops/allthethings-wotlk/actions/workflows/upstream-release.yml
     interval: 30m
     headers:
@@ -18,11 +21,11 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[BODY].state == active"
-  - name: att-release-last-run
+  - &ci-last-run
+    name: att-release-last-run
     group: ci
-    # latest completed run must have succeeded - catches failing releases
-    # (incl. expired RELEASES_TOKEN / SIGNING_KEY problems) and check-job
-    # failures the repo's own drift-alert job cannot see
+    # catches failing releases (incl. expired RELEASES_TOKEN / SIGNING_KEY
+    # problems) and check-job failures the repo's own drift-alert job cannot see
     url: "https://api.github.com/repos/materia-ops/allthethings-wotlk/actions/workflows/upstream-release.yml/runs?status=completed&per_page=1"
     interval: 30m
     headers:
@@ -30,44 +33,22 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[BODY].workflow_runs[0].conclusion == success"
-  # Dead-man for the materia-core release pipeline: the latest completed
-  # release.yml run must have succeeded — catches failed installer builds,
-  # smoke-test failures, and mirror-publish breakage (SIGNING_KEY /
-  # github-bot App problems) that would otherwise silently stop the
-  # installed fleet from receiving updates.
-  - name: materia-core-release-last-run
-    group: ci
+  # materia-core release pipeline: failed installer builds, smoke-test
+  # failures, mirror-publish breakage (SIGNING_KEY / github-bot App) that
+  # would otherwise silently stop the installed fleet from receiving updates.
+  - <<: *ci-last-run
+    name: materia-core-release-last-run
     url: "https://api.github.com/repos/materia-ops/materia-core/actions/workflows/release.yml/runs?status=completed&per_page=1"
-    interval: 30m
-    headers:
-      Authorization: Bearer ${GATUS_STATUS_TOKEN}
-    conditions:
-      - "[STATUS] == 200"
-      - "[BODY].workflow_runs[0].conclusion == success"
-  # Dead-man for the fleet's Renovate runner (home-ops renovate.yaml): the
-  # hourly schedule must still be active and the latest completed run on
-  # main must be green — a red run notifies nobody on its own. branch=main
-  # keeps feature-branch dispatches (used to trial runner versions) out; no
-  # event filter, because a dispatch that cancels the in-flight scheduled
+  # Renovate runner (home-ops renovate.yaml): a red run notifies nobody on
+  # its own. branch=main keeps feature-branch dispatches (runner trials) out;
+  # no event filter, because a dispatch that cancels the in-flight scheduled
   # run becomes the latest completed run itself.
-  - name: renovate-cron-enabled
-    group: ci
+  - <<: *ci-cron-enabled
+    name: renovate-cron-enabled
     url: https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml
-    interval: 30m
-    headers:
-      Authorization: Bearer ${GATUS_STATUS_TOKEN}
-    conditions:
-      - "[STATUS] == 200"
-      - "[BODY].state == active"
-  - name: renovate-last-run
-    group: ci
+  - <<: *ci-last-run
+    name: renovate-last-run
     url: "https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml/runs?status=completed&branch=main&per_page=1"
-    interval: 30m
-    headers:
-      Authorization: Bearer ${GATUS_STATUS_TOKEN}
-    conditions:
-      - "[STATUS] == 200"
-      - "[BODY].workflow_runs[0].conclusion == success"
   - name: Cloudflare
     group: connectivity
     url: icmp://1.1.1.1
