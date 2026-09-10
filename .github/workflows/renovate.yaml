@@ -198,3 +198,28 @@ jobs:
             echo "::error title=Renovate did not finish every repository::${failed[*]} - 'missing' means never autodiscovered (github-bot App uninstalled, repository gone) or Renovate died before reaching it; any other value is Renovate's abort reason, detailed in the Run Renovate step log"
             exit 1
           fi
+
+      # Loaded here, not up front, so a missing item only breaks the page,
+      # never the run. A canary failure is already on its PR.
+      - name: Load the Pushover secrets
+        if: failure() && github.event_name != 'pull_request'
+        id: pushover
+        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+        with:
+          version: 2.39.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          PUSHOVER_TOKEN: op://ci/pushover/token
+          PUSHOVER_USER_KEY: op://ci/pushover/user-key
+
+      - name: Page on failure
+        # Seconds instead of the gatus dead-man's ~2.5h; gatus still owns the
+        # case where the schedule never runs and nothing reaches this step.
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          PUSHOVER_TOKEN: ${{ steps.pushover.outputs.PUSHOVER_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ steps.pushover.outputs.PUSHOVER_USER_KEY }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -fsS --retry 3 --retry-all-errors https://api.pushover.net/1/messages.json --form-string "token=${PUSHOVER_TOKEN}" --form-string "user=${PUSHOVER_USER_KEY}" --form-string "title=Renovate run failed (${GITHUB_EVENT_NAME})" --form-string "message=A step failed on ${GITHUB_REF_NAME}. Read the failing step: Run Renovate red at startup or 'wrote no log' = broken runner pin; repo=result names an aborted repository." --form-string "url=${RUN_URL}" --form-string "url_title=Open the run" --form-string "priority=1" > /dev/null
+          echo "paged Pushover"

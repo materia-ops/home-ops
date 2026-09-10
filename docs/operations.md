@@ -67,7 +67,7 @@ Defence in depth, roughly outermost-in:
   zero, clean the stale staging dirs from a node debug pod, restart kubelet.
 - **PVC capacity bump** → bump `KOPIUR_CAPACITY` in the app's `ks.yaml`; the mover cache is
   `Ephemeral` and sized separately, so there is no cache PVC to clean up.
-- **Renovate workflow red** → read the failing step. `Run Renovate` red with an
+- **Renovate workflow red** (a Pushover page links the run) → read the failing step. `Run Renovate` red with an
   uncaught rejection at startup, or `Assert every repository finished` red with
   "wrote no log": the runner pin is broken — revert `RUNNER_VERSION` in
   `.github/workflows/renovate.yaml` to the last green run's version, or dispatch the

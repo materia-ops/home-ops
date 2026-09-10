@@ -93,8 +93,10 @@ strict mode turns a startup crash into a red **Run Renovate** step, and **Assert
 every repository finished** reads Renovate's log and fails the run when any
 repository in the autodiscover list is missing from it or aborted hard —
 transient or by-design results (a PR merged under the run, a paused repository)
-only warn. To trial a newer runner by hand, dispatch the workflow with the
-`version` input; the runbook is in
+only warn. A failed scheduled or dispatched run pages Pushover directly from the
+workflow within seconds (`op://ci/pushover`); the gatus `ci` dead-man remains
+for the case a disabled schedule never runs at all. To trial a newer runner by
+hand, dispatch the workflow with the `version` input; the runbook is in
 [operations.md](operations.md#known-failure-modes-and-their-runbooks).
 
 ### `ansible.yaml` — Pi-hole infrastructure
