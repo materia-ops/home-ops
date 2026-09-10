@@ -80,6 +80,11 @@ release-please), and Grafana dashboards — all via PR automerge (the org rulese
 forbids direct branch pushes). The AzerothCore server and MySQL images never
 auto-merge; everything else waits for review.
 
+The Renovate runner pin itself auto-merges only after a 3-day soak, and the run
+fails unless Renovate's log shows at least one repository finished: the runner
+exits 0 even when it crashes at startup, which is how 44.64.0 (missing `tar`)
+kept every run green for six days with no PRs opened (#1681).
+
 ### `ansible.yaml` — Pi-hole infrastructure
 
 PRs run a credential-less **Validate** (playbook syntax check) on a GitHub-hosted
