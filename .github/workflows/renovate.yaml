@@ -9,6 +9,13 @@ on:
     paths:
       - .renovaterc.json5
       - .renovate/**.json5
+  # Canary: a PR that moves the runner pin runs the candidate image as a
+  # full dry run through the same assertion (lookup mode sets no per-repo
+  # result); the pin's automerge waits on it (ignoreTests: false). Any base
+  # branch, so a stacked PR is canaried.
+  pull_request:
+    paths:
+      - .github/workflows/renovate.yaml
   schedule:
     - cron: 20 * * * *
   workflow_dispatch:
@@ -56,6 +63,8 @@ jobs:
       # Run-unique because Renovate appends; the action bind-mounts the host
       # /tmp into the container, and Renovate lowercases this value.
       RENOVATE_LOG_FILE: /tmp/renovate-${{ github.run_id }}-${{ github.run_attempt }}.log
+      # The runner pin. Not RENOVATE_-prefixed: it must not reach the container.
+      RUNNER_VERSION: '44.75.1'
     steps:
       - name: Load Secrets
         id: load-secrets
@@ -74,16 +83,19 @@ jobs:
         with:
           client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
           private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
-          permission-checks: write
-          permission-contents: write
-          permission-issues: write
-          permission-pull-requests: write
-          permission-statuses: write
+          # A canary (pull_request) is a dry run: read-only scopes, and no
+          # workflows permission (write-only; an empty input is skipped), so a
+          # PR that edits this file cannot spend a write token before review.
+          permission-checks: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-contents: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-issues: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-pull-requests: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-statuses: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
           permission-vulnerability-alerts: read
           # workflows:write is load-bearing: the github-actions manager bumps
           # SHA-pinned actions inside .github/workflows/** (audited 2026-07-18,
           # security review #8 - do not drop without disabling that manager).
-          permission-workflows: write
+          permission-workflows: ${{ github.event_name != 'pull_request' && 'write' || '' }}
           # Renovate also manages the azerothcore-image source pins
           # (versions.json git-refs manager), wow-panel's npm/actions/base
           # image, raidscope's pip/actions/base image, materia-core's
@@ -108,6 +120,22 @@ jobs:
           persist-credentials: false
           token: ${{ steps.app-token.outputs.token }}
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Verify the runner image signature
+        # Renovate signs every image keyless from its build workflow. The
+        # 3-day soak only delays new versions; a re-pushed tag is pulled
+        # within the hour and runs with the fleet-wide App token.
+        env:
+          IMAGE: ghcr.io/renovatebot/renovate:${{ inputs.version || env.RUNNER_VERSION }}
+        run: |
+          cosign verify \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp '^https://github\.com/renovatebot/renovate/\.github/workflows/build\.yml@' \
+            "${IMAGE}" > /dev/null
+          echo "signature verified: ${IMAGE}"
+
       - name: Run Renovate
         uses: renovatebot/github-action@37beffda261423addd537c33f2d126df7f6ffbab # v46.2.6
         env:
@@ -117,7 +145,7 @@ jobs:
           # left this step green. strict raises it as an uncaught exception.
           NODE_OPTIONS: --unhandled-rejections=strict
           RENOVATE_AUTODISCOVER: true
-          RENOVATE_DRY_RUN: ${{ inputs.dryRun }}
+          RENOVATE_DRY_RUN: ${{ github.event_name == 'pull_request' && 'full' || inputs.dryRun }}
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           # info is load-bearing: the assertion reads an info-level record.
           # LOG_LEVEL (the dispatch input) shapes stdout only.
@@ -127,7 +155,7 @@ jobs:
           RENOVATE_HOST_RULES: '[{"matchHost": "ghcr.io", "hostType": "docker", "username": "malpractis", "password": "${{ steps.load-secrets.outputs.RENOVATE_GHCR_TOKEN }}"}]'
         with:
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: ${{ inputs.version || '44.75.1' }}
+          renovate-version: ${{ inputs.version || env.RUNNER_VERSION }}
 
       - name: Assert every repository finished
         # Renovate logs "Repository finished" for aborted repositories too,
@@ -137,7 +165,7 @@ jobs:
         run: |
           log="${RENOVATE_LOG_FILE}"
           if ! [ -r "${log}" ] || ! [ -s "${log}" ]; then
-            echo "::error title=Renovate wrote no log::${log} is missing, empty or unreadable - Renovate never started (a broken runner pin: revert renovate-version or dispatch with a known-good version, #1681) or RENOVATE_LOG_FILE stopped reaching the container"
+            echo "::error title=Renovate wrote no log::${log} is missing, empty or unreadable - Renovate never started (a broken runner pin: revert RUNNER_VERSION or dispatch with a known-good version, #1681) or RENOVATE_LOG_FILE stopped reaching the container"
             exit 1
           fi
           IFS=, read -ra fleet <<<"${RENOVATE_AUTODISCOVER_FILTER}"

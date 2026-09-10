@@ -260,7 +260,7 @@
     {
       customType: "regex",
       managerFilePatterns: [ ".github/workflows/renovate.yaml" ],
-      matchStrings: [ "renovate-version: .+ '(?<currentValue>[0-9.]+)' }}" ],
+      matchStrings: [ "RUNNER_VERSION: '(?<currentValue>[0-9.]+)'" ],
       // github-releases, not docker: ghcr.io returns no release timestamps, so
       // minimumReleaseAge on the docker datasource would hold the pin forever.
       datasourceTemplate: "github-releases",
