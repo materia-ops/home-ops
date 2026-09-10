@@ -88,7 +88,7 @@
       schedule: [ "before 6am on Monday" ],
     },
     {
-      description: "Auto-merge the Renovate runner pin daily after a soak: a broken runner cannot open the PR that fixes itself (44.64.0 shipped without `tar`; every run died silently for six days, #1681)",
+      description: "Auto-merge the Renovate runner pin daily after a 3-day soak — a broken runner cannot open the PR that fixes itself (#1681)",
       matchDatasources: [ "github-releases" ],
       matchUpdateTypes: [ "minor", "patch" ],
       matchPackageNames: [ "renovatebot/renovate" ],

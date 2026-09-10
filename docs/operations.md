@@ -67,6 +67,14 @@ Defence in depth, roughly outermost-in:
   zero, clean the stale staging dirs from a node debug pod, restart kubelet.
 - **PVC capacity bump** → bump `KOPIUR_CAPACITY` in the app's `ks.yaml`; the mover cache is
   `Ephemeral` and sized separately, so there is no cache PVC to clean up.
+- **Renovate workflow red at `Assert every repository finished`** → Renovate ran but
+  did not finish every fleet repository, usually a broken runner self-update. Read the
+  `Run Renovate` step log: `unhandledRejection` at startup means the runner pin is
+  broken — revert `renovate-version` in `.github/workflows/renovate.yaml` to the last
+  green run's version, or dispatch the workflow with `version` set to a known-good
+  release. One aborted repository (config-validation, forbidden, bad-credentials) is
+  named in that log. Before this gate existed the only tell was a green run under a
+  minute long ([#1681](https://github.com/materia-ops/home-ops/pull/1681)).
 
 ## Scaling
 

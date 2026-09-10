@@ -49,6 +49,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: read
+    env:
+      # Job-level so the assertion step can count the fleet it expects.
+      RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }},${{ github.repository_owner }}/azerothcore-image,${{ github.repository_owner }}/raidscope,${{ github.repository_owner }}/materia-core,${{ github.repository_owner }}/wow-panel,${{ github.repository_owner }}/wow-realmchat
     steps:
       - name: Load Secrets
         id: load-secrets
@@ -101,36 +104,60 @@ jobs:
           persist-credentials: false
           token: ${{ steps.app-token.outputs.token }}
 
+      # Renovate opens the log in append mode; never let a previous run's
+      # lines satisfy the assertion on a reused runner.
+      - name: Clear the Renovate log
+        run: rm -f /tmp/renovate.log
+
       - name: Run Renovate
         uses: renovatebot/github-action@37beffda261423addd537c33f2d126df7f6ffbab # v46.2.6
         env:
-          # The runner mounts /tmp into the container (docker-volumes default),
-          # so the assertion step below can read this file.
+          # The action bind-mounts the host /tmp into the Renovate container
+          # (docker-volumes default), which is what lets the assertion step
+          # read this file.
           LOG_FILE: /tmp/renovate.log
+          # info is load-bearing: the assertion greps an info-level line.
+          # LOG_LEVEL (the dispatch input) shapes stdout only.
           LOG_FILE_LEVEL: info
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_AUTODISCOVER: true
-          RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }},${{ github.repository_owner }}/azerothcore-image,${{ github.repository_owner }}/raidscope,${{ github.repository_owner }}/materia-core,${{ github.repository_owner }}/wow-panel,${{ github.repository_owner }}/wow-realmchat
           RENOVATE_DRY_RUN: ${{ inputs.dryRun }}
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           RENOVATE_PLATFORM: github
           RENOVATE_PLATFORM_COMMIT: true
           RENOVATE_HOST_RULES: '[{"matchHost": "ghcr.io", "hostType": "docker", "username": "malpractis", "password": "${{ steps.load-secrets.outputs.RENOVATE_GHCR_TOKEN }}"}]'
         with:
-          # The action default plus LOG_FILE*, which it does not forward.
+          # The action's default env-regex (action.yml) plus LOG_FILE and
+          # LOG_FILE_LEVEL, which it does not forward. This copy freezes the
+          # default: re-copy it whenever an action bump changes it.
           env-regex: '^(?:RENOVATE_\w+|LOG_LEVEL|LOG_FILE|LOG_FILE_LEVEL|GITHUB_COM_TOKEN|NODE_OPTIONS|NO_COLOR|(?:HTTPS?|NO)_PROXY|(?:https?|no)_proxy)$'
           token: ${{ steps.app-token.outputs.token }}
           renovate-version: ${{ inputs.version || '44.74.0' }}
 
-      - name: Assert repositories were processed
-        # The runner exits 0 even when it dies at startup (44.64.0 imported a
-        # missing `tar` package; every run stayed green for six days, #1681).
-        # A run that finished no repository is a failure whatever its exit code.
+      - name: Assert every repository finished
+        # Renovate exits 0 when it dies at startup (#1681) and logs
+        # "Repository finished" for aborted repositories too, so the gate
+        # counts successful results against the fleet size. A missing log
+        # is itself a failure: the gate must not fail open on mount or
+        # env-regex drift.
         run: |
-          finished=$(grep -c 'Repository finished' /tmp/renovate.log || true)
-          crashed=$(grep -cE 'unhandledRejection|ERR_MODULE_NOT_FOUND' /tmp/renovate.log || true)
-          echo "repositories finished: ${finished}, crash markers: ${crashed}"
-          if [ "${finished}" -eq 0 ] || [ "${crashed}" -ne 0 ]; then
-            echo "::error::Renovate processed no repository - read the Run Renovate step log"
+          log=/tmp/renovate.log
+          if ! [ -s "${log}" ]; then
+            echo "::error title=Renovate wrote no log::${log} is missing or empty - the container did not start, or LOG_FILE is no longer forwarded (compare env-regex with the action default)"
+            exit 1
+          fi
+          expected=$(( $(tr -cd ',' <<<"${RENOVATE_AUTODISCOVER_FILTER}" | wc -c) + 1 ))
+          finished=$(grep -c '"msg":"Repository finished"' "${log}" || true)
+          succeeded=$(grep '"msg":"Repository finished"' "${log}" | grep -cE '"result":"(done|automerged)"' || true)
+          crashed=$(grep -cE '"msg":"unhandledRejection"|"code":"ERR_MODULE_NOT_FOUND"' "${log}" || true)
+          summary="repositories: ${succeeded:-0} succeeded / ${finished:-0} finished / ${expected} expected; crash markers: ${crashed:-0}"
+          echo "${summary}"
+          echo "Renovate - ${summary}" >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${crashed:-0}" -ne 0 ]; then
+            echo "::error title=Renovate crashed at startup::${summary}. The runner pin is broken - revert renovate-version in this file, or dispatch with a known-good version input (#1681)"
+            exit 1
+          fi
+          if [ "${succeeded:-0}" -ne "${expected}" ]; then
+            echo "::error title=Renovate did not finish every repository::${summary}. Read the Run Renovate step log for the aborted repository (config-validation, forbidden, bad-credentials)"
             exit 1
           fi
