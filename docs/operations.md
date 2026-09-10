@@ -69,7 +69,7 @@ Defence in depth, roughly outermost-in:
   `Ephemeral` and sized separately, so there is no cache PVC to clean up.
 - **Renovate workflow red** → read the failing step. `Run Renovate` red with an
   uncaught rejection at startup, or `Assert every repository finished` red with
-  "wrote no log": the runner pin is broken — revert `renovate-version` in
+  "wrote no log": the runner pin is broken — revert `RUNNER_VERSION` in
   `.github/workflows/renovate.yaml` to the last green run's version, or dispatch the
   workflow with `version` set to a known-good release
   ([#1681](https://github.com/materia-ops/home-ops/pull/1681)). The assertion red with
