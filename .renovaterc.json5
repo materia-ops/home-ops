@@ -34,10 +34,6 @@
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
-      // GitHub auto-merge ignores non-required checks, so with the default
-      // platformAutomerge the PR merged 8 s after creation (#1730) while the
-      // canary was still running; Renovate must gate the merge itself.
-      platformAutomerge: false,
     },
     {
       description: "Auto-merge raidscope image (own semver releases via release-please)",
@@ -122,6 +118,10 @@
       automergeType: "pr",
       minimumReleaseAge: "1 day",
       ignoreTests: false,
+      // GitHub auto-merge ignores non-required checks, so with the default
+      // platformAutomerge the PR merged 8 s after creation (#1730) while the
+      // canary was still running; Renovate must gate the merge itself.
+      platformAutomerge: false,
       schedule: [ "before 4am" ],
     },
     {
