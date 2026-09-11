@@ -8,6 +8,8 @@ spec:
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
+  # Held at 1.21.1: external-dns 0.22 ignores the Gateway target annotation and
+  # tried to point the proxied records at 192.168.10.6 (public DNS outage).
   ref:
     tag: 1.21.1
   url: oci://ghcr.io/home-operations/charts-mirror/external-dns
