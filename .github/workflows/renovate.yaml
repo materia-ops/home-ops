@@ -11,7 +11,8 @@ on:
       - .renovate/**.json5
   # Canary: a PR that moves the runner pin runs the candidate image as a
   # full dry run through the same assertion (lookup mode sets no per-repo
-  # result); the pin's automerge waits on it (ignoreTests: false). Any base
+  # result); the pin's automerge waits on it (platformAutomerge: false, so
+  # Renovate itself checks the result instead of GitHub auto-merge). Any base
   # branch, so a stacked PR is canaried.
   pull_request:
     paths:
@@ -64,7 +65,7 @@ jobs:
       # /tmp into the container, and Renovate lowercases this value.
       RENOVATE_LOG_FILE: /tmp/renovate-${{ github.run_id }}-${{ github.run_attempt }}.log
       # The runner pin. Not RENOVATE_-prefixed: it must not reach the container.
-      RUNNER_VERSION: '44.79.0'
+      RUNNER_VERSION: '44.82.0'
     steps:
       - name: Load Secrets
         id: load-secrets

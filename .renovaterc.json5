@@ -34,6 +34,10 @@
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
+      // GitHub auto-merge ignores non-required checks, so with the default
+      // platformAutomerge the PR merged 8 s after creation (#1730) while the
+      // canary was still running; Renovate must gate the merge itself.
+      platformAutomerge: false,
     },
     {
       description: "Auto-merge raidscope image (own semver releases via release-please)",
@@ -110,7 +114,7 @@
       // After the github-actions rules so its ignoreTests/soak win for the
       // lint image: those rules match it too (the trusted-actions rule by its
       // overridden name, renovatebot/renovate, on the later passes).
-      description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 1-day soak, canaried on its PR (#1715): a broken runner cannot open the PR that fixes itself (#1681)",
+      description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 1-day soak, canaried on its PR (#1715) and merged only by Renovate once the canary is green: a broken runner cannot open the PR that fixes itself (#1681)",
       matchPackageNames: [ "ghcr.io/renovatebot/renovate", "renovatebot/renovate" ],
       matchUpdateTypes: [ "minor", "patch" ],
       groupName: "Renovate runner",
