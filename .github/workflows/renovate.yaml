@@ -64,7 +64,7 @@ jobs:
       # /tmp into the container, and Renovate lowercases this value.
       RENOVATE_LOG_FILE: /tmp/renovate-${{ github.run_id }}-${{ github.run_attempt }}.log
       # The runner pin. Not RENOVATE_-prefixed: it must not reach the container.
-      RUNNER_VERSION: '44.75.1'
+      RUNNER_VERSION: '44.79.0'
     steps:
       - name: Load Secrets
         id: load-secrets
