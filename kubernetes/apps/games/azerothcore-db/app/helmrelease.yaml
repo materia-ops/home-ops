@@ -40,7 +40,7 @@ spec:
           01-init-guard:
             image:
               repository: docker.io/library/mysql
-              tag: 8.4@sha256:3466ba4a4828aa8d46fb7c3bc16b67b781c98413cf4ea0fac6feaa6e881faa26
+              tag: 8.4@sha256:85b9bf2e29cf836ecb8c2a15a935d4ba0c606631dff1dd79531a11983c638f2a
             env:
               # Set to "true" in git ONLY for a deliberate first install, then
               # revert once the datadir is populated. Any other value refuses an
@@ -73,7 +73,7 @@ spec:
             nameOverride: "{{ .Release.Name }}"
             image:
               repository: docker.io/library/mysql
-              tag: 8.4@sha256:3466ba4a4828aa8d46fb7c3bc16b67b781c98413cf4ea0fac6feaa6e881faa26
+              tag: 8.4@sha256:85b9bf2e29cf836ecb8c2a15a935d4ba0c606631dff1dd79531a11983c638f2a
             env:
               # Consumed by config/init-databases.sh on first datadir init to
               # create the acore application user.
