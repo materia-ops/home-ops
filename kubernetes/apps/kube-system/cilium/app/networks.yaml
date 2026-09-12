@@ -67,7 +67,7 @@ kind: Service
 metadata:
   name: kube-api
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: matalos.materia.wtf
+    external-dns.kubernetes.io/hostname: matalos.materia.wtf
     lbipam.cilium.io/ips: 192.168.10.20
 spec:
   type: LoadBalancer

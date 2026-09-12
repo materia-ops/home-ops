@@ -34,7 +34,7 @@ metadata:
   name: external-service-tlsroute-pikvm
   namespace: network
   annotations:
-    external-dns.alpha.kubernetes.io/target: "internal-tls.materia.wtf"
+    external-dns.kubernetes.io/target: "internal-tls.materia.wtf"
 spec:
   parentRefs:
     - name: envoy-internal-tls
