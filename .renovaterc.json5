@@ -160,6 +160,27 @@
       matchPackageNames: [ "/library\\/mysql/" ],
       allowedVersions: "<9.0.0",
     },
+    // The mise manager resolves aqua: tools via github-tags with a generic
+    // ^v?(.+) extractor and does not read the aqua registry's version_prefix,
+    // so tools with prefixed tags never get an update. Strip the prefix here.
+    {
+      description: "jq tags are jq-X.Y.Z",
+      matchManagers: [ "mise" ],
+      matchDepNames: [ "aqua:jqlang/jq" ],
+      extractVersion: "^jq-(?<version>\\d+\\.\\d+\\.\\d+)$",
+    },
+    {
+      description: "kubectl tags are kubernetes-X.Y.Z (the vX tags are the Go module)",
+      matchManagers: [ "mise" ],
+      matchDepNames: [ "aqua:kubernetes/kubectl" ],
+      extractVersion: "^kubernetes-(?<version>\\d+\\.\\d+\\.\\d+)$",
+    },
+    {
+      description: "kustomize tags are kustomize/vX.Y.Z (api/, kyaml/ tags are submodules)",
+      matchManagers: [ "mise" ],
+      matchDepNames: [ "aqua:kubernetes-sigs/kustomize" ],
+      extractVersion: "^kustomize/v(?<version>\\d+\\.\\d+\\.\\d+)$",
+    },
     // Grouping rules
     {
       description: "Actions Runner Controller Group",
@@ -222,6 +243,12 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       minimumGroupSize: 2,
+      // Clear the mise rule's 3-day age for the mise member: with it, the
+      // tuppr + image-pull pins ship as a group of two and the mise pin is
+      // stranded alone below minimumGroupSize (#1761). An age gate on the
+      // whole group is not an option — custom.talos-factory has no release
+      // timestamps, so it would hold the tuppr pin forever.
+      minimumReleaseAge: null,
     },
     // Labeling rules
     {
