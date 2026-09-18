@@ -72,6 +72,13 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
         runAsGroup: 65534
+      # Hard-spread the two replicas across nodes (soft spreading stacked
+      # dnscrypt-proxy on one node, 2026-08-27). Safe with 2 replicas on 3
+      # nodes; the chart (>= 5.2) fills in the controller labelSelector.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
     service:
       app:
         ports:
