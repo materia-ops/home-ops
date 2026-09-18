@@ -72,6 +72,13 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
         runAsGroup: 65534
+      # Keep the two tunnel replicas on separate nodes so one node loss
+      # can't take the whole public ingress path; the chart (>= 5.2)
+      # fills in the labelSelector for this controller.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
     service:
       app:
         ports:
