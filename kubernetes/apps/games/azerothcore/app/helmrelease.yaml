@@ -8,11 +8,10 @@ spec:
   chartRef:
     kind: OCIRepository
     name: azerothcore
-  # The wow-panel (and manual kubectl) scale these Deployments 0↔1; without
-  # the replicas ignore, cluster-wide drift detection reverts every scale
-  # within the reconcile interval (precedent: media/arr-apps/bazarr-anime).
+  # The wow-panel scales these Deployments 0↔1. replicas is kept out of the
+  # rendered manifest (see the controllers), and this ignore is the backstop
+  # so drift detection can never re-apply a replica count either.
   driftDetection:
-    mode: enabled
     ignore:
       - paths: [/spec/replicas]
   interval: 1h
@@ -21,7 +20,10 @@ spec:
       authserver:
         annotations:
           reloader.stakater.com/auto: "true"
-        replicas: 1
+        # `null` keeps replicas out of the rendered manifest (the chart
+        # defaults an absent key to 1), so a helm upgrade can no longer
+        # switch a scaled-off realm back on.
+        replicas: null
         containers:
           app:
             nameOverride: authserver
@@ -72,7 +74,7 @@ spec:
       worldserver:
         annotations:
           reloader.stakater.com/auto: "true"
-        replicas: 1
+        replicas: null # panel-owned, see authserver
         # RWO client-data PVC: the replacement pod can't mount until the old
         # one is gone.
         strategy: Recreate
