@@ -96,9 +96,7 @@ spec:
               # the live conf; deviations are AC_* env vars. Derive names with
               # the vault generator (ac-env-equivalence.sh), never by hand.
               AC_ACCOUNT_ACHIEVEMENTS_ANNOUNCE: "0"
-              # mod-account-mounts 8aa6e77 flipped both limits to 1 (class-limit
-              # filters SOURCE characters by class, so mixed-class accounts
-              # would stop sharing at all); keep full cross-faction/class sharing.
+              # mod-account-mounts >= 8aa6e77 defaults both limits to 1; keep full sharing.
               AC_ACCOUNT_MOUNTS_LIMIT_CLASS: "0"
               AC_ACCOUNT_MOUNTS_LIMIT_RACE: "0"
               AC_AI_PLAYERBOT_ADD_CLASS_ACCOUNT_POOL_SIZE: "10"
