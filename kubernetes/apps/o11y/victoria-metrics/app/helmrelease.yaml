@@ -172,10 +172,10 @@ spec:
       # CreateReplace patch upgrades them with the operator. Never
       # crds.enabled: false — the standalone crds chart lagged v0.75.0 (#1853).
       crds:
-        enabled: true
-        plain: true
         cleanup:
           enabled: false
+        enabled: true
+        plain: true
       operator:
         enable_converter_ownership: true
     vmagent:
