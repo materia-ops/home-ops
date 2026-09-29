@@ -8,8 +8,6 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: victoria-metrics-operator-crds
-      namespace: o11y
   interval: 1h
   path: ./kubernetes/apps/o11y/victoria-metrics/app
   prune: true
