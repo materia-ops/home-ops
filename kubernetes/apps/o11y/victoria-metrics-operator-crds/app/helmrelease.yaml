@@ -9,3 +9,7 @@ spec:
     kind: OCIRepository
     name: victoria-metrics-operator-crds
   interval: 1h
+  # Suspended so the follow-up removal orphans the Helm release (an uninstall
+  # would delete the CRDs and cascade every VM custom resource). Never resume:
+  # drift correction would re-apply this chart's stale CRD set over the stack's.
+  suspend: true

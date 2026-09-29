@@ -168,11 +168,14 @@ spec:
     prometheus-node-exporter:
       enabled: false
     victoria-metrics-operator:
+      # CRDs ship in the chart's crds/ dir and the cluster-wide
+      # CreateReplace patch upgrades them with the operator. Never
+      # crds.enabled: false — the standalone crds chart lagged v0.75.0 (#1853).
       crds:
-        enabled: false
-        plain: false
         cleanup:
           enabled: false
+        enabled: true
+        plain: true
       operator:
         enable_converter_ownership: true
     vmagent:
