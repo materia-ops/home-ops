@@ -40,9 +40,12 @@ Two conventions keep the layers honest:
   references resolved at render time.
 
 The content uses the Talos 1.14 multi-document kinds. The residual legacy `v1alpha1` document
-carries only what has no successor kind or was kept deliberately: CAs/tokens, `machine.install`
-(per-node diskSelector + grubUseUKICmdline), `machine.kubelet.disableManifestsDirectory`,
-`machine.network` nameservers, time servers, and `cluster.allowSchedulingOnControlPlanes`.
+carries only what has no successor kind or was kept deliberately: CAs/tokens, `clusterName`,
+`controlPlane.endpoint`, `machine.features` (apidCheckExtKeyUsage, diskQuotaSupport, rbac),
+`machine.install` (per-node diskSelector + grubUseUKICmdline) and time servers.
+`controlplane.yaml.j2` layers `machine.type`, the CA keys, etcd and the service-account key onto
+the same document. Nameservers live in `ResolverConfig`, and control planes are schedulable
+because `KubeNodeConfig` declares no taints, not via `cluster.allowSchedulingOnControlPlanes`.
 
 ## Schematics
 

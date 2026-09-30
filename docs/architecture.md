@@ -39,9 +39,9 @@ flowchart LR
 | `matalos-c2` | Bare metal | Lenovo ThinkStation P330 Tiny | Intel i7-8700 (6C/12T, UHD 630) | 32 GB | `192.168.20.11` |
 | `matalos-c3` | Bare metal | Lenovo ThinkStation P330 Tiny | Intel i7-8700 (6C/12T, UHD 630) | 32 GB | `192.168.20.12` |
 
-All three nodes are control-plane nodes with workload scheduling enabled
-(`allowSchedulingOnControlPlanes: true`), giving an HA etcd quorum without dedicated
-workers. `matalos-c1` is sized (8 vCPU / 32 GB) to match the physical nodes.
+All three nodes are control-plane nodes with workload scheduling enabled (the
+`KubeNodeConfig` document in `talos/controlplane.yaml.j2` sets no control-plane taint),
+giving an HA etcd quorum without dedicated workers. `matalos-c1` is sized (8 vCPU / 32 GB) to match the physical nodes.
 
 **Hypervisor host `pve-0`** — Supermicro X10SDV-4C-TLN2F (Intel Xeon D-1520, 4C/8T),
 128 GB ECC. It runs two VMs: `matalos-c1` and the TrueNAS SCALE NAS (4 vCPU / 64 GB).
