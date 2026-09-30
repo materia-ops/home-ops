@@ -41,7 +41,8 @@ flowchart LR
 
 All three nodes are control-plane nodes with workload scheduling enabled (the
 `KubeNodeConfig` document in `talos/controlplane.yaml.j2` sets no control-plane taint),
-giving an HA etcd quorum without dedicated workers. `matalos-c1` is sized (8 vCPU / 32 GB) to match the physical nodes.
+giving an HA etcd quorum without dedicated workers. `matalos-c1` is sized (8 vCPU / 32 GB)
+to match the physical nodes.
 
 **Hypervisor host `pve-0`** — Supermicro X10SDV-4C-TLN2F (Intel Xeon D-1520, 4C/8T),
 128 GB ECC. It runs two VMs: `matalos-c1` and the TrueNAS SCALE NAS (4 vCPU / 64 GB).
