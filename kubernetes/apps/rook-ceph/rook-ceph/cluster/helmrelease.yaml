@@ -131,16 +131,6 @@ spec:
         urlPrefix: /
         ssl: false
         prometheusEndpoint: http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428
-      healthCheck:
-        muteHealthWarning:
-          AUTH_INSECURE_CLIENT_KEY_TYPE:
-            policy: unmute
-          AUTH_INSECURE_KEYS_ALLOWED:
-            policy: unmute
-          AUTH_INSECURE_KEYS_CREATABLE:
-            policy: unmute
-          AUTH_INSECURE_ROTATING_SERVICE_KEY_TYPE:
-            policy: unmute
       mgr:
         modules:
           - name: insights
@@ -156,7 +146,7 @@ spec:
           allowedCiphers:
             - aes256k
           csi:
-            keepPriorKeyCountMax: 1
+            keepPriorKeyCountMax: 0
             keyRotationPolicy: KeyGeneration
             keyGeneration: 5
             keyType: aes256k
