@@ -181,8 +181,9 @@ spec:
     probes: 3
   timeout:
     http:
-      # Shorter than any backend's own keep-alive idle (Plex closes at 20s),
-      # so Envoy retires a pooled connection before the backend can reset it.
+      # Deliberately below the 5s keep-alive default of uvicorn/Node backends
+      # (raidscope, wow-panel): Envoy retires a pooled connection before the
+      # backend can close it under a request. Plex overrides to 300s per route.
       connectionIdleTimeout: 4s
       requestTimeout: 0s
       streamIdleTimeout: 1h
