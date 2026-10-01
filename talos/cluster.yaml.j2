@@ -1,6 +1,6 @@
 ---
 # Deliberately still legacy (no successor kind): CAs/tokens, clusterName,
-# controlPlane.endpoint, machine.features, machine.install, time servers.
+# controlPlane.endpoint, machine.features, machine.install.
 version: v1alpha1
 machine:
   ca:
@@ -13,10 +13,6 @@ machine:
     image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.2
     wipe: false
     grubUseUKICmdline: true
-  time:
-    servers:
-      - 162.159.200.1
-      - 162.159.200.123
   token: ref+op://kubernetes/talos/MACHINE_TOKEN
 cluster:
   ca:
@@ -47,10 +43,21 @@ nameservers:
   - address: 192.168.20.2
 searchDomains:
   disableDefault: true
+  domains: []
 hostDNS:
   enabled: true
   forwardKubeDNSToHost: true
   resolveMemberNames: true
+---
+# NTS needs hostnames, so time sync depends on the LAN resolvers at boot;
+# bootTimeout keeps a DNS outage from blocking boot (the RTC carries).
+apiVersion: v1alpha1
+kind: TimeSyncConfig
+bootTimeout: 2m
+ntp:
+  servers:
+    - time.cloudflare.com
+  useNTS: true
 ---
 apiVersion: v1alpha1
 kind: DiscoveryServiceConfig
@@ -111,18 +118,14 @@ params:
   net.ipv4.tcp_fastopen: "3"
   net.ipv4.tcp_mtu_probing: "1"
   net.ipv4.tcp_notsent_lowat: "131072"
-  net.ipv4.tcp_rmem: 4096 87380 33554432
+  net.ipv4.tcp_rmem: 4096 131072 67108864
   net.ipv4.tcp_slow_start_after_idle: "0"
-  net.ipv4.tcp_window_scaling: "1"
-  net.ipv4.tcp_wmem: 4096 65536 33554432
+  net.ipv4.tcp_wmem: 4096 65536 67108864
   # bond0.70 is only the multus IoT macvlan master; the host takes no address
   # there. Slash separators are required: the interface name contains a dot.
   net/ipv6/conf/bond0.70/disable_ipv6: "1"
-  sunrpc.tcp_max_slot_table_entries: "128"
-  sunrpc.tcp_slot_table_entries: "128"
   user.max_user_namespaces: "11255"
   vm.dirty_writeback_centisecs: "3000"
-  vm.nr_hugepages: "1024"
 ---
 apiVersion: v1alpha1
 kind: EtcFileConfig
