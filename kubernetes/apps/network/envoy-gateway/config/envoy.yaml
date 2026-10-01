@@ -170,14 +170,22 @@ spec:
     numRetries: 2
     retryOn:
       triggers:
-        - reset
+        # Never replay a request the upstream may already have processed.
+        - reset-before-request
   targetSelectors:
     - group: gateway.networking.k8s.io
       kind: Gateway
-  tcpKeepalive: {}
+  tcpKeepalive:
+    idleTime: 60s
+    interval: 10s
+    probes: 3
   timeout:
     http:
+      # Shorter than any backend's own keep-alive idle (Plex closes at 20s),
+      # so Envoy retires a pooled connection before the backend can reset it.
+      connectionIdleTimeout: 4s
       requestTimeout: 0s
+      streamIdleTimeout: 1h
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.envoyproxy.io/clienttrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -195,7 +203,14 @@ spec:
   targetSelectors:
     - group: gateway.networking.k8s.io
       kind: Gateway
-  tcpKeepalive: {}
+  tcpKeepalive:
+    idleTime: 60s
+    interval: 10s
+    probes: 3
+  timeout:
+    http:
+      # Must exceed cloudflared's keep-alive idle so the tunnel side closes first.
+      idleTimeout: 600s
   tls:
     minVersion: "1.2"
     alpnProtocols:
