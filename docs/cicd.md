@@ -125,6 +125,20 @@ restore points for the whole cluster state.
 Sync the label set from `.github/labels.yaml` (daily) and auto-label PRs by touched
 area (`.github/labeler.yaml`).
 
+### `claude-review.yaml` — report-only PR review
+
+Runs [claude-code-action](https://github.com/anthropics/claude-code-action) on every
+same-repo, non-draft PR and posts **one** top-level comment (verdict, breaking changes,
+deprecations, problems, features worth adopting, sources) plus inline anchors for
+concrete problems. For dependency bumps it walks every release between old and new
+and maps findings against what this repo actually configures; for everything else it
+checks manifests, Flux wiring and CLAUDE.md conventions. It is report-only (L1): it
+never approves, requests changes or merges, and its tool allowlist is read-only plus
+`gh pr view|diff|comment` and `gh release list|view`. Credentials come from 1Password
+(`op://ci/claude/CLAUDE_CODE_OAUTH_TOKEN` for Claude, the github-bot App for the
+comment), so forks never trigger it. The prompt treats PR bodies and changelogs as
+untrusted data.
+
 ## konflate — PR gating and Flux visibility
 
 [konflate](https://github.com/home-operations) runs **in-cluster** (`flux-system`
