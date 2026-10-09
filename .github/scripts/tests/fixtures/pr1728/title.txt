@@ -1,0 +1,1 @@
+feat(container): update image ghcr.io/home-operations/charts-mirror/external-dns (1.21.1 ➔ 1.22.0)

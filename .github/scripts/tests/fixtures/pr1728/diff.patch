@@ -1,0 +1,37 @@
+diff --git a/kubernetes/apps/network/external-dns/cloudflare/ocirepository.yaml b/kubernetes/apps/network/external-dns/cloudflare/ocirepository.yaml
+index 6f1fb7f7a..bb80f5912 100644
+--- a/kubernetes/apps/network/external-dns/cloudflare/ocirepository.yaml
++++ b/kubernetes/apps/network/external-dns/cloudflare/ocirepository.yaml
+@@ -9,5 +9,5 @@ spec:
+     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+     operation: copy
+   ref:
+-    tag: 1.21.1
++    tag: 1.22.0
+   url: oci://ghcr.io/home-operations/charts-mirror/external-dns
+diff --git a/kubernetes/apps/network/external-dns/pihole/ocirepository.yaml b/kubernetes/apps/network/external-dns/pihole/ocirepository.yaml
+index f1a08b136..15851f0a5 100644
+--- a/kubernetes/apps/network/external-dns/pihole/ocirepository.yaml
++++ b/kubernetes/apps/network/external-dns/pihole/ocirepository.yaml
+@@ -10,7 +10,7 @@ spec:
+     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+     operation: copy
+   ref:
+-    tag: 1.21.1
++    tag: 1.22.0
+   url: oci://ghcr.io/home-operations/charts-mirror/external-dns
+   verify:
+     provider: cosign
+diff --git a/kubernetes/apps/network/external-dns/unifi/ocirepository.yaml b/kubernetes/apps/network/external-dns/unifi/ocirepository.yaml
+index 1723c364d..7a25aa232 100644
+--- a/kubernetes/apps/network/external-dns/unifi/ocirepository.yaml
++++ b/kubernetes/apps/network/external-dns/unifi/ocirepository.yaml
+@@ -10,7 +10,7 @@ spec:
+     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+     operation: copy
+   ref:
+-    tag: 1.21.1
++    tag: 1.22.0
+   url: oci://ghcr.io/home-operations/charts-mirror/external-dns
+   verify:
+     provider: cosign

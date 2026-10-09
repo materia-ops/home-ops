@@ -1,0 +1,190 @@
+This PR contains the following updates:
+
+| Package | Update | Change |
+|---|---|---|
+| [siderolabs/talos](https://redirect.github.com/siderolabs/talos) | patch | `1.14.0` → `1.14.1` |
+| siderolabs/talos | patch | `v1.14.0` → `v1.14.1` |
+
+---
+
+### Release Notes
+
+<details>
+<summary>siderolabs/talos (siderolabs/talos)</summary>
+
+### [`v1.14.1`](https://redirect.github.com/siderolabs/talos/releases/tag/v1.14.1)
+
+[Compare Source](https://redirect.github.com/siderolabs/talos/compare/v1.14.0...v1.14.1)
+
+#### [Talos 1.14.1](https://redirect.github.com/siderolabs/talos/releases/tag/v1.14.1) (2026-09-15)
+
+Welcome to the v1.14.1 release of Talos!
+
+Please try out the release binaries and report any issues at
+<https://github.com/siderolabs/talos/issues>.
+
+##### Component Updates
+
+Linux: 6.18.51
+containerd: 2.3.5
+
+Talos is built with Go 1.26.8.
+
+##### Contributors
+
+- Andrey Smirnov
+- Noel Georgi
+- Maja Bojarska
+- Utku Ozdemir
+- Aleksei Sviridkin
+- Brian Topping
+- Dennis Docter
+- Louis Deconinck
+- Mateusz Urbanek
+- Raphaël DUCOM
+- Sacha Weatherstone
+- leppeK
+- usman.malik\_ext
+
+##### Changes
+
+<details><summary>36 commits</summary>
+<p>
+
+- [@&#8203;`2f86b9d`](https://redirect.github.com/siderolabs/talos/commit/2f86b9d2a) release(v1.14.1): prepare release
+- [@&#8203;`65f704e`](https://redirect.github.com/siderolabs/talos/commit/65f704ee1) chore: pass kernel version down to VEX generator
+- [@&#8203;`63101af`](https://redirect.github.com/siderolabs/talos/commit/63101af5b) fix: prevent sandboxd signal dispositions leaking into services
+- [@&#8203;`676276f`](https://redirect.github.com/siderolabs/talos/commit/676276f72) test: peer passively with the MetalLB speaker
+- [@&#8203;`2b8b46d`](https://redirect.github.com/siderolabs/talos/commit/2b8b46dcd) test: stop ARP flux breaking the BGP VRF test
+- [@&#8203;`357d600`](https://redirect.github.com/siderolabs/talos/commit/357d6006a) fix: rebuild the BGP server when its VRF is recreated
+- [@&#8203;`db0b5a1`](https://redirect.github.com/siderolabs/talos/commit/db0b5a17c) fix: guard against nil config document slices
+- [@&#8203;`094741f`](https://redirect.github.com/siderolabs/talos/commit/094741ff3) docs: clarify the kube-apiserver extra args and new config
+- [@&#8203;`a13b560`](https://redirect.github.com/siderolabs/talos/commit/a13b560f4) docs: correct the UnattendedInstallConfig name in the schema
+- [@&#8203;`166c407`](https://redirect.github.com/siderolabs/talos/commit/166c4070c) fix: make --insecure reachable for talosctl meta subcommands
+- [@&#8203;`aac1068`](https://redirect.github.com/siderolabs/talos/commit/aac106867) fix: ignore apply config dry-run for try mode
+- [@&#8203;`7a2c4e8`](https://redirect.github.com/siderolabs/talos/commit/7a2c4e8cf) fix: tighten the validation of v1alpha1 configs vs. migration
+- [@&#8203;`aef64fa`](https://redirect.github.com/siderolabs/talos/commit/aef64fa38) fix: reconnect the WireGuard over gRPC tunnel after a failure
+- [@&#8203;`d07a21a`](https://redirect.github.com/siderolabs/talos/commit/d07a21ad2) fix: drop logical links if they no longer declare as logical
+- [@&#8203;`9996bc8`](https://redirect.github.com/siderolabs/talos/commit/9996bc871) fix: create GRUB bootloader ISOs only for BIOS
+- [@&#8203;`0604432`](https://redirect.github.com/siderolabs/talos/commit/0604432de) feat: add NixOS OVMF search path
+- [@&#8203;`5cb44dc`](https://redirect.github.com/siderolabs/talos/commit/5cb44dcab) fix: wait for USB settle explicitly
+- [@&#8203;`20dcd51`](https://redirect.github.com/siderolabs/talos/commit/20dcd515a) fix: empty searchdomains dropped on merge
+- [@&#8203;`1e3e3fe`](https://redirect.github.com/siderolabs/talos/commit/1e3e3fe50) chore: support correctly various disk types for the system disk
+- [@&#8203;`7c2e0b1`](https://redirect.github.com/siderolabs/talos/commit/7c2e0b113) fix: notify about link alias changes
+- [@&#8203;`e9a67e1`](https://redirect.github.com/siderolabs/talos/commit/e9a67e163) chore: use the host page cache for the QEMU cluster disks
+- [@&#8203;`0afebca`](https://redirect.github.com/siderolabs/talos/commit/0afebca70) fix: use the final config version in upgrade-k8s
+- [@&#8203;`0ad18bb`](https://redirect.github.com/siderolabs/talos/commit/0ad18bb55) feat: bring in containerd 2.3.5
+- [@&#8203;`04c49d8`](https://redirect.github.com/siderolabs/talos/commit/04c49d8a3) feat: allow generating an ECDSA service account key in secrets bundles
+- [@&#8203;`bb2cb91`](https://redirect.github.com/siderolabs/talos/commit/bb2cb91fc) fix(security): define the permissions the 6.18 kernel expects in the classes
+- [@&#8203;`bf31b28`](https://redirect.github.com/siderolabs/talos/commit/bf31b2811) fix: improve resilience of the action tracker against dropped conns
+- [@&#8203;`00a0ea0`](https://redirect.github.com/siderolabs/talos/commit/00a0ea03c) fix: set TCP keealive and user timeout on apid proxied connections
+- [@&#8203;`6c06560`](https://redirect.github.com/siderolabs/talos/commit/6c065607e) test: revert disabling PS/2 in QEMU
+- [@&#8203;`9841e0b`](https://redirect.github.com/siderolabs/talos/commit/9841e0b47) docs: fix containerconfig.dependson examples
+- [@&#8203;`a11a260`](https://redirect.github.com/siderolabs/talos/commit/a11a260e6) feat: add USB LAN78XX drivers to the rootfs
+- [@&#8203;`9f82774`](https://redirect.github.com/siderolabs/talos/commit/9f8277434) fix: harden the code around kubelet's client certificate handling
+- [@&#8203;`3260b1e`](https://redirect.github.com/siderolabs/talos/commit/3260b1e1f) fix: resolve volume devices in shared selector helper
+- [@&#8203;`0841525`](https://redirect.github.com/siderolabs/talos/commit/084152592) fix: create LVM physical volumes on the decrypted device
+- [@&#8203;`7dabdeb`](https://redirect.github.com/siderolabs/talos/commit/7dabdeb43) feat: add xfrm interface module
+- [@&#8203;`63963f7`](https://redirect.github.com/siderolabs/talos/commit/63963f7da) feat: sync pkgs/tools
+- [@&#8203;`09681e8`](https://redirect.github.com/siderolabs/talos/commit/09681e895) fix: correct the bug with overlay assets in ESP being dropped
+
+</p>
+</details>
+
+##### Changes from siderolabs/gen
+<details><summary>2 commits</summary>
+<p>
+
+- [siderolabs/gen@`cbd9518`](https://redirect.github.com/siderolabs/gen/commit/cbd9518) chore: rekres and update deps
+- [siderolabs/gen@`26ccee1`](https://redirect.github.com/siderolabs/gen/commit/26ccee1) feat: provide new YAMl unmarshal validator for null values
+
+</p>
+</details>
+
+##### Changes from siderolabs/pkgs
+<details><summary>10 commits</summary>
+<p>
+
+- [siderolabs/pkgs@`f694e1b`](https://redirect.github.com/siderolabs/pkgs/commit/f694e1b) feat: update Linux to 6.18.51
+- [siderolabs/pkgs@`85a249a`](https://redirect.github.com/siderolabs/pkgs/commit/85a249a) feat: update libpathrs to 0.2.6
+- [siderolabs/pkgs@`fe037b6`](https://redirect.github.com/siderolabs/pkgs/commit/fe037b6) feat: update Linux to 6.18.50
+- [siderolabs/pkgs@`35e3898`](https://redirect.github.com/siderolabs/pkgs/commit/35e3898) feat: update containerd to 2.3.5
+- [siderolabs/pkgs@`fd0c2b2`](https://redirect.github.com/siderolabs/pkgs/commit/fd0c2b2) fix: add a kernel patch for EFI SecureBoot integrity lockdown
+- [siderolabs/pkgs@`2415a01`](https://redirect.github.com/siderolabs/pkgs/commit/2415a01) feat: add kernel modules to enable Intel HD audio
+- [siderolabs/pkgs@`202a677`](https://redirect.github.com/siderolabs/pkgs/commit/202a677) feat: bump kernel to 6.18.49
+- [siderolabs/pkgs@`5ddbb53`](https://redirect.github.com/siderolabs/pkgs/commit/5ddbb53) feat: enable CONFIG\_USB\_LAN78XX and CONFIG\_MICROCHIP\_PHY on amd64
+- [siderolabs/pkgs@`c61bcc3`](https://redirect.github.com/siderolabs/pkgs/commit/c61bcc3) feat: enable CONFIG\_XFRM\_INTERFACE in the kernel
+- [siderolabs/pkgs@`40ccb0d`](https://redirect.github.com/siderolabs/pkgs/commit/40ccb0d) chore: sync tools & toolchain
+
+</p>
+</details>
+
+##### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+- [siderolabs/tools@`a404efb`](https://redirect.github.com/siderolabs/tools/commit/a404efb) chore: bump util-linux 2.42.3
+- [siderolabs/tools@`3c49a3c`](https://redirect.github.com/siderolabs/tools/commit/3c49a3c) feat: bump go to 1.26.8
+
+</p>
+</details>
+
+##### Dependency Changes
+
+- **github.com/containerd/containerd/v2**        v2.3.4 -> v2.3.5
+- **github.com/containerd/platforms**            v1.0.0-rc.4 -> v1.0.0-rc.5
+- **github.com/siderolabs/gen**                  v0.8.7 -> v0.8.8
+- **github.com/siderolabs/pkgs**                 v1.14.0-15-g2f03590 -> v1.14.0-25-gf694e1b
+- **github.com/siderolabs/talos/pkg/machinery**  v1.14.0 -> v1.14.1
+- **github.com/siderolabs/tools**                v1.14.0-5-g87316ca -> v1.14.0-7-ga404efb
+
+Previous release can be found at [v1.14.0](https://redirect.github.com/siderolabs/talos/releases/tag/v1.14.0)
+
+#### Images
+
+```
+ghcr.io/siderolabs/flannel:0.28.9
+registry.k8s.io/coredns/coredns:v1.14.7
+registry.k8s.io/etcd:3.7.1
+registry.k8s.io/pause:3.10.2
+registry.k8s.io/kube-apiserver:v1.37.0
+registry.k8s.io/kube-controller-manager:v1.37.0
+registry.k8s.io/kube-scheduler:v1.37.0
+registry.k8s.io/kube-proxy:v1.37.0
+ghcr.io/siderolabs/kubelet:v1.37.0
+registry.k8s.io/networking/kube-network-policies:v1.1.1
+ghcr.io/siderolabs/installer-base:v1.14.1
+ghcr.io/siderolabs/imager:v1.14.1
+ghcr.io/siderolabs/talos:v1.14.1
+ghcr.io/siderolabs/talosctl-all:v1.14.1
+ghcr.io/siderolabs/overlays:v1.14.1
+ghcr.io/siderolabs/extensions:v1.14.1
+```
+
+</details>
+
+---
+
+### Configuration
+
+📅 **Schedule**: (in timezone Australia/Melbourne)
+
+- Branch creation
+  - At any time (no schedule defined)
+- Automerge
+  - At any time (no schedule defined)
+
+🚦 **Automerge**: Disabled by config. Please merge this manually once you are satisfied.
+
+♻ **Rebasing**: Whenever PR becomes conflicted, or you tick the rebase/retry checkbox.
+
+👻 **Immortal**: This PR will be recreated if closed unmerged. Get [config help](https://redirect.github.com/renovatebot/renovate/discussions) if that's undesired.
+
+---
+
+ - [ ] <!-- rebase-check -->If you want to rebase/retry this PR, check this box
+
+---
+
+This PR has been generated by [Mend Renovate CLI](https://redirect.github.com/renovatebot/renovate).
+<!--renovate-debug:eyJjcmVhdGVkSW5WZXIiOiI0NC44My4wIiwidXBkYXRlZEluVmVyIjoiNDQuODMuMCIsInRhcmdldEJyYW5jaCI6Im1haW4iLCJsYWJlbHMiOlsidHlwZS9wYXRjaCJdfQ==-->

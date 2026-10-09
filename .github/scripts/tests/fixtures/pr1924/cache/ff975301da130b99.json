@@ -1,0 +1,22 @@
+{
+ "key": "releases:github.com:rook/rook:v1.20.8",
+ "value": [
+  [
+   [
+    "v1.21.0",
+    "v1.21.0",
+    "## Upgrade Guide\r\n\r\nTo upgrade from previous versions of Rook, see the [Rook upgrade guide](https://rook.github.io/docs/rook/v1.21/Upgrade/rook-upgrade/).\r\n\r\n## Breaking Changes\r\n\r\n- Helm OCI chart tags no longer include the `v` prefix (e.g., `1.21.0` instead of `v1.21.0`). Update any scripts or tooling that reference the chart by tag.\r\n- Ceph msgrv2 is required by default. Msgrv2 requires the 5.11 kernel. If you still cannot use msgrv2 due to an older kernel, disable the msgrv2 protocol with the CephCluster CR setting `network.connections.requireMsgr2: false`. If using the helm chart, this same value is applied under the `cephClusterSpec` of the values.\r\n- New installs of NFS must define a CephBlockPool for the `.nfs` pool. Rook no longer automatically creates the `.nfs` pool. A sample CephBlockPool spec is included in `deploy/examples/nfs.yaml`. Upgraded clusters are not impacted, as the `.nfs`pool was already previously created.\r\n\r\n## Features\r\n\r\n- Ceph Umbrella (v21) is now a supported version of Ceph, once v21.2.0 is released by the Ceph team soon.\r\n- RBD Quality of Service (QoS) support is configured via the `VolumeAttributesClass` using the krbd mounter with cgroup v2 `io.max` enforcement. See the [RBD QoS documentation](Documentation/Storage-Configuration/Block-Storage-RBD/rbd-qos.md) for details.\r\n- Automated OSD replacement: An OSD deployment can be annotated to mark it for replacement. Rook will drain and destroy it by preserving its CRUSH position to later reuse it when new device will be available on the same node. All types of OSDs supported for host-based clusters, including OSDs sharing a metadata device. PVC-based OSDs are not supported for this new replacement design. See [OSD replacement design document](./design/ceph/osd-replacement.md) for details.\r\n- The rook-ceph-cluster Helm chart can create `CephObjectStoreUser` resources via the new `cephObjectStoreUsers` value.\r\n- The toolbox deployments from the Helm chart and the example manifests now reload the keyring and `ceph.conf` automatically after CephX key rotation, mon failover, or a config override change.\r\n- CephCluster dashboard TLS certificates can now be configured from a same-namespace Kubernetes TLS Secret with `spec.dashboard.sslCertificateRef` when the dashboard SSL is enabled. Rook reconciles updates to the referenced Secret and restores the default self-signed certificate when the reference is removed.\r\n- `CephObjectStoreUser` gained settings `spec.defaultPlacement` and `spec.defaultStorageClass`, which set the RGW user's default bucket placement target and default storage class. Both are optional and validated by RGW. The effective values are reported in `status.info`. Removing either field stops Rook from managing it and leaves the last applied value in place on the RGW user, except that changing `defaultPlacement` without a `defaultStorageClass` resets the storage class to the new placement target's default.\r\n- Default CSI driver container images are no longer set by Rook. The configmap `rook-csi-operator-image-set-configmap` is now configured with empty values, allowing the ceph-csi-operator to use its built-in defaults. Users with custom CSI images should ensure their overrides are present in the configmap after upgrade.\r\n",
+    "https://github.com/rook/rook/releases/tag/v1.21.0",
+    false
+   ],
+   [
+    "v1.20.8",
+    "v1.20.8",
+    "",
+    "https://github.com/rook/rook/releases/tag/v1.20.8",
+    false
+   ]
+  ],
+  false
+ ]
+}

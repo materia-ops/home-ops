@@ -139,6 +139,47 @@ never approves, requests changes or merges, and its tool allowlist is read-only 
 comment), so forks never trigger it. The prompt treats PR bodies and changelogs as
 untrusted data.
 
+Before the model runs, an **upgrade-evidence** step collects the release notes
+deterministically instead of leaving the research to the model.
+[`.github/scripts/upgrade_evidence.py`](../.github/scripts/upgrade_evidence.py) reads
+the PR diff, finds every version change (OCIRepository chart tags, HelmRelease image
+tags, `# renovate:` annotated pins, Talos installer images, `.mise/config.toml` pins,
+pinned `uses:` actions), and cross-checks them against the Renovate table and title.
+For a chart bump it also reads `appVersion` from both chart versions with
+`helm show chart` and adds the **inner application** as its own row. That is where
+breaking changes tend to hide: the external-dns 1.21→1.22 chart bump (#1728) shipped
+the app's 0.22 annotation-prefix change, which was only in the app's release notes.
+It resolves each dependency to an upstream repo (Renovate source link, then
+[`evidence-sources.yaml`](../.github/scripts/evidence-sources.yaml) overrides, then the
+chart's `sources`/`home`, charts-mirror metadata, the OCI `image.source` label, then
+the `ghcr.io/<owner>/<repo>` pattern), and pulls the notes for **every** release in the
+range from GitHub, Codeberg or GitLab releases, falling back to `CHANGELOG.md`. Its
+Markdown output, `.review-evidence/upgrade-impact.md`, starts with a summary table and
+labels rollbacks, digest-only rebuilds, and anything it could not resolve
+(`UNRESOLVED`) or had to cut to fit its size caps (`truncated`). The prompt tells the
+model to read this file first, cover every row, and go upstream itself only for those
+gaps.
+
+Trust model: the step runs with the read-only `github.token`, never the App token or
+the 1Password secrets. It is `continue-on-error` with a 3-minute timeout, and the
+script keeps its own time budget below that so it always writes a file, marking any
+rows it did not reach as `UNRESOLVED`. If it fails anyway, the model researches
+unaided. The script is checked out from the PR's **base** commit (`_base/`), so a PR
+cannot change the code that gathers evidence about itself. The flip side is that a
+change to the script only takes effect for PRs opened after it merges. The step
+deletes `.review-evidence/` before writing, so a PR cannot plant a forged evidence
+file. Release notes are third-party text: the file is labelled untrusted, HTML
+comments are stripped, and code fences are neutralised so a note cannot break out of
+its quoted block.
+
+### `scripts-test.yaml` — evidence script tests
+
+Runs `python3 -m unittest discover -s .github/scripts/tests` on PRs touching
+`.github/scripts/**`. The fixtures are real PRs (#1728, #1734, #1761, #1917, #1924,
+#1953, #1955) with recorded API responses, so the suite runs offline. Re-record a
+fixture with the command in the test module's docstring after a deliberate behaviour
+change.
+
 ## konflate — PR gating and Flux visibility
 
 [konflate](https://github.com/home-operations) runs **in-cluster** (`flux-system`
