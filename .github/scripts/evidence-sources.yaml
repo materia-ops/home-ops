@@ -1,0 +1,34 @@
+---
+# Upstream source repo per dependency name, for upgrade_evidence.py.
+# Flat `name-or-prefix: owner/repo` (GitHub) or `codeberg.org/owner/repo`;
+# the longest matching prefix wins. Only needed where the Renovate body link,
+# Chart.yaml sources and the ghcr.io/<owner>/<repo> pattern all miss.
+# `<chart>#app` names the repo of a chart's inner application (appVersion).
+docker: docker-library/docker
+docker.io/library/mysql: mysql/mysql-server
+factory.talos.dev: siderolabs/talos
+ghcr.io/actions/actions-runner: actions/runner
+ghcr.io/actions/actions-runner-controller-charts: actions/actions-runner-controller
+ghcr.io/bjw-s-labs/helm/app-template: bjw-s-labs/helm-charts
+ghcr.io/controlplaneio-fluxcd/charts: controlplaneio-fluxcd/flux-operator
+ghcr.io/home-operations/bazarr: morpheus65535/bazarr
+ghcr.io/home-operations/lidarr: Lidarr/Lidarr
+ghcr.io/home-operations/prowlarr: Prowlarr/Prowlarr
+ghcr.io/home-operations/qbittorrent: qbittorrent/qBittorrent
+ghcr.io/home-operations/radarr: Radarr/Radarr
+ghcr.io/home-operations/sabnzbd: sabnzbd/sabnzbd
+ghcr.io/home-operations/sonarr: Sonarr/Sonarr
+ghcr.io/home-operations/tautulli: Tautulli/Tautulli
+ghcr.io/prometheus-community/charts: prometheus-community/helm-charts
+ghcr.io/rook: rook/rook
+ghcr.io/rook/ceph: ceph/ceph
+ghcr.io/siderolabs/installer: siderolabs/talos
+ghcr.io/siderolabs/kubelet: kubernetes/kubernetes
+ghcr.io/stakater/charts/reloader: stakater/Reloader
+ghcr.io/victoriametrics/helm-charts/victoria-logs-collector#app: VictoriaMetrics/VictoriaLogs
+ghcr.io/victoriametrics/helm-charts/victoria-logs-single#app: VictoriaMetrics/VictoriaLogs
+ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack#app: VictoriaMetrics/VictoriaMetrics
+mirror.gcr.io/envoyproxy/gateway-helm: envoyproxy/gateway
+quay.io/jetstack/charts/cert-manager: cert-manager/cert-manager
+registry.k8s.io/external-dns: kubernetes-sigs/external-dns
+siderolabs/talos: siderolabs/talos

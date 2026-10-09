@@ -1,0 +1,4 @@
+{
+ "key": "helm:ghcr.io/rook/rook-ceph:v1.20.8",
+ "value": "apiVersion: v2\nappVersion: v1.20.8\ndependencies:\n- name: library\n  repository: file://../library\n  version: 0.0.1\n- alias: ceph-csi-operator\n  condition: csi.installCsiOperator\n  name: ceph-csi-operator\n  repository: https://ceph.github.io/ceph-csi-operator\n  version: 1.0.4\ndescription: File, Block, and Object Storage Services for your Cloud-Native Environment\nicon: https://rook.io/images/rook-logo.svg\nname: rook-ceph\nsources:\n- https://github.com/rook/rook\nversion: v1.20.8\n\n"
+}

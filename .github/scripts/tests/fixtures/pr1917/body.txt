@@ -1,0 +1,78 @@
+This PR contains the following updates:
+
+| Package | Update | Change |
+|---|---|---|
+| [ghcr.io/home-operations/charts-mirror/descheduler](https://redirect.github.com/kubernetes-sigs/descheduler) | minor | `0.36.0` → `0.37.0` |
+
+---
+
+### Release Notes
+
+<details>
+<summary>kubernetes-sigs/descheduler (ghcr.io/home-operations/charts-mirror/descheduler)</summary>
+
+### [`v0.37.0`](https://redirect.github.com/kubernetes-sigs/descheduler/releases/tag/v0.37.0): Descheduler v0.37.0
+
+[Compare Source](https://redirect.github.com/kubernetes-sigs/descheduler/compare/v0.36.0...v0.37.0)
+
+#### What's Changed
+
+- chore(copilot): ignore vendor directory by [@&#8203;a7i](https://redirect.github.com/a7i) in [#&#8203;1876](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1876)
+- \[descheduler v0.36.0] update helm chart by [@&#8203;a7i](https://redirect.github.com/a7i) in [#&#8203;1879](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1879)
+- fix: emit eviction metrics for background evictions that never get deleted by [@&#8203;tiraboschi](https://redirect.github.com/tiraboschi) in [#&#8203;1880](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1880)
+- Remove unnecessary pods delete permission from ClusterRole by [@&#8203;yugstar](https://redirect.github.com/yugstar) in [#&#8203;1888](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1888)
+- deps: bump golang.org/x/net and x/crypto for security fixes by [@&#8203;sammedsingalkar09](https://redirect.github.com/sammedsingalkar09) in [#&#8203;1889](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1889)
+- feat: add opt-in PodDisruptionBudget to the Helm chart by [@&#8203;somaz94](https://redirect.github.com/somaz94) in [#&#8203;1885](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1885)
+- fix(e2e): resolve LowNodeUtilization metrics timeout, test isolation, and runner resource exhaustion by [@&#8203;a7i](https://redirect.github.com/a7i) in [#&#8203;1911](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1911)
+- security: bump grpc and cel-go to fix vulnerabilities by [@&#8203;sammedsingalkar09](https://redirect.github.com/sammedsingalkar09) in [#&#8203;1908](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1908)
+- Updated Kubivert to latest v1.9.0 by [@&#8203;PKNaveen](https://redirect.github.com/PKNaveen) in [#&#8203;1910](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1910)
+- refactor(e2e): centralize kubevirt version from go.mod by [@&#8203;a7i](https://redirect.github.com/a7i) in [#&#8203;1913](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1913)
+- feat: add opt-in schedulerName and runtimeClassName to the Helm chart by [@&#8203;somaz94](https://redirect.github.com/somaz94) in [#&#8203;1890](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1890)
+- (Code-cleanup) removed EvictionRequests by [@&#8203;PKNaveen](https://redirect.github.com/PKNaveen) in [#&#8203;1915](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1915)
+- feat: add opt-in hostUsers to the Helm chart by [@&#8203;somaz94](https://redirect.github.com/somaz94) in [#&#8203;1892](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1892)
+- Fix LoggingAlphaOptions wiring by [@&#8203;mattburgess](https://redirect.github.com/mattburgess) in [#&#8203;1906](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1906)
+- refactor(test): extract e2e test scripts into reusable lib modules by [@&#8203;a7i](https://redirect.github.com/a7i) in [#&#8203;1914](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1914)
+- feat(deployment): adds revisionHistoryLimit as a configurable parameter by [@&#8203;NPastorale](https://redirect.github.com/NPastorale) in [#&#8203;1884](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1884)
+- fix(nodeutilization): correct misleading notSupportedError message by [@&#8203;Mukuwul](https://redirect.github.com/Mukuwul) in [#&#8203;1897](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1897)
+- fix(node): Structure node condition logs by [@&#8203;mattburgess](https://redirect.github.com/mattburgess) in [#&#8203;1907](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1907)
+- fix: bump golang.org/x/crypto to v0.56.0 (CVE-2026-56855) and grpc to… by [@&#8203;sammedsingalkar09](https://redirect.github.com/sammedsingalkar09) in [#&#8203;1923](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1923)
+- \[v0.37.0] release prep: bump k8s deps, manifests, docs, helm chart, and CI matrix by [@&#8203;a7i](https://redirect.github.com/a7i) in [#&#8203;1930](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1930)
+
+#### New Contributors
+
+- [@&#8203;yugstar](https://redirect.github.com/yugstar) made their first contribution in [#&#8203;1888](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1888)
+- [@&#8203;somaz94](https://redirect.github.com/somaz94) made their first contribution in [#&#8203;1885](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1885)
+- [@&#8203;PKNaveen](https://redirect.github.com/PKNaveen) made their first contribution in [#&#8203;1910](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1910)
+- [@&#8203;mattburgess](https://redirect.github.com/mattburgess) made their first contribution in [#&#8203;1906](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1906)
+- [@&#8203;NPastorale](https://redirect.github.com/NPastorale) made their first contribution in [#&#8203;1884](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1884)
+- [@&#8203;Mukuwul](https://redirect.github.com/Mukuwul) made their first contribution in [#&#8203;1897](https://redirect.github.com/kubernetes-sigs/descheduler/pull/1897)
+
+**Full Changelog**: <https://github.com/kubernetes-sigs/descheduler/compare/v0.36.0...v0.37.0>
+
+</details>
+
+---
+
+### Configuration
+
+📅 **Schedule**: (in timezone Australia/Melbourne)
+
+- Branch creation
+  - At any time (no schedule defined)
+- Automerge
+  - At any time (no schedule defined)
+
+🚦 **Automerge**: Disabled by config. Please merge this manually once you are satisfied.
+
+♻ **Rebasing**: Whenever PR becomes conflicted, or you tick the rebase/retry checkbox.
+
+🔕 **Ignore**: Close this PR and you won't be reminded about this update again.
+
+---
+
+ - [ ] <!-- rebase-check -->If you want to rebase/retry this PR, check this box
+
+---
+
+This PR has been generated by [Mend Renovate CLI](https://redirect.github.com/renovatebot/renovate).
+<!--renovate-debug:eyJjcmVhdGVkSW5WZXIiOiI0NC4xMzIuNSIsInVwZGF0ZWRJblZlciI6IjQ0LjEzMi41IiwidGFyZ2V0QnJhbmNoIjoibWFpbiIsImxhYmVscyI6WyJ0eXBlL21pbm9yIl19-->

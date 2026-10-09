@@ -1,0 +1,52 @@
+diff --git a/.github/workflows/image-pull.yaml b/.github/workflows/image-pull.yaml
+index 516a261cc..aabb05a88 100644
+--- a/.github/workflows/image-pull.yaml
++++ b/.github/workflows/image-pull.yaml
+@@ -82,7 +82,7 @@ jobs:
+           tool_versions: |
+             # Pinned to the cluster's Talos version (see .mise/config.toml);
+             # renovate tracks it via the custom manager in .renovaterc.json5.
+-            talosctl 1.14.0
++            talosctl 1.14.1
+ 
+       - name: Pull Image
+         env:
+diff --git a/kubernetes/apps/system-upgrade/tuppr/upgrades/talosupgrade.yaml b/kubernetes/apps/system-upgrade/tuppr/upgrades/talosupgrade.yaml
+index ed4382fb0..b29ac5b30 100644
+--- a/kubernetes/apps/system-upgrade/tuppr/upgrades/talosupgrade.yaml
++++ b/kubernetes/apps/system-upgrade/tuppr/upgrades/talosupgrade.yaml
+@@ -7,7 +7,7 @@ metadata:
+ spec:
+   talos:
+     # renovate: datasource=custom.talos-factory depName=siderolabs/talos
+-    version: v1.14.0
++    version: v1.14.1
+   policy:
+     rebootMode: powercycle
+   healthChecks:
+diff --git a/talos/cluster.yaml.j2 b/talos/cluster.yaml.j2
+index 9ec000fbb..2cd0938df 100644
+--- a/talos/cluster.yaml.j2
++++ b/talos/cluster.yaml.j2
+@@ -10,7 +10,7 @@ machine:
+     diskQuotaSupport: true
+     rbac: true
+   install:
+-    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.0
++    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.1
+     wipe: false
+     grubUseUKICmdline: true
+   time:
+diff --git a/talos/nodes/controlplane/matalos-c1.yaml.j2 b/talos/nodes/controlplane/matalos-c1.yaml.j2
+index 93f8b1c90..28ff6893c 100644
+--- a/talos/nodes/controlplane/matalos-c1.yaml.j2
++++ b/talos/nodes/controlplane/matalos-c1.yaml.j2
+@@ -5,7 +5,7 @@ machine:
+     diskSelector:
+       model: INTEL SSDPE21D280GA
+     # VM node: generic installer path, baremetal nodes use metal-installer (cluster.yaml.j2)
+-    image: factory.talos.dev/installer/{{ schematic }}:v1.14.0
++    image: factory.talos.dev/installer/{{ schematic }}:v1.14.1
+ ---
+ apiVersion: v1alpha1
+ kind: HostnameConfig

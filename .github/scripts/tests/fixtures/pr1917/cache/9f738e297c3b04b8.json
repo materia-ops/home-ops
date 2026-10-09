@@ -1,0 +1,4 @@
+{
+ "key": "helm:ghcr.io/home-operations/charts-mirror/descheduler:0.37.0",
+ "value": "apiVersion: v1\nappVersion: 0.37.0\ndescription: Descheduler for Kubernetes is used to rebalance clusters by evicting\n  pods that can potentially be scheduled on better nodes. In the current implementation,\n  descheduler does not schedule replacement of evicted pods but relies on the default\n  scheduler for that.\nhome: https://github.com/kubernetes-sigs/descheduler\nicon: https://raw.githubusercontent.com/kubernetes-sigs/descheduler/master/assets/logo/descheduler-stacked-color.png\nkeywords:\n- kubernetes\n- descheduler\n- kube-scheduler\nmaintainers:\n- email: sig-scheduling@kubernetes.io\n  name: Kubernetes SIG Scheduling\nname: descheduler\nsources:\n- https://github.com/kubernetes-sigs/descheduler\nversion: 0.37.0\n\n"
+}

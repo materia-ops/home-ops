@@ -1,0 +1,4 @@
+{
+ "key": "helm:ghcr.io/rook/rook-ceph-cluster:1.21.0",
+ "value": "apiVersion: v2\nappVersion: v1.21.0\ndependencies:\n- name: library\n  repository: file://../library\n  version: 0.0.1\ndescription: Manages a single Ceph cluster namespace for Rook\nicon: https://rook.io/images/rook-logo.svg\nname: rook-ceph-cluster\nsources:\n- https://github.com/rook/rook\nversion: 1.21.0\n\n"
+}

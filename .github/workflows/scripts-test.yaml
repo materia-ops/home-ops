@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Scripts Test
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/scripts/**
+      - .github/workflows/scripts-test.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    name: Scripts Test - Unittest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Offline: the fixtures replay recorded API responses.
+      - name: Run tests
+        run: python3 -m unittest discover -s .github/scripts/tests -v
