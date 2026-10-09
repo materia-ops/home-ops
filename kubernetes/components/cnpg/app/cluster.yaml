@@ -6,10 +6,13 @@ metadata:
   name: postgres-${APP}
 spec:
   instances: ${DB_INSTANCES:-2}
-  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm
   enableSuperuserAccess: false
   primaryUpdateMethod: switchover
   primaryUpdateStrategy: unsupervised
+
+  affinity:
+    podAntiAffinityType: required
 
   storage:
     size: ${DB_SIZE:-10Gi}
