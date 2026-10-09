@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/barmancloud.cnpg.io/objectstore_v1.json
-# Garage bucket for the barman-cloud plugin (WAL archive + base backups).
 # Before first deploy, create the Garage bucket:
 #   garage bucket create postgres-${APP}-backup
 #   garage bucket allow --read --write --owner postgres-${APP}-backup --key <cnpg-key-name>
@@ -26,7 +25,6 @@ spec:
       compression: gzip
       jobs: 8
       encryption: AES256
-  # The sidecar does not inherit the Cluster's env; Garage signs for region "garage".
   instanceSidecarConfiguration:
     env:
       - name: AWS_DEFAULT_REGION

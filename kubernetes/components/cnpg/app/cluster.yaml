@@ -43,8 +43,6 @@ spec:
       database: ${APP}
       owner: ${APP}
 
-  # Backups + WAL archiving via the barman-cloud plugin; bucket, retention and
-  # sidecar settings live in objectstore.yaml.
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
