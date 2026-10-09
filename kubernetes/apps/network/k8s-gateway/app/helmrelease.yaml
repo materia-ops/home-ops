@@ -17,12 +17,60 @@ spec:
       remediateLastFailure: true
   values:
     fullnameOverride: k8s-gateway
-    domain: "materia.wtf"
-    ttl: 1
+    image:
+      repository: codeberg.org/k8s-gateway/k8s_gateway
+      tag: 1.9.2
+    deployment:
+      dnsPolicy: ClusterFirst
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: null
+        memory: 128Mi
+    readinessProbe:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      readOnlyRootFilesystem: true
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+    serviceType: LoadBalancer
     service:
-      type: LoadBalancer
-      port: 53
       annotations:
         lbipam.cilium.io/ips: 192.168.10.4
       externalTrafficPolicy: Cluster
-    watchedResources: ["HTTPRoute", "Service"]
+    servers:
+      - zones:
+          - zone: .
+        port: 1053
+        servicePort: 53
+        plugins:
+          - name: log
+          - name: errors
+          - name: health
+            configBlock: |-
+              lameduck 5s
+          - name: ready
+          - name: k8s_gateway
+            parameters: materia.wtf
+            configBlock: |-
+              apex k8s-gateway.network
+              ttl 1
+              resources HTTPRoute Service
+          - name: prometheus
+            parameters: 0.0.0.0:9153
+          - name: forward
+            parameters: . /etc/resolv.conf
+          - name: loop
+          - name: reload
+          - name: loadbalance
