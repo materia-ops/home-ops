@@ -1,0 +1,22 @@
+diff --git a/kubernetes/apps/rook-ceph/rook-ceph/app/ocirepository.yaml b/kubernetes/apps/rook-ceph/rook-ceph/app/ocirepository.yaml
+index 6c01b0892..30b4154ec 100644
+--- a/kubernetes/apps/rook-ceph/rook-ceph/app/ocirepository.yaml
++++ b/kubernetes/apps/rook-ceph/rook-ceph/app/ocirepository.yaml
+@@ -10,5 +10,5 @@ spec:
+     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+     operation: copy
+   ref:
+-    tag: v1.20.8
++    tag: 1.21.0
+   url: oci://ghcr.io/rook/rook-ceph
+diff --git a/kubernetes/apps/rook-ceph/rook-ceph/cluster/ocirepository.yaml b/kubernetes/apps/rook-ceph/rook-ceph/cluster/ocirepository.yaml
+index 5f3472f80..ac0f94115 100644
+--- a/kubernetes/apps/rook-ceph/rook-ceph/cluster/ocirepository.yaml
++++ b/kubernetes/apps/rook-ceph/rook-ceph/cluster/ocirepository.yaml
+@@ -12,5 +12,5 @@ spec:
+   ref:
+     # helmrelease prometheusRuleOverrides + ./prometheusrule.yaml patch this
+     # chart's alert rules by name — re-check both on bump
+-    tag: v1.20.8
++    tag: 1.21.0
+   url: oci://ghcr.io/rook/rook-ceph-cluster

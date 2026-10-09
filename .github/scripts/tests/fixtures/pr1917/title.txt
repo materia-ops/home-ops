@@ -1,0 +1,1 @@
+feat(container)!: Update image ghcr.io/home-operations/charts-mirror/descheduler (0.36.0 ➔ 0.37.0)

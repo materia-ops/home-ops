@@ -1,0 +1,30 @@
+## What is broken on the cluster
+
+Since chart 1.22.0 (#1728) reconciled at 2026-09-12 02:07 AEST, `external-dns-cloudflare` no longer honours the `external-dns.alpha.kubernetes.io/target: external.materia.wtf` annotation on the `envoy-external` Gateway for `gateway-httproute` sources. external-dns v0.22.0 resolves the target from the Gateway's status address (`192.168.10.6`) instead. With `policy: sync` it then:
+
+1. **deleted** the proxied CNAMEs (and their `k8s.cname-*` owner TXTs) for `auth`, `plex`, `konflate`, `raidscope`, `seerr`, `requests` and `theme-park` — 14 DELETEs logged at 02:07:14;
+2. tries every minute to create replacement proxied **A** records to `192.168.10.6`, which Cloudflare rejects:
+
+```
+400 Bad Request {"code":9003,"message":"Target 192.168.10.6 is not allowed for a proxied record."}
+Failed to do run once: soft error ... (consecutive soft errors: 439)
+```
+
+Result: those seven public hostnames return no answer from 1.1.1.1. Externally the auth portal, Plex, Seerr, Raidscope and the konflate PR check are all unreachable. `flux-webhook.materia.wtf` still resolves because it comes from the `cloudflare-tunnel` DNSEndpoint (crd source), which is why Flux kept pulling. GitHub's konflate webhook has returned 502/530 since 16:07Z for the same reason, so #1732 and #1733 have no Konflate check yet.
+
+## What changes
+
+The cloudflare OCIRepository is pinned back to chart 1.21.1 (external-dns v0.21.x). On reconcile the previous behaviour returns: targets come from the Gateway annotation again, and the sync policy recreates the seven CNAMEs to `external.materia.wtf` plus their owner TXTs. A short comment on the pin explains the hold so the next Renovate bump is not merged blind.
+
+`external-dns-pihole` (fixed separately in #1732) and `external-dns-unifi` are not affected: neither is proxied and both use the Gateway address as the intended target.
+
+## Validation
+
+- `just kube render-local-ks network external-dns-cloudflare` (flate, WSL): renders clean, tag 1.21.1.
+- Root cause from the pod log (DELETE lines, then the 9003 rejections) and the Gateway's annotation/status.
+
+## Rollback / follow-up
+
+Rollback of a rollback is re-applying 1.22.0, which reproduces the outage. Follow-up: work out how 0.22 expects per-Gateway targets to be expressed (possibly the annotation now belongs on the HTTPRoutes, or a `--target-template`) before letting the group bump the cloudflare instance again; the pihole/unifi instances can move independently.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

@@ -1,0 +1,36 @@
+{
+ "key": "releases:github.com:kubernetes-sigs/descheduler",
+ "value": [
+  [
+   [
+    "v0.37.0",
+    "Descheduler v0.37.0",
+    "## What's Changed\r\n* chore(copilot): ignore vendor directory by @a7i in https://github.com/kubernetes-sigs/descheduler/pull/1876\r\n* [descheduler v0.36.0] update helm chart by @a7i in https://github.com/kubernetes-sigs/descheduler/pull/1879\r\n* fix: emit eviction metrics for background evictions that never get deleted by @tiraboschi in https://github.com/kubernetes-sigs/descheduler/pull/1880\r\n* Remove unnecessary pods delete permission from ClusterRole by @yugstar in https://github.com/kubernetes-sigs/descheduler/pull/1888\r\n* deps: bump golang.org/x/net and x/crypto for security fixes by @sammedsingalkar09 in https://github.com/kubernetes-sigs/descheduler/pull/1889\r\n* feat: add opt-in PodDisruptionBudget to the Helm chart by @somaz94 in https://github.com/kubernetes-sigs/descheduler/pull/1885\r\n* fix(e2e): resolve LowNodeUtilization metrics timeout, test isolation, and runner resource exhaustion by @a7i in https://github.com/kubernetes-sigs/descheduler/pull/1911\r\n* security: bump grpc and cel-go to fix vulnerabilities by @sammedsingalkar09 in https://github.com/kubernetes-sigs/descheduler/pull/1908\r\n* Updated Kubivert to latest v1.9.0 by @PKNaveen in https://github.com/kubernetes-sigs/descheduler/pull/1910\r\n* refactor(e2e): centralize kubevirt version from go.mod by @a7i in https://github.com/kubernetes-sigs/descheduler/pull/1913\r\n* feat: add opt-in schedulerName and runtimeClassName to the Helm chart by @somaz94 in https://github.com/kubernetes-sigs/descheduler/pull/1890\r\n* (Code-cleanup) removed EvictionRequests by @PKNaveen in https://github.com/kubernetes-sigs/descheduler/pull/1915\r\n* feat: add opt-in hostUsers to the Helm chart by @somaz94 in https://github.com/kubernetes-sigs/descheduler/pull/1892\r\n* Fix LoggingAlphaOptions wiring by @mattburgess in https://github.com/kubernetes-sigs/descheduler/pull/1906\r\n* refactor(test): extract e2e test scripts into reusable lib modules by @a7i in https://github.com/kubernetes-sigs/descheduler/pull/1914\r\n* feat(deployment): adds revisionHistoryLimit as a configurable parameter by @NPastorale in https://github.com/kubernetes-sigs/descheduler/pull/1884\r\n* fix(nodeutilization): correct misleading notSupportedError message by @Mukuwul in https://github.com/kubernetes-sigs/descheduler/pull/1897\r\n* fix(node): Structure node condition logs by @mattburgess in https://github.com/kubernetes-sigs/descheduler/pull/1907\r\n* fix: bump golang.org/x/crypto to v0.56.0 (CVE-2026-56855) and grpc to… by @sammedsingalkar09 in https://github.com/kubernetes-sigs/descheduler/pull/1923\r\n* [v0.37.0] release prep: bump k8s deps, manifests, docs, helm chart, and CI matrix by @a7i in https://github.com/kubernetes-sigs/descheduler/pull/1930\r\n\r\n## New Contributors\r\n* @yugstar made their first contribution in https://github.com/kubernetes-sigs/descheduler/pull/1888\r\n* @somaz94 made their first contribution in https://github.com/kubernetes-sigs/descheduler/pull/1885\r\n* @PKNaveen made their first contribution in https://github.com/kubernetes-sigs/descheduler/pull/1910\r\n* @mattburgess made their first contribution in https://github.com/kubernetes-sigs/descheduler/pull/1906\r\n* @NPastorale made their first contribution in https://github.com/kubernetes-sigs/descheduler/pull/1884\r\n* @Mukuwul made their first contribution in https://github.com/kubernetes-sigs/descheduler/pull/1897\r\n\r\n**Full Changelog**: https://github.com/kubernetes-sigs/descheduler/compare/v0.36.0...v0.37.0",
+    "https://github.com/kubernetes-sigs/descheduler/releases/tag/v0.37.0",
+    false
+   ],
+   [
+    "descheduler-helm-chart-0.37.0",
+    "descheduler-helm-chart-0.37.0",
+    "Descheduler for Kubernetes is used to rebalance clusters by evicting pods that can potentially be scheduled on better nodes. In the current implementation, descheduler does not schedule replacement of evicted pods but relies on the default scheduler for that.",
+    "https://github.com/kubernetes-sigs/descheduler/releases/tag/descheduler-helm-chart-0.37.0",
+    false
+   ],
+   [
+    "descheduler-helm-chart-0.36.0",
+    "descheduler-helm-chart-0.36.0",
+    "",
+    "https://github.com/kubernetes-sigs/descheduler/releases/tag/descheduler-helm-chart-0.36.0",
+    false
+   ],
+   [
+    "v0.36.0",
+    "Descheduler v0.36.0",
+    "",
+    "https://github.com/kubernetes-sigs/descheduler/releases/tag/v0.36.0",
+    false
+   ]
+  ],
+  false
+ ]
+}

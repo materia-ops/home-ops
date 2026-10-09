@@ -1,0 +1,22 @@
+{
+ "key": "releases:github.com:anthropics/claude-code-action",
+ "value": [
+  [
+   [
+    "v1.0.243",
+    "v1.0.243",
+    "**Full Changelog**: https://github.com/anthropics/claude-code-action/compare/v1.0.242...v1.0.243",
+    "https://github.com/anthropics/claude-code-action/releases/tag/v1.0.243",
+    false
+   ],
+   [
+    "v1.0.242",
+    "v1.0.242",
+    "",
+    "https://github.com/anthropics/claude-code-action/releases/tag/v1.0.242",
+    false
+   ]
+  ],
+  true
+ ]
+}
