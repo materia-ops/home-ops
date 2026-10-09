@@ -57,7 +57,7 @@ Cilium over BGP to route LoadBalancer VIPs.
 | 🕸️ | [Cilium](https://cilium.io/) | CNI, kube-proxy replacement, BGP load-balancer VIPs |
 | 🌐 | [Envoy Gateway](https://gateway.envoyproxy.io/) | Gateway API ingress — internal, external, and TLS gateways |
 | ☁️ | [Cloudflare](https://www.cloudflare.com/) + cloudflared | Public DNS + tunnel for external apps |
-| 🔍 | [external-dns](https://github.com/kubernetes-sigs/external-dns) ×3 + [k8s-gateway](https://github.com/ori-edge/k8s_gateway) | DNS records in Cloudflare, UniFi, and Pi-hole; split-horizon DNS |
+| 🔍 | [external-dns](https://github.com/kubernetes-sigs/external-dns) ×3 | DNS records in Cloudflare, UniFi, and Pi-hole; split-horizon DNS |
 | 🗄️ | [Rook-Ceph](https://rook.io/) / [OpenEBS](https://openebs.io/) / NFS | Replicated block, local hostpath, bulk media |
 | 💾 | [kopiur](https://github.com/home-operations/kopiur) + [Kopia](https://kopia.io/) | Scheduled PVC backups to the NAS, one-command restore |
 | 🔐 | [External Secrets](https://external-secrets.io/) + [1Password Connect](https://developer.1password.com/docs/connect/) | Secrets from 1Password, none in Git |

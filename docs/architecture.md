@@ -119,7 +119,6 @@ Cilium replaces kube-proxy and announces LoadBalancer VIPs from the
 | VIP | Service |
 | :--- | :--- |
 | `192.168.10.2` | dnscrypt-proxy (encrypted upstream for the Pi-holes) |
-| `192.168.10.4` | k8s-gateway (split DNS for `materia.wtf`) |
 | `192.168.10.5` | `envoy-internal` gateway |
 | `192.168.10.6` | `envoy-external` gateway |
 | `192.168.10.7` | `envoy-internal-tls` gateway (TLS passthrough) |
@@ -136,9 +135,8 @@ traffic by audience, and three external-dns instances publish records:
 flowchart TD
     inet[Internet] --> cf[Cloudflare]
     cf -->|cloudflared tunnel| ext[envoy-external .6]
-    lan[LAN clients] -->|Pi-hole conditional forward| kgw[k8s-gateway .4]
-    kgw -->|resolves materia.wtf| int[envoy-internal .5]
-    lan --> int
+    lan[LAN clients] -->|resolve materia.wtf| ph[Pi-hole / UniFi]
+    lan --> int[envoy-internal .5]
     ext --> apps[HTTPRoutes]
     int --> apps
     subgraph external-dns
@@ -151,8 +149,8 @@ flowchart TD
 - **Public apps** attach `HTTPRoute`s to `envoy-external`; external-dns (cloudflare)
   creates a proxied CNAME to the Cloudflare Tunnel. Flux's webhook receiver
   (`flux-webhook.materia.wtf`) and konflate are exposed this way.
-- **Internal apps** attach to `envoy-internal`; resolvable only on the LAN via split DNS
-  (Pi-hole → k8s-gateway) plus the pihole/unifi external-dns providers.
+- **Internal apps** attach to `envoy-internal`; resolvable only on the LAN via the
+  records the pihole/unifi external-dns providers write into Pi-hole and UniFi.
 - **Plex is grey-clouded** — Plex ToS forbids proxying video through Cloudflare, so its
   record is an unproxied CNAME to the WAN IP (`dynamic.materia.wtf`), not the tunnel.
 - **Home DNS chain:** clients → Pi-hole (blocklists) → dnscrypt/NextDNS upstream

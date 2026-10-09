@@ -144,7 +144,7 @@ cilium status                      # CNI + BGP healthy
 kubectl get nodes                  # all Ready
 flux check && flux get ks -A       # Flux reconciling, everything Ready
 kubectl -n rook-ceph get cephcluster   # HEALTH_OK once storage converges
-dig @192.168.10.4 <app>.materia.wtf    # split DNS answering
+dig @192.168.1.2 <app>.materia.wtf     # Pi-hole has the internal records
 ```
 
 Expect 10–20 minutes of churn while Flux works through dependency ordering — transient
