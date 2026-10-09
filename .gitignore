@@ -21,7 +21,6 @@ terraform/**/.env
 # Misc.
 .claude/
 .private/
-.task/
 .venv/
 .DS_Store
 Thumbs.db
