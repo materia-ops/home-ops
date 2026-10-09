@@ -26,15 +26,8 @@ spec:
       #   targetTime: "2006-01-02 15:04:05"   # UTC, format must match exactly
   externalClusters:
     - name: postgres-${APP}
-      barmanObjectStore:
-        destinationPath: s3://postgres-${APP}-backup
-        endpointURL: http://garage.internal:3900
-        s3Credentials:
-          accessKeyId:
-            name: postgres-backup-secret
-            key: ACCESS_KEY_ID
-          secretAccessKey:
-            name: postgres-backup-secret
-            key: SECRET_ACCESS_KEY
-        wal:
-          maxParallel: 8
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: postgres-${APP}-backup
+          serverName: postgres-${APP}

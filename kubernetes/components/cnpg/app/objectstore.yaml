@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/barmancloud.cnpg.io/objectstore_v1.json
+# Garage bucket for the barman-cloud plugin (WAL archive + base backups).
+# Before first deploy, create the Garage bucket:
+#   garage bucket create postgres-${APP}-backup
+#   garage bucket allow --read --write --owner postgres-${APP}-backup --key <cnpg-key-name>
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: postgres-${APP}-backup
+spec:
+  configuration:
+    destinationPath: s3://postgres-${APP}-backup
+    endpointURL: http://garage.internal:3900
+    s3Credentials:
+      accessKeyId:
+        name: postgres-backup-secret
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: postgres-backup-secret
+        key: SECRET_ACCESS_KEY
+    wal:
+      compression: gzip
+      maxParallel: 8
+    data:
+      compression: gzip
+      jobs: 8
+      encryption: AES256
+  # The sidecar does not inherit the Cluster's env; Garage signs for region "garage".
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_DEFAULT_REGION
+        value: garage
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+  retentionPolicy: "30d"
