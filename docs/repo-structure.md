@@ -95,9 +95,6 @@ defaults into every child Kustomization/HelmRelease: drift detection enabled, CR
 unset — failed upgrades fail-and-hold for roll-forward). Any new `ks.yaml` under
 `kubernetes/apps/**` inherits all of that for free.
 
-`ksgate` (in `system/`) supplements `dependsOn` by gating Kustomizations on arbitrary
-resource conditions.
-
 ## Talos configuration
 
 ```text
