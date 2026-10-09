@@ -7,6 +7,9 @@ metadata:
 spec:
   instances: ${DB_INSTANCES:-2}
   imageName: ghcr.io/cloudnative-pg/postgresql:18
+  enableSuperuserAccess: false
+  primaryUpdateMethod: switchover
+  primaryUpdateStrategy: unsupervised
 
   storage:
     size: ${DB_SIZE:-10Gi}

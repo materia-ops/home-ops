@@ -160,6 +160,13 @@
       matchPackageNames: [ "/library\\/mysql/" ],
       allowedVersions: "<9.0.0",
     },
+    {
+      description: "Hold CNPG Postgres at 18.x and never auto-merge — a major in imageName makes CNPG run an offline in-place pg_upgrade",
+      matchDatasources: [ "docker" ],
+      matchPackageNames: [ "ghcr.io/cloudnative-pg/postgresql" ],
+      allowedVersions: "<19",
+      automerge: false,
+    },
     // The mise manager resolves aqua: tools via github-tags with a generic
     // ^v?(.+) extractor and does not read the aqua registry's version_prefix,
     // so tools with prefixed tags never get an update. Strip the prefix here.
