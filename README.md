@@ -6,6 +6,20 @@ _The **matalos** cluster — my home operations repository_
 
 Talos Linux · Kubernetes · Flux · Renovate
 
+[![Talos](https://kromgo.materia.wtf/badges/talos_version)](https://www.talos.dev)&nbsp;&nbsp;
+[![Kubernetes](https://kromgo.materia.wtf/badges/kubernetes_version)](https://kubernetes.io)&nbsp;&nbsp;
+[![Flux](https://kromgo.materia.wtf/badges/flux_version)](https://fluxcd.io)&nbsp;&nbsp;
+[![Internet](https://kromgo.materia.wtf/badges/home_internet)](https://status.materia.wtf)
+
+[![Age](https://kromgo.materia.wtf/badges/cluster_birth_age)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![Uptime](https://kromgo.materia.wtf/badges/cluster_uptime_age)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![Nodes](https://kromgo.materia.wtf/badges/cluster_node_count)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![Pods](https://kromgo.materia.wtf/badges/cluster_pod_count)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![CPU](https://kromgo.materia.wtf/badges/cluster_cpu_usage)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![Memory](https://kromgo.materia.wtf/badges/cluster_memory_usage)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![Ceph](https://kromgo.materia.wtf/badges/ceph_health)](https://github.com/home-operations/kromgo)&nbsp;&nbsp;
+[![Alerts](https://kromgo.materia.wtf/badges/cluster_alert_count)](https://github.com/home-operations/kromgo)
+
 </div>
 
 ---

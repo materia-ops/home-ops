@@ -10,6 +10,7 @@ resources:
   - ./blackbox-exporter/ks.yaml
   - ./gatus-sidecar/ks.yaml
   - ./grafana-operator/ks.yaml
+  - ./kromgo/ks.yaml
   - ./kube-state-metrics/ks.yaml
   - ./node-exporter/ks.yaml
   - ./prometheus-adapter/ks.yaml
