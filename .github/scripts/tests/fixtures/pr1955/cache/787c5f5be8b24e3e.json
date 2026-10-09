@@ -1,5 +1,5 @@
 {
- "key": "releases:github.com:anthropics/claude-code-action",
+ "key": "releases:github.com:anthropics/claude-code-action:v1.0.242",
  "value": [
   [
    [
@@ -17,6 +17,6 @@
     false
    ]
   ],
-  true
+  false
  ]
 }

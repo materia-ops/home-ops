@@ -1,4 +1,0 @@
-{
- "key": "ghraw:repos/home-operations/charts-mirror/contents/apps/external-dns/metadata.yaml",
- "value": "---\nartifactName: external-dns\nsource:\n  helm:\n    registry: https://kubernetes-sigs.github.io/external-dns\n    version: 1.23.0\n"
-}

@@ -26,6 +26,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.parse
 import urllib.request
 
@@ -39,6 +40,9 @@ MAX_DEP_BYTES = 16 * 1024
 MAX_TOTAL_BYTES = 60 * 1024
 MINOR_EXCERPT_BYTES = 1536
 RELEASE_PAGES = 3
+# Stays under the workflow step's 3-minute timeout so a file is always written.
+TIME_BUDGET_SECONDS = 140
+START = time.monotonic()
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCES_FILE = os.path.join(SCRIPT_DIR, "evidence-sources.yaml")
 
@@ -66,11 +70,18 @@ def parse_version(text):
 
 
 def vkey(text):
-    """Sort key; prereleases sort before their release."""
+    """Sort key; prereleases sort before their release, rc.10 after rc.9."""
     p = parse_version(text)
     if p is None:
         return None
-    return p[0], 0 if p[1] else 1, p[1] or ""
+    pre = tuple((0, int(x), "") if x.isdigit() else (1, 0, x)
+                for x in (p[1] or "").split(".") if x)
+    return p[0], 0 if p[1] else 1, pre
+
+
+def is_prerelease(suffix):
+    """'rc.1', 'beta2' are prereleases; image flavours like 'dind' are not."""
+    return bool(re.match(r"(alpha|beta|rc|pre|dev|preview)", suffix or "", re.I))
 
 
 def norm(text):
@@ -97,10 +108,9 @@ class Net:
         self.cache_dir, self.mode, self.repo = cache_dir, mode, repo
         self.release_lists = {}
 
-    def releases(self, host, slug, fn):
+    def releases(self, key, fn):
         """Release lists are recorded trimmed to the releases actually used
         (see flush_releases), keeping test fixtures small."""
-        key = f"releases:{host}:{slug}"
         if self.mode == "replay":
             return self.cached(key, fn) or ([], False)
         value = fn()
@@ -181,7 +191,7 @@ class Net:
         def go():
             try:
                 return self.run(["helm", "show", "chart", f"oci://{ref}",
-                                 "--version", version], timeout=60)
+                                 "--version", version], timeout=30)
             except Exception as exc:
                 log(f"helm show chart {ref}:{version}: {exc}")
                 return None
@@ -190,11 +200,15 @@ class Net:
     def pr(self, number):
         diff = self.run(["gh", "pr", "diff", str(number), *self._repo()], timeout=60)
         meta = json.loads(self.run(["gh", "pr", "view", str(number), *self._repo(),
-                                    "--json", "title,body"]))
-        return diff, meta.get("body") or "", meta.get("title") or ""
+                                    "--json", "title,body,headRefOid"]))
+        return diff, meta.get("body") or "", meta.get("title") or "", meta.get("headRefOid")
 
     def _repo(self):
         return ["--repo", self.repo] if self.repo else []
+
+
+def out_of_time():
+    return time.monotonic() - START > TIME_BUDGET_SECONDS
 
 
 def log(msg):
@@ -260,12 +274,23 @@ def classify(line, path, renovate):
     return None
 
 
-def read_head_file(root, path):
-    try:
-        with open(os.path.join(root, path), encoding="utf-8") as f:
-            return f.read().splitlines()
-    except OSError:
-        return None
+def local_reader(root):
+    def read(path):
+        try:
+            with open(os.path.join(root, path), encoding="utf-8") as f:
+                return f.read().splitlines()
+        except OSError:
+            return None
+    return read
+
+
+def head_reader(net, repo, sha):
+    """Files at the PR head commit. The CI workspace holds the merge commit,
+    whose line numbers can differ from the diff's when main moved."""
+    def read(path):
+        text = net.gh_raw(f"repos/{repo}/contents/{urllib.parse.quote(path)}?ref={sha}")
+        return text.splitlines() if text is not None else None
+    return read
 
 
 def nearest_above(lines, lineno, regex):
@@ -278,15 +303,14 @@ def nearest_above(lines, lineno, regex):
     return None
 
 
-def parse_diff(diff_text, root="."):
+def parse_diff(diff_text, read_file):
     """Return raw bumps: [{name, kind, old, new, path}]."""
     bumps = []
     path = None
     state = {}
 
     def reset_hunk():
-        state.update(renovate=None, saw_value=False, repository=None, url=None,
-                     pending=[])
+        state.update(renovate=None, repository=None, url=None, pending=[])
 
     reset_hunk()
     new_line = 0
@@ -314,7 +338,7 @@ def parse_diff(diff_text, root="."):
         if m and line.lstrip().startswith("#"):
             fields = dict(kv.split("=", 1) for kv in m.group(1).split() if "=" in kv)
             if "depName" in fields:
-                state.update(renovate=fields, saw_value=False)
+                state["renovate"] = fields
             continue
         m = URL_RE.match(line)
         if m and sign != "-":
@@ -326,15 +350,16 @@ def parse_diff(diff_text, root="."):
         if m and sign != "-":
             state["repository"] = m.group(1)
 
-        if sign == " ":
-            if state["renovate"] is not None and state["saw_value"]:
-                state["renovate"] = None
-            continue
         if line.lstrip().startswith("#"):
             continue
-        cls = classify(line, path, state["renovate"])
-        if state["renovate"] is not None:
-            state["saw_value"] = True
+        if sign == " ":
+            # An annotation covers only the next value line, even if unchanged.
+            state["renovate"] = None
+            continue
+        renovate = state["renovate"]
+        cls = classify(line, path, renovate)
+        if sign == "+":
+            state["renovate"] = None
         if cls is None:
             continue
         ptype, key, value = cls
@@ -353,16 +378,15 @@ def parse_diff(diff_text, root="."):
         if ptype == "tag" and path.endswith("ocirepository.yaml"):
             bump.update(kind="chart", name=state["url"])
             if not bump["name"]:
-                lines = read_head_file(root, path) or []
+                lines = read_file(path) or []
                 urls = [URL_RE.match(x).group(1) for x in lines if URL_RE.match(x)]
                 bump["name"] = urls[0] if urls else None
         elif ptype == "tag":
             name = state["repository"] or nearest_above(
-                read_head_file(root, path), lineno, REPOSITORY_RE)
+                read_file(path), lineno, REPOSITORY_RE)
             bump.update(kind="image", name=name or f"{path} (tag)")
         elif ptype == "renovate":
-            dep = state["renovate"]
-            bump.update(kind=dep.get("datasource", "renovate"), name=key)
+            bump.update(kind=renovate.get("datasource", "renovate"), name=key)
         else:
             bump.update(kind=ptype, name=key)
         bumps.append(bump)
@@ -391,11 +415,18 @@ def code_host_slug(url):
 
 
 def parse_body(body):
-    """Renovate update table -> [{name, old, new, source}]."""
+    """Renovate update table -> [{name, old, new, source}].
+
+    Only the first table counts: later ones are embedded upstream release
+    notes, whose `a` → `b` cells are not bumps."""
     rows = []
+    in_table = False
     for line in (body or "").splitlines():
         if not line.startswith("|"):
+            if in_table:
+                break
             continue
+        in_table = True
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         change = next((ROW_CHANGE_RE.search(c) for c in cells if ROW_CHANGE_RE.search(c)),
                       None)
@@ -591,46 +622,58 @@ def pattern_candidates(name):
 
 
 def resolve_candidates(net, bump, overrides):
-    """Ordered (host, slug, via) candidates; first one with releases wins."""
-    cands = []
-
-    def add(src, via):
-        if src and all(src != (h, s) for h, s, _ in cands):
-            cands.append((src[0], src[1], via))
-
+    """Yield (host, slug, via) candidates in priority order; first one with
+    releases wins. Lazy, so the network-backed lookups run only when the
+    cheap ones miss."""
     if bump.get("inner_of"):
         # The body link names the wrapper chart's repo, so it goes last here.
-        add(override_for(bump["inner_of"] + "#app", overrides), "evidence-sources.yaml")
+        steps = [lambda: [(override_for(bump["inner_of"] + "#app", overrides),
+                           "evidence-sources.yaml")]]
     else:
-        add(bump.get("body_source"), "PR body link")
-        add(override_for(bump["name"], overrides), "evidence-sources.yaml")
-    for url in [*(bump.get("chart_sources") or []), bump.get("chart_home")]:
-        add(code_host_slug(url), "Chart.yaml sources/home")
+        steps = [lambda: [(bump.get("body_source"), "PR body link"),
+                          (override_for(bump["name"], overrides),
+                           "evidence-sources.yaml")]]
+    steps.append(lambda: [(code_host_slug(u), "Chart.yaml sources/home") for u in
+                          [*(bump.get("chart_sources") or []), bump.get("chart_home")]])
     if bump.get("inner_of"):
-        add(bump.get("body_source"), "PR body link")
+        steps.append(lambda: [(bump.get("body_source"), "PR body link")])
     if bump["kind"] == "chart":
-        add(charts_mirror_source(net, bump["name"]), "charts-mirror metadata.yaml")
+        steps.append(lambda: [(charts_mirror_source(net, bump["name"]),
+                               "charts-mirror metadata.yaml")])
     if bump["kind"] == "image":
-        add(oci_source_label(net, bump["name"], bump["new"]),
-            "OCI image.source label")
-    for c in pattern_candidates(bump["name"]):
-        add(c, "name pattern")
-    return cands
+        steps.append(lambda: [(oci_source_label(net, bump["name"], bump["new"]),
+                               "OCI image.source label")])
+    steps.append(lambda: [(c, "name pattern") for c in pattern_candidates(bump["name"])])
+    seen = set()
+    for step in steps:
+        for src, via in step():
+            if src and tuple(src) not in seen:
+                seen.add(tuple(src))
+                yield src[0], src[1], via
 
 
 # --------------------------------------------------------------------------
 # release fetching
 
 
-def fetch_releases(net, host, slug):
+def fetch_releases(net, host, slug, name, lo):
     """[(tag, name, body, url, prerelease)] newest first; (list, capped)."""
-    rels, capped = net.releases(host, slug, lambda: _fetch_releases(net, host, slug))
+    rels, capped = net.releases(f"releases:{host}:{slug}:{lo}",
+                                lambda: _fetch_releases(net, host, slug, name, lo))
     return [tuple(r) for r in rels], capped
 
 
-def _fetch_releases(net, host, slug):
+def reaches(tag, name, lo):
+    """True when `tag` is the range start in one of the name's tag forms."""
+    m = TAG_SPLIT_RE.match(tag)
+    return bool(m) and m.group(1) in tag_prefixes(name) and norm(m.group(3)) == norm(lo)
+
+
+def _fetch_releases(net, host, slug, name, lo):
     out, capped = [], False
     for page in range(1, RELEASE_PAGES + 1):
+        if out and any(reaches(r[0], name, lo) for r in out):
+            break
         if host == "github.com":
             data = net.gh_api(f"repos/{slug}/releases?per_page=100&page={page}",
                               cache=False)
@@ -682,7 +725,7 @@ def select_releases(releases, name, lo, hi, chart=False):
     start), or None.
     """
     groups = {}
-    want_pre = bool((parse_version(hi) or (None, None))[1])
+    want_pre = is_prerelease((parse_version(hi) or (None, None))[1])
     for rel in releases:
         m = TAG_SPLIT_RE.match(rel[0])
         if not m:
@@ -690,7 +733,7 @@ def select_releases(releases, name, lo, hi, chart=False):
         prefix, ver = m.group(1), m.group(3) + (f"-{m.group(4)}" if m.group(4) else "")
         if prefix not in tag_prefixes(name):
             continue
-        if (rel[4] or m.group(4)) and not want_pre:
+        if (rel[4] or is_prerelease(m.group(4))) and not want_pre:
             continue
         groups.setdefault(prefix, []).append((ver, rel))
     target = norm(hi)
@@ -833,7 +876,7 @@ def add_inner_components(net, bumps):
     """Chart bump -> inner appVersion row (deduplicated later)."""
     inner = []
     for b in bumps:
-        if b["kind"] != "chart":
+        if b["kind"] != "chart" or out_of_time():
             continue
         old_meta = chart_meta(net.helm_chart(b["name"], split_ref(b["old"])[0]))
         new_meta = chart_meta(net.helm_chart(b["name"], split_ref(b["new"])[0]))
@@ -864,23 +907,33 @@ def collect(net, bumps, overrides):
         if b["direction"] == "rollback":
             lo, hi = hi, lo
         b["range"] = (lo, hi)
-        cands = [] if b["direction"] == "rebuild" else resolve_candidates(net, b, overrides)
-        b["cands"] = cands
+        b["cands"], b["resolved"] = [], None
+        if b["direction"] == "rebuild":
+            continue
+        if out_of_time():
+            b["timed_out"] = True
+            continue
         chosen = None
-        for host, slug, via in cands:
-            key = (host, slug)
+        for host, slug, via in resolve_candidates(net, b, overrides):
+            b["cands"].append((host, slug, via))
+            key = (host, slug, lo)
             if key not in deps:
-                deps[key] = fetch_releases(net, host, slug)
+                deps[key] = fetch_releases(net, host, slug, b["name"], lo)
             rels, capped = deps[key]
             picked, found_new, prefix, boundary = select_releases(
                 rels, b["name"], lo, hi, chart=b["kind"] == "chart")
             if picked:
                 chosen = dict(host=host, slug=slug, via=via, releases=picked,
                               found_new=found_new, capped=capped and boundary is None,
-                              prefix=prefix, boundary=boundary)
+                              prefix=prefix, boundary=boundary,
+                              key=f"releases:{host}:{slug}:{lo}")
                 break
-        if chosen is None and b["direction"] != "rebuild":
-            for host, slug, via in cands:
+            if out_of_time():
+                break
+        if chosen is None:
+            for host, slug, via in b["cands"]:
+                if out_of_time():
+                    break
                 picked, url = changelog_sections(net, host, slug, lo, hi)
                 if picked:
                     chosen = dict(host=host, slug=slug, via=via + " (CHANGELOG)",
@@ -891,11 +944,10 @@ def collect(net, bumps, overrides):
     used, boundary = set(), set()
     for b in bumps:
         res = b.get("resolved")
-        if res:
-            key = f"releases:{res['host']}:{res['slug']}"
-            used.update((key, r[0]) for _, r in res["releases"])
+        if res and res.get("key"):
+            used.update((res["key"], r[0]) for _, r in res["releases"])
             if res.get("boundary"):
-                boundary.add((key, res["boundary"][0]))
+                boundary.add((res["key"], res["boundary"][0]))
     net.flush_releases(used, boundary)
     return dedupe(bumps)
 
@@ -947,9 +999,11 @@ def render(bumps):
             lines.append(f"- {status}")
         elif not res:
             tried = ", ".join(f"{h}/{s} ({v})" for h, s, v in b["cands"]) or "none"
+            why = ("time budget exhausted before this row" if b.get("timed_out")
+                   else "no release notes found for this range")
             status = "UNRESOLVED"
-            lines.append(f"- UNRESOLVED: no release notes found for this range. "
-                         f"Candidates tried: {tried}. Research it yourself.")
+            lines.append(f"- UNRESOLVED: {why}. Candidates tried: {tried}. "
+                         "Research it yourself.")
         else:
             n_rel = len(res["releases"])
             lines.append(f"- Upstream: https://{res['host']}/{res['slug']} "
@@ -1016,8 +1070,8 @@ def render(bumps):
     return "\n".join(out)
 
 
-def build(net, diff, body, title, root="."):
-    bumps = parse_diff(diff, root)
+def build(net, diff, body, title, read_file):
+    bumps = parse_diff(diff, read_file)
     rows = parse_body(body)
     if not rows and not bumps:
         t = parse_title(title)
@@ -1034,7 +1088,8 @@ def main(argv=None):
     ap.add_argument("--diff-file")
     ap.add_argument("--body-file")
     ap.add_argument("--title", default="")
-    ap.add_argument("--root", default=".", help="PR head checkout (for files)")
+    ap.add_argument("--root", default=".", help="checkout to read files from "
+                    "(--diff-file mode; --pr reads the PR head via the API)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--cache")
     mode = ap.add_mutually_exclusive_group()
@@ -1049,8 +1104,11 @@ def main(argv=None):
     net = Net(args.cache, "record" if args.record else "replay" if args.replay else None,
               args.repo)
     try:
+        read_file = local_reader(args.root)
         if args.pr:
-            diff, body, title = net.pr(args.pr)
+            diff, body, title, sha = net.pr(args.pr)
+            if args.repo and sha:
+                read_file = head_reader(net, args.repo, sha)
         else:
             with open(args.diff_file, encoding="utf-8") as f:
                 diff = f.read()
@@ -1059,7 +1117,7 @@ def main(argv=None):
                 with open(args.body_file, encoding="utf-8") as f:
                     body = f.read()
             title = args.title
-        text = build(net, diff, body, title, args.root)
+        text = build(net, diff, body, title, read_file)
     except Exception as exc:  # advisory: never fail the review
         log(f"failed: {exc}")
         text = ("# Upgrade evidence\n\nEvidence generation FAILED "

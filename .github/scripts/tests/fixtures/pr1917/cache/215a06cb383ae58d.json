@@ -1,4 +1,0 @@
-{
- "key": "ghraw:repos/home-operations/charts-mirror/contents/apps/descheduler/metadata.yaml",
- "value": "---\nartifactName: descheduler\nsource:\n  helm:\n    registry: https://kubernetes-sigs.github.io/descheduler\n    version: 0.37.0\n"
-}

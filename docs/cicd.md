@@ -161,14 +161,24 @@ model to read this file first, cover every row, and go upstream itself only for 
 gaps.
 
 Trust model: the step runs with the read-only `github.token`, never the App token or
-the 1Password secrets, and is `continue-on-error`, so a failure only means the model
-researches unaided. The script is checked out from the PR's **base** commit
-(`_base/`), so a PR cannot change the code that gathers evidence about itself. The
-flip side is that a change to the script only takes effect for PRs opened after it
-merges. Release notes are third-party text: the file is labelled untrusted, HTML
+the 1Password secrets. It is `continue-on-error` with a 3-minute timeout, and the
+script keeps its own time budget below that so it always writes a file, marking any
+rows it did not reach as `UNRESOLVED`. If it fails anyway, the model researches
+unaided. The script is checked out from the PR's **base** commit (`_base/`), so a PR
+cannot change the code that gathers evidence about itself. The flip side is that a
+change to the script only takes effect for PRs opened after it merges. The step
+deletes `.review-evidence/` before writing, so a PR cannot plant a forged evidence
+file. Release notes are third-party text: the file is labelled untrusted, HTML
 comments are stripped, and code fences are neutralised so a note cannot break out of
-its quoted block. Tests replay recorded API responses from real PRs and run offline
-(`python3 -m unittest discover -s .github/scripts/tests`).
+its quoted block.
+
+### `scripts-test.yaml` — evidence script tests
+
+Runs `python3 -m unittest discover -s .github/scripts/tests` on PRs touching
+`.github/scripts/**`. The fixtures are real PRs (#1728, #1734, #1761, #1917, #1924,
+#1953, #1955) with recorded API responses, so the suite runs offline. Re-record a
+fixture with the command in the test module's docstring after a deliberate behaviour
+change.
 
 ## konflate — PR gating and Flux visibility
 

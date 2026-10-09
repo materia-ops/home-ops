@@ -32,7 +32,8 @@ def run_fixture(name, mode="replay"):
     net = ue.Net(str(d / "cache"), mode)
     return ue.build(net, (d / "diff.patch").read_text(encoding="utf-8"),
                     (d / "body.txt").read_text(encoding="utf-8"),
-                    (d / "title.txt").read_text(encoding="utf-8").strip(), str(d))
+                    (d / "title.txt").read_text(encoding="utf-8").strip(),
+                    ue.local_reader(str(d)))
 
 
 class Golden(unittest.TestCase):
@@ -119,12 +120,36 @@ diff --git a/x/upgrade.yaml b/x/upgrade.yaml
 -    version: v1.36.0
 +    version: v1.37.1
 """
-        got = {(b["kind"], b["name"], b["old"], b["new"]) for b in ue.parse_diff(diff, "/nonexistent")}
+        bumps = ue.parse_diff(diff, ue.local_reader("/nonexistent"))
+        got = {(b["kind"], b["name"], b["old"], b["new"]) for b in bumps}
         self.assertEqual(got, {
             ("mise", "siderolabs/talos", "1.14.0", "1.14.1"),
             ("image", "ghcr.io/autobrr/qui", "v1.31.0@sha256:aaaaaaa", "v1.31.1@sha256:bbbbbbb"),
             ("docker", "ghcr.io/siderolabs/kubelet", "v1.36.0", "v1.37.1"),
         })
+
+    def test_renovate_annotation_covers_only_the_next_line(self):
+        diff = """\
+diff --git a/vars.yaml b/vars.yaml
+--- a/vars.yaml
++++ b/vars.yaml
+@@ -1,4 +1,4 @@
+ # renovate: datasource=github-releases depName=prometheus/node_exporter
+ node_exporter_version: "1.12.1"
+-other_version: 1.0
++other_version: 1.1
+"""
+        self.assertEqual(ue.parse_diff(diff, ue.local_reader("/nonexistent")), [])
+
+    def test_body_parses_only_the_update_table(self):
+        body = ("| Package | Change |\n|---|---|\n| [o/r](https://github.com/o/r) | `1` → `2` |\n"
+                "\n<details>\n\n| Flag | Rename |\n|---|---|\n| x | `--a` → `--b` |\n")
+        self.assertEqual([r["name"] for r in ue.parse_body(body)], ["o/r"])
+
+    def test_prerelease_ordering(self):
+        self.assertGreater(ue.vkey("v2.0.0-rc.10"), ue.vkey("v2.0.0-rc.9"))
+        self.assertGreater(ue.vkey("v2.0.0"), ue.vkey("v2.0.0-rc.10"))
+        self.assertFalse(ue.is_prerelease("dind"))
 
     def test_direction(self):
         self.assertEqual(ue.direction("1.22.0", "1.21.1"), "rollback")

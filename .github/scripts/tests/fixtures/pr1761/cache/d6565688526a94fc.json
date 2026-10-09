@@ -1,5 +1,5 @@
 {
- "key": "releases:github.com:siderolabs/talos",
+ "key": "releases:github.com:siderolabs/talos:v1.14.0",
  "value": [
   [
    [
@@ -17,6 +17,6 @@
     false
    ]
   ],
-  true
+  false
  ]
 }
