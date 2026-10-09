@@ -70,18 +70,28 @@ def parse_version(text):
 
 
 def vkey(text):
-    """Sort key; prereleases sort before their release, rc.10 after rc.9."""
+    """Sort key; prereleases sort before their release, rc.10 after rc.9.
+    Image flavour suffixes ('-standard-bookworm') don't order versions."""
     p = parse_version(text)
     if p is None:
         return None
+    suffix = p[1] if is_prerelease(p[1]) else None
     pre = tuple((0, int(x), "") if x.isdigit() else (1, 0, x)
-                for x in (p[1] or "").split(".") if x)
-    return p[0], 0 if p[1] else 1, pre
+                for x in (suffix or "").split(".") if x)
+    return p[0], 0 if suffix else 1, pre
 
 
 def is_prerelease(suffix):
     """'rc.1', 'beta2' are prereleases; image flavours like 'dind' are not."""
     return bool(re.match(r"(alpha|beta|rc|pre|dev|preview)", suffix or "", re.I))
+
+
+def release_version(text):
+    """'18.6-standard-bookworm' -> '18.6'; prerelease suffixes are kept."""
+    m = VERSION_RE.match((text or "").strip())
+    if not m or not m.group(2) or is_prerelease(m.group(2)):
+        return text
+    return ("v" if text.strip().startswith("v") else "") + m.group(1)
 
 
 def norm(text):
@@ -224,7 +234,7 @@ RENOVATE_RE = re.compile(r"#\s*renovate:\s*(.*)$")
 TAG_RE = re.compile(r"^\s*tag:\s*[\"']?([^\s\"'#]+)")
 URL_RE = re.compile(r"^\s*url:\s*oci://(\S+)")
 REPOSITORY_RE = re.compile(r"^\s*repository:\s*[\"']?([^\s\"'#]+)")
-IMAGE_RE = re.compile(r"^\s*(?:-\s*)?image:\s*[\"']?([^\"'#]*[^\s\"'#])")
+IMAGE_RE = re.compile(r"^\s*(?:-\s*)?image(?:Name)?:\s*[\"']?([^\"'#]*[^\s\"'#])")
 MISE_RE = re.compile(r"^\s*\"((?:aqua|github|ubi|cargo|npm|pipx|go):[^\"]+)\"\s*=\s*\"([^\"]+)\"")
 USES_RE = re.compile(r"^\s*(?:-\s*)?uses:\s*([^@\s]+)@(\S+)(?:\s*#\s*(\S+))?")
 KV_RE = re.compile(r"^\s*(?:-\s*)?[\"']?[A-Za-z0-9_.-]+[\"']?\s*[:=]\s*[\"']?([^\s\"'#]+)")
@@ -265,7 +275,7 @@ def classify(line, path, renovate):
         ver = m.group(3) or m.group(2)
         return "action", m.group(1), f"{ver}@{m.group(2)}" if m.group(3) else ver
     m = IMAGE_RE.match(line)
-    if m and (":" in m.group(1) or "@" in m.group(1)):
+    if m and (":" in m.group(1) or "@" in m.group(1)) and "$" not in m.group(1):
         name, tag = split_image(m.group(1))
         return "image", name, tag
     m = TAG_RE.match(line)
@@ -903,7 +913,7 @@ def collect(net, bumps, overrides):
     deps = {}
     for b in bumps:
         b["direction"] = direction(b["old"], b["new"])
-        lo, hi = split_ref(b["old"])[0], split_ref(b["new"])[0]
+        lo, hi = (release_version(split_ref(b[k])[0]) for k in ("old", "new"))
         if b["direction"] == "rollback":
             lo, hi = hi, lo
         b["range"] = (lo, hi)

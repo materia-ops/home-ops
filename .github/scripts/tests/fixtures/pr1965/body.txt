@@ -1,0 +1,34 @@
+## What
+
+The second of two CNPG hardening PRs (follows #1963). **This one rolls the database.**
+
+- **`imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm`**, replacing the floating `:18`. The tag had already drifted: all three live instances run digest `7a9a6827…` (PostgreSQL 18.4, Debian bullseye "system" build), while `:18` now resolves to `899d3ed5…`. With `imagePullPolicy: IfNotPresent`, any reschedule or fresh node could silently start a different build. `18.6-standard-bookworm` is the same digest as `18-standard-bookworm` (`94aa172f…`). From now on Renovate offers 18.x minors as PRs (the #1963 rule holds `<19` and never auto-merges).
+- **`affinity.podAntiAffinityType: required`**, replacing the default `preferred`. A rebuilt instance stays Pending rather than sharing a node with another instance.
+
+## What changes on the cluster when it reconciles
+
+- **A rolling update of `security/postgres-authentik`** (3 instances, `dataDurability: required`). CNPG restarts the two standbys one at a time on the new image. Then, because of #1963's `primaryUpdateMethod: switchover`, it promotes an updated standby and restarts the old primary as a standby. Writes pause for the few seconds of the switchover. With quorum sync replication (`ANY 1`) and two standbys, one standby is always available to acknowledge writes, so writes never stall waiting for one.
+- **18.4 → 18.6 is a minor upgrade** with the same on-disk format; no `pg_upgrade` runs.
+- **The OS changes from bullseye to bookworm** (glibc 2.31 → 2.36). Every database uses the `C` collation provider (`datlocprovider = c`, `C`/`C`), so the glibc collation change cannot invalidate indexes.
+- **The image changes from the "system" flavour to "standard"**, which drops the in-image barman tools. Backups and WAL archiving run through the barman-cloud plugin sidecar since #1950, and the sidecar is present on all three instances.
+- **Anti-affinity moves no pods:** the hostpath PVs already pin one instance per node (c1, c2, c3). It is folded into this PR so there is one roll, not two.
+- **The pooler is untouched.**
+
+## Pre-flight (checked before merge)
+
+- `postgres-authentik`: "Cluster in healthy state", 3/3 ready, `ContinuousArchiving=True`, `LastBackupSucceeded=True`.
+- The plugin sidecar is present on all three instances, so the switchover path is available rather than an in-place primary recreate.
+- Merged **after** the first plugin-scheduled backup (02:30 Melbourne) completed, so there is a fresh base backup right before the roll.
+
+## Validation
+
+- `just kube render-local-ks security authentik` (flate, WSL) renders clean, with the new `imageName` and `affinity`.
+- Tag-to-digest mapping checked against the ghcr registry.
+
+## Rollback
+
+Revert to the exact build that ran before:
+`ghcr.io/cloudnative-pg/postgresql:18@sha256:7a9a68272eb5f192c5826fdd72b1ebc81c185fea21678993c5583610c7e59739`. A minor downgrade uses the same data format, and the revert is another rolling update with a switchover. Never force-delete instance pods during a roll.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+

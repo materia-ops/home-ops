@@ -1,0 +1,1 @@
+feat(cnpg): pin Postgres 18.6 standard-bookworm and require anti-affinity
