@@ -27,6 +27,11 @@ just                         # lists available recipes (bootstrap, kube, talos m
 `mise` also wires `KUBECONFIG`/`TALOSCONFIG` to the repo-local files and loads
 `.secrets.env`. Git hooks come from lefthook (`.lefthook.toml`).
 
+Every tool is pinned to an exact version in `.mise/config.toml`, and `.mise/mise.lock`
+records each one's download URL and sha256 for linux-x64 and windows-x64; `mise install`
+verifies against it. Renovate bumps both files together. For a manual bump, edit the
+version in `config.toml` and run `mise lock` — never hand-edit the lockfile.
+
 ## The change lifecycle
 
 ```text
