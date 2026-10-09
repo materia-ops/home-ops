@@ -5,7 +5,7 @@
 # so CNPG knows where to find the barman-cloud backup.
 #
 # For point-in-time recovery: uncomment recoveryTarget.targetTime and set the
-# timestamp (UTC) to the moment just before the incident. CNPG will replay WAL
+# timestamp to the moment just before the incident. CNPG will replay WAL
 # up to that point. Omitting it recovers to the latest available WAL.
 #
 # See components/cnpg/restore/kustomization.yaml for the full restore procedure.
@@ -23,7 +23,7 @@ spec:
       database: ${APP}
       owner: ${APP}
       # recoveryTarget:
-      #   targetTime: "2006-01-02 15:04:05"   # UTC, format must match exactly
+      #   targetTime: "2006-01-02T15:04:05+11:00"   # RFC3339 with offset; never omit it
   externalClusters:
     - name: postgres-${APP}
       plugin:
