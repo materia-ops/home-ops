@@ -163,6 +163,15 @@ diff --git a/e/envoy.yaml b/e/envoy.yaml
     def test_flavour_suffix_does_not_shrink_range(self):
         self.assertEqual(ue.release_version("18.6-standard-bookworm"), "18.6")
         self.assertEqual(ue.release_version("v2.0.0-rc.1"), "v2.0.0-rc.1")
+        # Revision suffixes are part of upstream tags and still order.
+        for tag in ("1.2.3-ls123", "2.0.1-2", "1.4.0-r1"):
+            self.assertEqual(ue.release_version(tag), tag)
+        self.assertEqual(ue.direction("1.2.3-ls123", "1.2.3-ls122"), "rollback")
+        picked, found, _, _ = ue.select_releases(
+            [rel("1.2.3-ls123"), rel("1.2.3-ls122")], "ghcr.io/linuxserver/x",
+            "1.2.3-ls122", "1.2.3-ls123")
+        self.assertEqual([r[0] for _, r in picked], ["1.2.3-ls123"])
+        self.assertTrue(found)
         self.assertEqual(ue.vkey("18.6-standard-bookworm"), ue.vkey("18.6"))
         self.assertEqual(ue.direction("18", "18.6-standard-bookworm"), "upgrade")
         self.assertEqual(ue.direction("18.6-standard-bookworm", "18.6"), "upgrade")

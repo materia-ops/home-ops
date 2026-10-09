@@ -75,7 +75,7 @@ def vkey(text):
     p = parse_version(text)
     if p is None:
         return None
-    suffix = p[1] if is_prerelease(p[1]) else None
+    suffix = None if is_flavour(p[1]) else p[1]
     pre = tuple((0, int(x), "") if x.isdigit() else (1, 0, x)
                 for x in (suffix or "").split(".") if x)
     return p[0], 0 if suffix else 1, pre
@@ -86,10 +86,17 @@ def is_prerelease(suffix):
     return bool(re.match(r"(alpha|beta|rc|pre|dev|preview)", suffix or "", re.I))
 
 
+def is_flavour(suffix):
+    """'standard-bookworm', 'dind' name a build variant. Suffixes with digits
+    ('ls123', '1', 'r1') are revisions upstream tags carry, so they still order."""
+    return bool(re.fullmatch(r"[A-Za-z]+(?:-[A-Za-z]+)*", suffix or "")
+                and not is_prerelease(suffix))
+
+
 def release_version(text):
-    """'18.6-standard-bookworm' -> '18.6'; prerelease suffixes are kept."""
+    """'18.6-standard-bookworm' -> '18.6'; other suffixes are kept."""
     m = VERSION_RE.match((text or "").strip())
-    if not m or not m.group(2) or is_prerelease(m.group(2)):
+    if not m or not is_flavour(m.group(2)):
         return text
     return ("v" if text.strip().startswith("v") else "") + m.group(1)
 
