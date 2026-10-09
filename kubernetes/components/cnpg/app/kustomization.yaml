@@ -6,6 +6,8 @@ resources:
   - ./cluster.yaml
   - ./externalsecret-backup.yaml
   - ./externalsecret-credentials.yaml
+  - ./objectstore.yaml
   - ./pooler.yaml
+  - ./prometheusrule.yaml
   - ./pushsecret.yaml
   - ./scheduledbackup.yaml

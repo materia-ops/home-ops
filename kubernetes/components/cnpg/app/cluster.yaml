@@ -12,10 +12,6 @@ spec:
     size: ${DB_SIZE:-10Gi}
     storageClass: ${DB_STORAGE_CLASS:-openebs-hostpath}
 
-  env:
-    - name: AWS_DEFAULT_REGION
-      value: garage
-
   postgresql:
     # dataDurability=preferred (default): writes fall back to local-commit if the
     # standby is unavailable rather than blocking — the right call at 2 instances.
@@ -43,33 +39,15 @@ spec:
     # Normal path: fresh cluster. For disaster recovery from a barman-cloud
     # backup, use the components/cnpg/restore component overlay instead —
     # see that component's kustomization.yaml for the full restore procedure.
-    #
-    # Before first deploy, create the Garage bucket:
-    #   garage bucket create postgres-${APP}-backup
-    #   garage bucket allow --read --write --owner postgres-${APP}-backup --key <cnpg-key-name>
     initdb:
       database: ${APP}
       owner: ${APP}
 
-  backup:
-    barmanObjectStore:
-      destinationPath: s3://postgres-${APP}-backup
-      endpointURL: http://garage.internal:3900
-      s3Credentials:
-        accessKeyId:
-          name: postgres-backup-secret
-          key: ACCESS_KEY_ID
-        secretAccessKey:
-          name: postgres-backup-secret
-          key: SECRET_ACCESS_KEY
-      wal:
-        compression: gzip
-        maxParallel: 8
-      data:
-        compression: gzip
-        jobs: 8
-        encryption: AES256
-    retentionPolicy: "30d"
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgres-${APP}-backup
 
   monitoring:
     enablePodMonitor: true

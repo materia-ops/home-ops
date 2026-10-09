@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: postgres-${APP}-backup
+spec:
+  groups:
+    - name: postgres-${APP}-backup.rules
+      rules:
+        - alert: CNPGBackupStale
+          expr: |-
+            time() - max(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{pod=~"postgres-${APP}-[0-9]+"}) > 172800
+              or absent(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{pod=~"postgres-${APP}-[0-9]+"})
+          annotations:
+            summary: >-
+              No completed barman-cloud backup for postgres-${APP} in 48h
+          for: 1h
+          labels:
+            severity: critical
