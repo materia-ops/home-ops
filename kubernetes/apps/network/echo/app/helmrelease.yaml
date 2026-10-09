@@ -12,6 +12,7 @@ spec:
   values:
     replicaCount: 2
     config:
+      commandsEnabled: false
       trustedProxies:
         - 10.42.0.0/16
     httpRoute:
