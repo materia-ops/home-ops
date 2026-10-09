@@ -90,6 +90,13 @@ class RealPRs(unittest.TestCase):
         self.assertIn("rebuild (digest only)", out)
         self.assertNotIn("UNRESOLVED", out)
 
+    def test_1965_single_line_image_name(self):
+        out = run_fixture("pr1965")
+        self.assertIn("| ghcr.io/cloudnative-pg/postgresql | `18` → `18.6-standard-bookworm` |"
+                      " image |", out)
+        self.assertIn("github.com/cloudnative-pg/postgres-containers (OCI image.source label)",
+                      out)
+
 
 def rel(tag, body="notes", pre=False):
     return (tag, "", body, f"https://example.invalid/{tag}", pre)
@@ -127,6 +134,53 @@ diff --git a/x/upgrade.yaml b/x/upgrade.yaml
             ("image", "ghcr.io/autobrr/qui", "v1.31.0@sha256:aaaaaaa", "v1.31.1@sha256:bbbbbbb"),
             ("docker", "ghcr.io/siderolabs/kubelet", "v1.36.0", "v1.37.1"),
         })
+
+    def test_parse_diff_single_line_images(self):
+        diff = """diff --git a/c/cluster.yaml b/c/cluster.yaml
+--- a/c/cluster.yaml
++++ b/c/cluster.yaml
+@@ -6,3 +6,3 @@
+-  imageName: ghcr.io/cloudnative-pg/postgresql:18
++  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm
+-  imageName: ${DB_IMAGE:-a:1}
++  imageName: ${DB_IMAGE:-a:2}
+diff --git a/e/envoy.yaml b/e/envoy.yaml
+--- a/e/envoy.yaml
++++ b/e/envoy.yaml
+@@ -20,2 +20,2 @@
+-        - image: "mirror.gcr.io/envoyproxy/envoy:v1.39.3@sha256:aaaaaaa"
++        - image: "mirror.gcr.io/envoyproxy/envoy:v1.39.4@sha256:bbbbbbb"
+"""
+        bumps = ue.parse_diff(diff, ue.local_reader("/nonexistent"))
+        got = {(b["kind"], b["name"], b["old"], b["new"], b["path"]) for b in bumps}
+        self.assertEqual(got, {
+            ("image", "ghcr.io/cloudnative-pg/postgresql", "18", "18.6-standard-bookworm",
+             "c/cluster.yaml"),
+            ("image", "mirror.gcr.io/envoyproxy/envoy", "v1.39.3@sha256:aaaaaaa",
+             "v1.39.4@sha256:bbbbbbb", "e/envoy.yaml"),
+        })
+
+    def test_flavour_suffix_does_not_shrink_range(self):
+        self.assertEqual(ue.release_version("18.6-standard-bookworm"), "18.6")
+        self.assertEqual(ue.release_version("v2.0.0-rc.1"), "v2.0.0-rc.1")
+        # Revision suffixes are part of upstream tags and still order.
+        for tag in ("1.2.3-ls123", "2.0.1-2", "1.4.0-r1"):
+            self.assertEqual(ue.release_version(tag), tag)
+        self.assertEqual(ue.direction("1.2.3-ls123", "1.2.3-ls122"), "rollback")
+        picked, found, _, _ = ue.select_releases(
+            [rel("1.2.3-ls123"), rel("1.2.3-ls122")], "ghcr.io/linuxserver/x",
+            "1.2.3-ls122", "1.2.3-ls123")
+        self.assertEqual([r[0] for _, r in picked], ["1.2.3-ls123"])
+        self.assertTrue(found)
+        self.assertEqual(ue.vkey("18.6-standard-bookworm"), ue.vkey("18.6"))
+        self.assertEqual(ue.direction("18", "18.6-standard-bookworm"), "upgrade")
+        self.assertEqual(ue.direction("18.6-standard-bookworm", "18.6"), "upgrade")
+        rels = [rel("v18.7"), rel("v18.6"), rel("v18.5"), rel("v17.9")]
+        picked, found, _, _ = ue.select_releases(
+            rels, "ghcr.io/cloudnative-pg/postgresql", "18",
+            ue.release_version("18.6-standard-bookworm"))
+        self.assertEqual([r[0] for _, r in picked], ["v18.6", "v18.5"])
+        self.assertTrue(found)
 
     def test_renovate_annotation_covers_only_the_next_line(self):
         diff = """\

@@ -1,0 +1,7 @@
+{
+ "key": "ocilabel:ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm",
+ "value": [
+  "github.com",
+  "cloudnative-pg/postgres-containers"
+ ]
+}
