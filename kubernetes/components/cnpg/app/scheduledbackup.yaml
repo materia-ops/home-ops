@@ -5,7 +5,6 @@ kind: ScheduledBackup
 metadata:
   name: postgres-${APP}-backup
 spec:
-  # CNPG cron has a leading SECONDS field: 5-field "30 2 * * *" ran hourly.
   schedule: "0 0 16 * * *"   # daily 16:00 UTC = 02:00/03:00 Melbourne
   backupOwnerReference: self
   cluster:
