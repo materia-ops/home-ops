@@ -8,10 +8,12 @@ spec:
   groups:
     - name: postgres-${APP}-backup.rules
       rules:
-        # backups run daily; 2 days without a new one means two misses in a row
+        # backups run daily; 2 days without a new one means two misses in a row.
+        # absent() covers a dead/uninjected sidecar, where max() alone returns nothing.
         - alert: CNPGBackupStale
           expr: |-
             time() - max(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{pod=~"postgres-${APP}-[0-9]+"}) > 172800
+              or absent(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{pod=~"postgres-${APP}-[0-9]+"})
           annotations:
             summary: >-
               No completed barman-cloud backup for postgres-${APP} in 48h
