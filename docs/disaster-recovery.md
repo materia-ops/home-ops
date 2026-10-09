@@ -139,7 +139,7 @@ At each stage, from [bootstrap.md](./bootstrap.md#verification) and the
 | Stage 2 (bootstrap) | `cilium status` — CNI + BGP healthy; `kubectl get nodes` — all `Ready` |
 | Stage 3 (Flux) | `flux check` and `flux get ks -A` / `flux get hr -A` — everything `Ready` (the `--status-selector ready=false` variants should come back empty) |
 | Storage converged | `kubectl -n rook-ceph get cephcluster` — `HEALTH_OK` |
-| DNS | `dig @192.168.10.4 <app>.materia.wtf` — split DNS answering |
+| DNS | `dig @192.168.1.2 <app>.materia.wtf` — Pi-hole serving the external-dns records |
 | Workloads | Pods running, no CrashLoopBackOff; routes reachable and gatus green; no new alerts after ~15 minutes (Pushover quiet, vmalert clean) |
 | Stage 4 (restore) | The restore recipe itself waits for the app pod to be `Ready`; confirm app data in the UI or via `just kube browse-pvc` |
 
