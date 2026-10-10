@@ -50,7 +50,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
           cache: "pip"
           cache-dependency-path: infrastructure/requirements.txt
       - name: Install Requirements
@@ -129,7 +129,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14" # Pin to stable 3.11
+          python-version: "3.15" # Pin to stable 3.11
           cache: "pip" # Optional: caches pip dependencies
           cache-dependency-path: infrastructure/requirements.txt
       - name: Install Requirements
@@ -185,7 +185,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14" # Pin to stable 3.11
+          python-version: "3.15" # Pin to stable 3.11
           cache: "pip" # Optional: caches pip dependencies
           cache-dependency-path: infrastructure/requirements.txt
       - name: Install Requirements
