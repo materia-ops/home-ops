@@ -29,7 +29,7 @@ spec:
             nameOverride: authserver
             image: &image
               repository: ghcr.io/materia-ops/azerothcore-wotlk-playerbots
-              tag: 1.9.4@sha256:d36d7a7bba4380a761114adc3805e5e7b505f28a67eccb2190c2bf6754b2244d
+              tag: 1.9.6@sha256:c444d1e3f44cf8e114f9e806b5b2f986d797b9fa4fd47ff3ebdf160f1fff793c
             # Image CMD is worldserver; same image runs both servers.
             command: ["authserver"]
             env:
