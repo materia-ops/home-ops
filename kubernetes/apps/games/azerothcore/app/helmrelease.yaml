@@ -29,7 +29,7 @@ spec:
             nameOverride: authserver
             image: &image
               repository: ghcr.io/materia-ops/azerothcore-wotlk-playerbots
-              tag: 1.9.4@sha256:d36d7a7bba4380a761114adc3805e5e7b505f28a67eccb2190c2bf6754b2244d
+              tag: 1.9.6@sha256:c444d1e3f44cf8e114f9e806b5b2f986d797b9fa4fd47ff3ebdf160f1fff793c
             # Image CMD is worldserver; same image runs both servers.
             command: ["authserver"]
             env:
@@ -99,32 +99,6 @@ spec:
               # mod-account-mounts >= 8aa6e77 defaults both limits to 1; keep full sharing.
               AC_ACCOUNT_MOUNTS_LIMIT_CLASS: "0"
               AC_ACCOUNT_MOUNTS_LIMIT_RACE: "0"
-              AC_AI_PLAYERBOT_ADD_CLASS_ACCOUNT_POOL_SIZE: "10"
-              AC_AI_PLAYERBOT_AUTO_GEAR_BIS_COMMAND: "1"
-              AC_AI_PLAYERBOT_AUTO_GEAR_QUALITY_LIMIT: "4"
-              # Dist-less key the pinned playerbot code still READS (boot
-              # warns otherwise); ac-image's registry can't pin it (the gate
-              # greps the dist). Drop once upstream stops reading it.
-              AC_AI_PLAYERBOT_BOT_ONLY_GROUP_FULL_XP: "1"
-              AC_AI_PLAYERBOT_COMBAT_STRATEGIES: "+behind,+threat"
-              AC_AI_PLAYERBOT_COMMAND_SERVER_PORT: "0"
-              AC_AI_PLAYERBOT_ENABLE_PERIODIC_ONLINE_OFFLINE: "1"
-              AC_AI_PLAYERBOT_FREE_METHOD_LOOT: "1"
-              # Level brackets (ex-#1523): bots follow the real players' level
-              # ranges. SyncFactions needs identical faction bracket tables —
-              # the dist ships them identical.
-              AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_REAL_PLAYER_WEIGHT: "10.0"
-              AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_SYNC_FACTIONS: "1"
-              AC_AI_PLAYERBOT_LEVEL_BRACKETS_DYNAMIC_USE_DYNAMIC_DISTRIBUTION: "1"
-              AC_AI_PLAYERBOT_LEVEL_BRACKETS_ENABLED: "1"
-              AC_AI_PLAYERBOT_MAX_RANDOM_BOTS: "300"
-              AC_AI_PLAYERBOT_MIN_RANDOM_BOTS: "300"
-              AC_AI_PLAYERBOT_PREFERRED_SPEC_WEAPONS: "1"
-              AC_AI_PLAYERBOT_PREFER_CLASS_ARMOR_TYPE: "1"
-              AC_AI_PLAYERBOT_RANDOM_BOT_AUTO_JOIN_BG: "1"
-              AC_AI_PLAYERBOT_RANDOM_BOT_COMBAT_STRATEGIES: "+behind,+threat"
-              AC_AI_PLAYERBOT_RANDOM_GEAR_QUALITY_LIMIT: "4"
-              AC_AI_PLAYERBOT_TOXIC_LINKS_REPLIES_CHANCE: "0"
               AC_ALE_SCRIPT_PATH: "/azerothcore/lua_scripts"
               AC_ALLOW_TWO_SIDE_INTERACTION_ARENA: "1"
               AC_ALLOW_TWO_SIDE_INTERACTION_CALENDAR: "1"
@@ -170,6 +144,32 @@ spec:
               AC_OLLAMA_CHAT_NUM_PREDICT: "40"
               AC_OLLAMA_CHAT_SYSTEM_PROMPT: "You are a World of Warcraft: Wrath of the Lich King player character. Always stay in character. Reply like a real player typing in game chat: casual, short (under 15 words), era-appropriate slang, no emojis, no markdown, no narration, never mention being an AI."
               AC_OLLAMA_CHAT_URL: "http://kiterium.internal:11434/api/generate"
+              AC_PLAYERBOTS_ADD_CLASS_ACCOUNT_POOL_SIZE: "10"
+              AC_PLAYERBOTS_AUTO_GEAR_BIS_COMMAND: "1"
+              AC_PLAYERBOTS_AUTO_GEAR_QUALITY_LIMIT: "4"
+              # Key added by ac-image patch mod-playerbots/0003 (not in the
+              # dist), so ac-image's registry can't pin it — renames there
+              # must be mirrored here by hand.
+              AC_PLAYERBOTS_BOT_ONLY_GROUP_FULL_XP: "1"
+              AC_PLAYERBOTS_COMBAT_STRATEGIES: "+behind,+threat"
+              AC_PLAYERBOTS_COMMAND_SERVER_PORT: "0"
+              AC_PLAYERBOTS_ENABLE_PERIODIC_ONLINE_OFFLINE: "1"
+              AC_PLAYERBOTS_FREE_METHOD_LOOT: "1"
+              # Level brackets (ex-#1523): bots follow the real players' level
+              # ranges. SyncFactions needs identical faction bracket tables —
+              # the dist ships them identical.
+              AC_PLAYERBOTS_LEVEL_BRACKETS_DYNAMIC_REAL_PLAYER_WEIGHT: "10.0"
+              AC_PLAYERBOTS_LEVEL_BRACKETS_DYNAMIC_SYNC_FACTIONS: "1"
+              AC_PLAYERBOTS_LEVEL_BRACKETS_DYNAMIC_USE_DYNAMIC_DISTRIBUTION: "1"
+              AC_PLAYERBOTS_LEVEL_BRACKETS_ENABLED: "1"
+              AC_PLAYERBOTS_MAX_RANDOM_BOTS: "300"
+              AC_PLAYERBOTS_MIN_RANDOM_BOTS: "300"
+              AC_PLAYERBOTS_PREFERRED_SPEC_WEAPONS: "1"
+              AC_PLAYERBOTS_PREFER_CLASS_ARMOR_TYPE: "1"
+              AC_PLAYERBOTS_RANDOM_BOT_AUTO_JOIN_BG: "1"
+              AC_PLAYERBOTS_RANDOM_BOT_COMBAT_STRATEGIES: "+behind,+threat"
+              AC_PLAYERBOTS_RANDOM_GEAR_QUALITY_LIMIT: "4"
+              AC_PLAYERBOTS_TOXIC_LINKS_REPLIES_CHANCE: "0"
               AC_SOAP_ENABLED: "1"
               AC_SOAP_IP: "0.0.0.0"
               AC_SOURCE_DIRECTORY: "/azerothcore/source"
