@@ -1,0 +1,20 @@
+diff --git a/kubernetes/components/cnpg/app/cluster.yaml b/kubernetes/components/cnpg/app/cluster.yaml
+index b5115df09..17f63a952 100644
+--- a/kubernetes/components/cnpg/app/cluster.yaml
++++ b/kubernetes/components/cnpg/app/cluster.yaml
+@@ -6,11 +6,14 @@ metadata:
+   name: postgres-${APP}
+ spec:
+   instances: ${DB_INSTANCES:-2}
+-  imageName: ghcr.io/cloudnative-pg/postgresql:18
++  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm
+   enableSuperuserAccess: false
+   primaryUpdateMethod: switchover
+   primaryUpdateStrategy: unsupervised
+ 
++  affinity:
++    podAntiAffinityType: required
++
+   storage:
+     size: ${DB_SIZE:-10Gi}
+     storageClass: ${DB_STORAGE_CLASS:-openebs-hostpath}

@@ -143,8 +143,10 @@ Before the model runs, an **upgrade-evidence** step collects the release notes
 deterministically instead of leaving the research to the model.
 [`.github/scripts/upgrade_evidence.py`](../.github/scripts/upgrade_evidence.py) reads
 the PR diff, finds every version change (OCIRepository chart tags, HelmRelease image
-tags, `# renovate:` annotated pins, Talos installer images, `.mise/config.toml` pins,
-pinned `uses:` actions), and cross-checks them against the Renovate table and title.
+tags, single-line `image:`/`imageName:` references, `# renovate:` annotated pins, Talos
+installer images, `.mise/config.toml` pins, pinned `uses:` actions), and cross-checks
+them against the Renovate table and title. Image flavour suffixes
+(`18.6-standard-bookworm`) are dropped when comparing a tag against release versions.
 For a chart bump it also reads `appVersion` from both chart versions with
 `helm show chart` and adds the **inner application** as its own row. That is where
 breaking changes tend to hide: the external-dns 1.21→1.22 chart bump (#1728) shipped
