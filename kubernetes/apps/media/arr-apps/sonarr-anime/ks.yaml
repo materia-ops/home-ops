@@ -6,7 +6,6 @@ metadata:
   name: &app sonarr-anime
 spec:
   components:
-    - ../../../../../components/authentik-forward-auth
     - ../../../../../components/kopiur/backup
     - ../../../../../components/theme-park
     - ../../../../../components/zeroscaler
