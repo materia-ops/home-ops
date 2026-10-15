@@ -39,7 +39,7 @@ radarr:
             - 09d9dd29a0fc958f9796e65c2a8864b4  # Open Matte
         - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c  # [Streaming Services] UK
         - trash_id: 15b1cf0b6f1a1493856a4355907affee  # [Unwanted] Unwanted Formats SQP
-          select:
-            - 7357cf5161efbf8c4d5d0c30b4815ee2  # Obfuscated
-            - 5c44f52a8714fdd79bb4d98e2673be1f  # Retags
-            - f537cf427b64c38c8e36298f657e4828  # Scene
+          select_all: true
+          exclude:
+            # -10000 on SQP-1: would block 10-bit HEVC WEB releases
+            - a5d148168c4506b55cf53984107c396e  # 10bit

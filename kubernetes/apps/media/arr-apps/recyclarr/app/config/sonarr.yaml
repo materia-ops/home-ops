@@ -42,8 +42,6 @@ sonarr:
         - trash_id: ddab3095a5d2f436f369263840af34f9  # [Streaming Services] UK
         - trash_id: 59c3af66780d08332fdc64e68297098f  # [Unwanted] Unwanted Formats
           select_all: true
-          exclude:
-            - 21d9d08e39b05523ec36811ab06b8308  # BW
 
     custom_formats:
       # FLUX at its guide default score (the CF isn't part of the profile by default)
