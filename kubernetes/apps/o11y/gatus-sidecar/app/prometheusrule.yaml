@@ -37,6 +37,7 @@ spec:
             summary: >-
               CI dead-man check {{ $labels.name }} is failing (cron disabled, latest run failed, or the monitoring PAT died)
           labels:
+            depends_on: internet
             severity: critical
 
         - alert: GatusUpstreamDown
@@ -47,19 +48,36 @@ spec:
             summary: >-
               The {{ $labels.name }} third-party upstream is unreachable
           labels:
+            depends_on: internet
             # Third-party outages aren't actionable at 3am — warn, don't page.
             severity: warning
 
-        # All three icmp checks down = the WAN, not the cluster. Alertmanager
-        # inhibits the internet-dependent alerts while this fires; it is held
-        # 10m past recovery so reconnecting workloads don't page on the way back.
+        # The WAN, not the cluster: all three icmp checks down, or the UDM's own WAN
+        # health check (unpoller, polled over the LAN). Alertmanager inhibits the
+        # internet-dependent alerts; held 20m so the 15m-window send-failure alerts drain.
         - alert: InternetDown
           expr: |
             max(gatus_results_endpoint_success{group="connectivity"}) == 0
+            or on()
+            max(unpoller_site_uptime_seconds{subsystem="www"}) == 0
           for: 3m
-          keep_firing_for: 10m
+          keep_firing_for: 20m
           annotations:
             summary: >-
-              Internet connectivity is down (Cloudflare, Google and Quad9 all unreachable); internet-dependent alerts are inhibited
+              Internet connectivity is down (gatus icmp to Cloudflare, Google and Quad9, or the UDM WAN health check); internet-dependent alerts are inhibited. If the UDM shows WAN traffic, suspect cluster egress instead
           labels:
             severity: critical
+
+        # Pushover is internet-hosted: if this arrives the internet works, so the
+        # InternetDown sensor is broken and internet-dependent alerts are muted.
+        - alert: InternetDownProlonged
+          expr: |
+            max(gatus_results_endpoint_success{group="connectivity"}) == 0
+            or on()
+            max(unpoller_site_uptime_seconds{subsystem="www"}) == 0
+          for: 2h
+          annotations:
+            summary: >-
+              InternetDown has fired for 2h while this notification got through; check the gatus icmp checks and the unpoller WAN health series
+          labels:
+            severity: warning

@@ -23,6 +23,11 @@ spec:
             - receiver: blackhole
               matchers:
                 - alertname = InfoInhibitor
+            # Only deliverable once the WAN is back; don't re-send through a long outage.
+            - receiver: pushover
+              matchers:
+                - alertname = InternetDown
+              repeat_interval: 24h
           group_by:
             - alertname
             - cluster
@@ -37,27 +42,55 @@ spec:
               - severity = "critical"
             target_matchers:
               - severity = "warning"
-          # InternetDown (gatus-sidecar rules): mute what only fails because the WAN did
+          # InternetDown (gatus-sidecar rules): mute what only fails because the WAN did.
+          # Rules this repo owns opt in with a depends_on: internet label; chart rules
+          # can't carry one, so they are matched by name and scoped to the affected apps.
           - source_matchers: &internet-down
               - alertname = "InternetDown"
             target_matchers:
-              - alertname =~ "AlertmanagerClusterFailedToSendAlerts|AlertmanagerFailedToSendAlerts|FluxInstanceNotReady|GatusCiPipelineBroken|GatusUpstreamDown|TooManyLogs|TooManyScrapeErrors|VpnProbeFailed"
+              - depends_on = "internet"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname =~ "AlertmanagerClusterFailedToSendAlerts|AlertmanagerFailedToSendAlerts|TooManyScrapeErrors"
           - source_matchers: *internet-down
             target_matchers:
               - alertname = "GatusEndpointDown"
               - group = "external"
           - source_matchers: *internet-down
             target_matchers:
+              - alertname = "KubeContainerWaiting"
+              - reason =~ "ErrImagePull|ImagePullBackOff"
+          - source_matchers: *internet-down
+            target_matchers:
               - alertname =~ "KubeContainerWaiting|KubePodCrashLooping|KubePodNotReady"
-              - pod =~ "(cloudflare-tunnel|external-dns-cloudflare|seerr)-.+|.+-listener"
+              - namespace = "actions-runner-system"
+              - pod =~ ".+-listener"
+          # Deployment pods only (<deploy>-<rs hash>-<suffix>): the alphabet has no 0/1/3,
+          # so kopiur mover pods (<app>-<timestamp>-<suffix>) never match.
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname =~ "KubeContainerWaiting|KubePodCrashLooping|KubePodNotReady"
+              - namespace =~ "media|network"
+              - pod =~ "(cloudflare-tunnel|external-dns-cloudflare|seerr)-[bcdfghjklmnpqrstvwxz2456789]+-[bcdfghjklmnpqrstvwxz2456789]{5}"
           - source_matchers: *internet-down
             target_matchers:
               - alertname = "KubeDeploymentReplicasMismatch"
+              - namespace =~ "media|network"
               - deployment =~ "cloudflare-tunnel|external-dns-cloudflare|seerr"
           - source_matchers: *internet-down
             target_matchers:
               - alertname = "KubePdbNotEnoughHealthyPods"
+              - namespace = "network"
               - poddisruptionbudget = "cloudflare-tunnel"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "TargetDown"
+              - namespace = "network"
+              - job = "external-dns-cloudflare"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "TooManyLogs"
+              - job = "vmagent-victoria-metrics"
         receivers:
           - name: blackhole
           - name: pushover
@@ -83,7 +116,7 @@ spec:
                     {{- end }}
                   {{- end }}
                 priority: |-
-                  {{ if eq .Status "firing" }}1{{ else }}0{{ end }}
+                  {{ if and (eq .Status "firing") (ne .CommonLabels.alertname "InternetDown") }}1{{ else }}0{{ end }}
                 send_resolved: true
                 sound: gamelan
                 title: >-
