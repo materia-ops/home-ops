@@ -24,12 +24,18 @@ spec:
             env:
               CORS_ORIGIN: https://tracearr.materia.wtf
               HOST: 0.0.0.0
+              IMAGE_CACHE_MAX_MB: "2048"
               LOG_LEVEL: info
               OIDC_ISSUER_URL: https://auth.materia.wtf/application/o/tracearr/
               OIDC_PROVIDER_NAME: Authentik
               PORT: &port 3000
+              REDIS_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: tracearr-dragonfly-secret
+                    key: password
               REDIS_PREFIX: "tracearr:"
-              REDIS_URL: redis://dragonfly.database.svc.cluster.local:6379
+              REDIS_URL: redis://:$(REDIS_PASSWORD)@tracearr-dragonfly.media.svc.cluster.local:6379
               TRUST_PROXY: "true"
               TZ: Australia/Melbourne
             envFrom:
@@ -89,10 +95,12 @@ spec:
     persistence:
       backup:
         type: emptyDir
+        sizeLimit: 2Gi
         globalMounts:
           - path: /data/backup
       image-cache:
         type: emptyDir
+        sizeLimit: 3Gi
         globalMounts:
           - path: /data/tracearr/image-cache
       tmp:

@@ -81,7 +81,8 @@ mixed into apps via `spec.components`:
 | `namespace` | The Namespace object itself (`name: _`, renamed by the kustomization's `namespace:` field) with `prune: disabled`, so no namespace directory carries its own `namespace.yaml`. Mixed into namespace-level kustomizations, not apps |
 | `kopiur/secret` | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps |
 | `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC |
-| `cnpg` | A CloudNativePG Postgres cluster for the app |
+| `cnpg` | A CloudNativePG Postgres cluster for the app (`cnpg/app`), with barman-cloud backups and a pgbouncer pooler. The app user's password is pushed to the 1Password item `postgres-<app>-app`; each app templates its own connection settings from that item. `cnpg/restore` overlays a recovery bootstrap |
+| `cnpg/timescaledb` | Layer after `cnpg/app` for apps that need TimescaleDB's community edition: swaps in a CNPG-compatible TimescaleDB image and adds its preload library, licence and extensions |
 | `gpu` | Intel iGPU resource claims for transcoding workloads |
 | `theme-park` | theme.park styling injection |
 | `zeroscaler` | An HPA that scales the workload to zero when idle (uses the `HPAScaleToZero` feature gate) |

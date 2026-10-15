@@ -8,13 +8,16 @@ spec:
   components:
     - ../../../../components/cnpg/app
     - ../../../../components/cnpg/timescaledb
+    - ../../../../components/dragonfly
   dependsOn:
     - name: cnpg-operator
       namespace: database
-    - name: dragonfly-cluster
+    - name: dragonfly-operator
       namespace: database
     - name: plugin-barman-cloud
       namespace: database
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
   interval: 30m
   path: ./kubernetes/apps/media/tracearr/app
   postBuild:

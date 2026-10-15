@@ -12,6 +12,7 @@ spec:
   values:
     grafanaDashboard:
       enabled: true
+      folder: Dragonfly
       grafanaOperator:
         enabled: true
         matchLabels:
