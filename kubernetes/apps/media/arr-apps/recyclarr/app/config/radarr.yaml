@@ -1,7 +1,21 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
-# Guide-backed: profile scores, default CF groups and default CFs follow TRaSH on
-# every sync, so this file holds only deviations. Origin template (2160p superset):
-# https://github.com/recyclarr/config-templates/blob/master/radarr/templates/sqp/sqp-1-web-2160p.yml
+#
+#  _______         __      ________        __      _______    _______
+# |_   __ \       /  \    |_   ___ \.     /  \    |_   __ \  |_   __ \
+#   | |__) |     / /\ \     | |   \. \   / /\ \     | |__) |   | |__) |
+#   |  __ /     / ____ \    | |    | |  / ____ \    |  __ /    |  __ /
+#  _| |  \ \_ _/ /    \ \_ _| |___.' /_/ /    \ \_ _| |  \ \_ _| |  \ \_
+# |____| |___|____|  |____|________.'|____|  |____|____| |___|____| |___|
+#
+#
+# Recyclarr Configuration Template: [SQP] SQP-1 WEB (1080p + 2160p)
+# Profile: [SQP] SQP-1 WEB (1080p) + [SQP] SQP-1 WEB (2160p)  (combined instance)
+# Source:  https://github.com/recyclarr/config-templates/blob/master/radarr/templates/sqp/sqp-1-web-2160p.yml
+#          (2160p superset; also .../radarr/templates/sqp/sqp-1-web-1080p.yml)
+# Updated: 2026-10-15
+# Guide-backed: profile scores, default CF groups and default CFs follow TRaSH
+# on every sync, so this file holds only deviations from the guide.
+################################################################################
 radarr:
   movies:
     base_url: http://radarr.media.svc.cluster.local

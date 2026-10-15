@@ -1,7 +1,26 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
-# Guide-backed: profile scores, default CF groups and default CFs follow TRaSH on
-# every sync, so this file holds only deviations. Origin template:
-# https://github.com/recyclarr/config-templates/blob/master/radarr/templates/sqp/sqp-2.yml
+#
+#  _______         __      ________        __      _______    _______
+# |_   __ \       /  \    |_   ___ \.     /  \    |_   __ \  |_   __ \
+#   | |__) |     / /\ \     | |   \. \   / /\ \     | |__) |   | |__) |
+#   |  __ /     / ____ \    | |    | |  / ____ \    |  __ /    |  __ /
+#  _| |  \ \_ _/ /    \ \_ _| |___.' /_/ /    \ \_ _| |  \ \_ _| |  \ \_
+# |____| |___|____|  |____|________.'|____|  |____|____| |___|____| |___|
+#
+#     d8   888  /
+#    d88   888 /
+#   d888   888/\
+#  / 888   888  \
+# /__888__ 888   \
+#    888   888    \
+#
+# Recyclarr Configuration Template: [SQP] SQP-2
+# Profile: [SQP] SQP-2
+# Source:  https://github.com/recyclarr/config-templates/blob/master/radarr/templates/sqp/sqp-2.yml
+# Updated: 2026-10-15
+# Guide-backed: profile scores, default CF groups and default CFs follow TRaSH
+# on every sync, so this file holds only deviations from the guide.
+################################################################################
 radarr:
   movies-4k:
     base_url: http://radarr-4k.media.svc.cluster.local
