@@ -142,6 +142,17 @@ endpoints:
       ignore-redirect: true
     conditions:
       - "[STATUS] == 302"
+  # A failed Authentik blueprint stays `error` and is never retried until its
+  # file changes or Authentik restarts (games proxy sat broken 2026-08-31..10-15).
+  - name: authentik-blueprints
+    group: security
+    url: http://authentik-server.security.svc.cluster.local/api/v3/managed/blueprints/?page_size=100
+    interval: 15m
+    headers:
+      Authorization: Bearer ${AUTHENTIK_TOKEN}
+    conditions:
+      - "[STATUS] == 200"
+      - '[BODY] != pat(*"status":"error"*)'
 metrics: true
 storage:
   type: sqlite

@@ -39,6 +39,16 @@ spec:
           labels:
             severity: critical
 
+        - alert: GatusSecurityCheckFailing
+          expr: |
+            gatus_results_endpoint_success{group="security"} == 0
+          for: 15m
+          annotations:
+            summary: >-
+              Security check {{ $labels.name }} is failing (SSO guard bypassed or an Authentik blueprint is in error)
+          labels:
+            severity: critical
+
         - alert: GatusUpstreamDown
           expr: |
             gatus_results_endpoint_success{group="upstreams"} == 0
