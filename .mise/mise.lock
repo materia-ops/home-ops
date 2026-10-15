@@ -219,19 +219,19 @@ url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/597222575"
 provenance = "cosign"
 
 [[tools."aqua:mitsuhiko/minijinja"]]
-version = "3.0.0"
+version = "3.0.1"
 backend = "aqua:mitsuhiko/minijinja"
-specifiers = ["3.0.0"]
+specifiers = ["3.0.1"]
 
 [tools."aqua:mitsuhiko/minijinja"."platforms.linux-x64"]
-checksum = "sha256:475e12d8b29b321b6176b664cafb09043a67a96449a9c8fa4772424f6edb50b4"
-url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.0/minijinja-cli-x86_64-unknown-linux-gnu.tar.xz"
-url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/624062606"
+checksum = "sha256:5b2eb07b18d5804e50b4e83ebdaae9b70dda37f4a2d058987881396e6c91c8b6"
+url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.1/minijinja-cli-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/644229276"
 
 [tools."aqua:mitsuhiko/minijinja"."platforms.windows-x64"]
-checksum = "sha256:dae7105051d2b1300549862e362a31b8036dbc93cc99eeb42c48372f44329eca"
-url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.0/minijinja-cli-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/624062597"
+checksum = "sha256:fb50e280eb2356672319e092aee51f28b870e9feddc145ef56abcbeef22e5fd2"
+url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.1/minijinja-cli-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/644229249"
 
 [[tools."aqua:siderolabs/talos"]]
 version = "1.14.3"
