@@ -10,7 +10,7 @@ machine:
     diskQuotaSupport: true
     rbac: true
   install:
-    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.2
+    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.3
     wipe: false
     grubUseUKICmdline: true
   token: ref+op://kubernetes/talos/MACHINE_TOKEN
