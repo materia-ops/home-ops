@@ -198,6 +198,10 @@ spec:
     xForwardedFor:
       trustedCIDRs:
         - 10.42.0.0/16
+  connection:
+    # theme-park's Lua buffers whole HTML bodies; SABnzbd's index is ~580 KiB and
+    # 500'd (response_payload_too_large) over HTTP/2 at the default limit.
+    bufferLimit: 1Mi
   http2:
     onInvalidMessage: TerminateStream
   http3: {}
