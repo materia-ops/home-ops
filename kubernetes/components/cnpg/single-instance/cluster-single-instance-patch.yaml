@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-${APP}
+spec:
+  instances: 1
+  enablePDB: false
+  postgresql:
+    synchronous: null

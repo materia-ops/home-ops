@@ -1,0 +1,107 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tracearr
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: tracearr
+  interval: 1h
+  values:
+    controllers:
+      tracearr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        # singleton poller: never two pods at once
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: ghcr.io/connorgallopo/tracearr
+              tag: 2.8.3@sha256:df06e1a22b7eda67929a3076c5fe4ad2e03df8f92324ab09c2f3b18137a82c83
+            env:
+              CORS_ORIGIN: https://tracearr.materia.wtf
+              HOST: 0.0.0.0
+              IMAGE_CACHE_MAX_MB: "2048"
+              LOG_LEVEL: info
+              OIDC_ISSUER_URL: https://auth.materia.wtf/application/o/tracearr/
+              OIDC_PROVIDER_NAME: Authentik
+              PORT: &port 3000
+              REDIS_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: tracearr-dragonfly-secret
+                    key: password
+              REDIS_PREFIX: "tracearr:"
+              REDIS_URL: redis://:$(REDIS_PASSWORD)@tracearr-dragonfly.media.svc.cluster.local:6379
+              TRUST_PROXY: "true"
+              TZ: Australia/Melbourne
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+              readiness: *probe
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 50m
+                memory: 512Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.materia.wtf"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      backup:
+        type: emptyDir
+        sizeLimit: 2Gi
+        globalMounts:
+          - path: /data/backup
+      image-cache:
+        type: emptyDir
+        sizeLimit: 3Gi
+        globalMounts:
+          - path: /data/tracearr/image-cache
+      tmp:
+        type: emptyDir
