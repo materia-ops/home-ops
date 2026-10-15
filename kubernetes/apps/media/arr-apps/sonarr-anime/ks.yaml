@@ -8,7 +8,6 @@ spec:
   components:
     - ../../../../../components/authentik-forward-auth
     - ../../../../../components/kopiur/backup
-    - ../../../../../components/theme-park
     - ../../../../../components/zeroscaler
   dependsOn:
     - name: rook-ceph-cluster
@@ -18,7 +17,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      THEME_PARK_APP: sonarr
   prune: true
   sourceRef:
     kind: GitRepository
