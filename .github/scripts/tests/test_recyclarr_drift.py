@@ -153,6 +153,16 @@ class DriftTest(unittest.TestCase):
         self.assertIn("new optional CF `Obfuscated` (`cf-obf`): decide", out)
         self.assertIn("new default CF `Extras` (`cf-ext`): already syncing", out)
 
+    def test_new_cf_under_select_all_is_already_syncing(self):
+        cfg = (self.config_dir / "sonarr.yaml").read_text().replace(
+            "          select:\n            - cf-scene",
+            "          select_all: true\n          exclude:\n            - cf-retags")
+        (self.config_dir / "sonarr.yaml").write_text(cfg)
+        self.accept()
+        self.groups["g-unwanted"]["custom_formats"].append(cf("cf-obf", "Obfuscated"))
+        self.assertIn("new optional (via select_all) CF `Obfuscated` (`cf-obf`): already syncing",
+                      self.report())
+
     def test_new_cf_in_unsynced_group_is_ignored(self):
         self.accept()
         self.groups["g-uk"]["custom_formats"].append(cf("cf-now", "NOW"))

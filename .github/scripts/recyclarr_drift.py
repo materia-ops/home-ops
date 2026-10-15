@@ -218,7 +218,8 @@ def changes(offer, base):
             prior = known.get(cid)
             if prior is None:
                 if cf_syncs(g, cid, c["default"]):
-                    lines.append(f"{name}: new default CF {cname} (`{cid}`): already syncing; "
+                    kind = "default" if c["default"] else "optional (via select_all)"
+                    lines.append(f"{name}: new {kind} CF {cname} (`{cid}`): already syncing; "
                                  "`exclude` it if unwanted")
                 else:
                     lines.append(f"{name}: new optional CF {cname} (`{cid}`): decide whether to "
