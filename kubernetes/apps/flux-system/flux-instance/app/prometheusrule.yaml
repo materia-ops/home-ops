@@ -27,4 +27,5 @@ spec:
             summary: >-
               Flux instance {{ $labels.name }} is not ready
           labels:
+            depends_on: internet
             severity: critical
