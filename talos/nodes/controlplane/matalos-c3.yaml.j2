@@ -4,6 +4,14 @@ machine:
   install:
     diskSelector:
       model: Samsung SSD 980 1TB
+  # Experiment: no C7s-C10 (124-890us exit latency) while comparing igc rx FIFO
+  # overruns against c2. Revert by setting "0" and applying before removing the keys.
+  sysfs:
+    {% for cpu in range(12) %}
+    {% for state in range(5, 9) %}
+    devices.system.cpu.cpu{{ cpu }}.cpuidle.state{{ state }}.disable: "1"
+    {% endfor %}
+    {% endfor %}
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig
