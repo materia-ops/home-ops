@@ -49,3 +49,17 @@ spec:
           labels:
             # Third-party outages aren't actionable at 3am — warn, don't page.
             severity: warning
+
+        # All three icmp checks down = the WAN, not the cluster. Alertmanager
+        # inhibits the internet-dependent alerts while this fires; it is held
+        # 10m past recovery so reconnecting workloads don't page on the way back.
+        - alert: InternetDown
+          expr: |
+            max(gatus_results_endpoint_success{group="connectivity"}) == 0
+          for: 3m
+          keep_firing_for: 10m
+          annotations:
+            summary: >-
+              Internet connectivity is down (Cloudflare, Google and Quad9 all unreachable); internet-dependent alerts are inhibited
+          labels:
+            severity: critical

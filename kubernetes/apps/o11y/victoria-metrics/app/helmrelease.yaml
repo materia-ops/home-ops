@@ -37,6 +37,27 @@ spec:
               - severity = "critical"
             target_matchers:
               - severity = "warning"
+          # InternetDown (gatus-sidecar rules): mute what only fails because the WAN did
+          - source_matchers: &internet-down
+              - alertname = "InternetDown"
+            target_matchers:
+              - alertname =~ "AlertmanagerClusterFailedToSendAlerts|AlertmanagerFailedToSendAlerts|FluxInstanceNotReady|GatusCiPipelineBroken|GatusUpstreamDown|TooManyLogs|TooManyScrapeErrors|VpnProbeFailed"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "GatusEndpointDown"
+              - group = "external"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname =~ "KubeContainerWaiting|KubePodCrashLooping|KubePodNotReady"
+              - pod =~ "(cloudflare-tunnel|external-dns-cloudflare|seerr)-.+|.+-listener"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "KubeDeploymentReplicasMismatch"
+              - deployment =~ "cloudflare-tunnel|external-dns-cloudflare|seerr"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "KubePdbNotEnoughHealthyPods"
+              - poddisruptionbudget = "cloudflare-tunnel"
         receivers:
           - name: blackhole
           - name: pushover
