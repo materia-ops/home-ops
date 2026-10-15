@@ -23,8 +23,12 @@ spec:
             env:
               SONARR__APP__INSTANCENAME: Sonarr-Anime
               SONARR__APP__THEME: dark
-              SONARR__AUTH__METHOD: External
-              SONARR__AUTH__REQUIRED: DisabledForLocalAddresses
+              # native OIDC (v5+): one authorised user, matched on the Authentik
+              # username (provider sub_mode user_username); API keys unaffected
+              SONARR__AUTH__METHOD: Oidc
+              SONARR__AUTH__OIDCAUTHORITY: https://auth.materia.wtf/application/o/sonarr-anime/
+              SONARR__AUTH__OIDCUSERIDENTIFIER: vince
+              SONARR__AUTH__REQUIRED: Enabled
               SONARR__LOG__DBENABLED: "False"
               SONARR__LOG__LEVEL: info
               SONARR__SERVER__ALLOWEDHOSTS: sonarr-anime.materia.wtf,sonarr-anime.media.svc.cluster.local,localhost
