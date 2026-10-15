@@ -174,13 +174,35 @@ file. Release notes are third-party text: the file is labelled untrusted, HTML
 comments are stripped, and code fences are neutralised so a note cannot break out of
 its quoted block.
 
-### `scripts-test.yaml` — evidence script tests
+### `recyclarr-drift.yaml` — TRaSH Guides changes to review
+
+The recyclarr configs use guide-backed profiles, so scores, default CF groups and
+default CFs already follow TRaSH on every sync. What cannot follow on its own is
+anything optional: a new non-default CF group offered to one of our profiles, or a new
+non-default CF inside a group we sync. Weekly (and on pushes that touch the configs or
+baseline), [`.github/scripts/recyclarr_drift.py`](../.github/scripts/recyclarr_drift.py)
+shallow-clones the TRaSH JSON, lists everything it offers each instance, and diffs that
+against the reviewed baseline in `kubernetes/apps/media/arr-apps/recyclarr/drift-baseline.json`.
+It also flags config problems: trash_ids that no longer exist upstream, and `select`
+entries the guide has since made default or required. Findings go to a single open
+issue ("recyclarr: TRaSH Guides changes to review"), refreshed in place and closed
+when clean. It is report-only (L1) and never edits the configs.
+
+To clear the issue, decide each item in the config (`add`, `select`, `exclude`, `skip`),
+then accept the rest and commit both:
+
+```sh
+python3 .github/scripts/recyclarr_drift.py --update-baseline
+```
+
+### `scripts-test.yaml` — script tests
 
 Runs `python3 -m unittest discover -s .github/scripts/tests` on PRs touching
-`.github/scripts/**`. The fixtures are real PRs (#1728, #1734, #1761, #1917, #1924,
-#1953, #1955) with recorded API responses, so the suite runs offline. Re-record a
-fixture with the command in the test module's docstring after a deliberate behaviour
-change.
+`.github/scripts/**`. The upgrade-evidence fixtures are real PRs (#1728, #1734,
+#1761, #1917, #1924, #1953, #1955) with recorded API responses, so the suite runs
+offline. Re-record a fixture with the command in the test module's docstring after a
+deliberate behaviour change. The recyclarr-drift tests build a synthetic TRaSH tree in
+a temp directory.
 
 ## konflate — PR gating and Flux visibility
 
