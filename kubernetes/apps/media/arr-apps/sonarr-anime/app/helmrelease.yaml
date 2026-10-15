@@ -23,8 +23,6 @@ spec:
             env:
               SONARR__APP__INSTANCENAME: Sonarr-Anime
               SONARR__APP__THEME: dark
-              # native OIDC (v5+): one authorised user, matched on the Authentik
-              # username (provider sub_mode user_username); API keys unaffected
               SONARR__AUTH__METHOD: Oidc
               SONARR__AUTH__OIDCAUTHORITY: https://auth.materia.wtf/application/o/sonarr-anime/
               SONARR__AUTH__OIDCUSERIDENTIFIER: vince

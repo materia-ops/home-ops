@@ -449,19 +449,11 @@ entries:
     attrs:
       order: 10
 
-  # ── Sonarr (native OIDC; replaces the old forward-auth proxy) ─────────────────
-  # Remove the superseded proxy provider first; the app below keeps its slug and
-  # is re-pointed at the OAuth2 provider.
-  - model: authentik_providers_proxy.proxyprovider
-    state: absent
-    identifiers:
-      name: sonarr
-
+  # ── Sonarr ────────────────────────────────────────────────────────────────────
   - id: sonarr_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
-      # provider names are unique across types: not "sonarr" (the old proxy's name)
-      name: sonarr-oidc
+      name: sonarr
     attrs:
       client_id: !Env SONARR_CLIENT_ID
       client_secret: !Env SONARR_CLIENT_SECRET
@@ -469,7 +461,7 @@ entries:
       redirect_uris:
         - url: https://sonarr.materia.wtf/signin-oidc
           matching_mode: strict
-      # Sonarr authorises exactly one user by sub (or verified email): make sub the username
+      # Sonarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
@@ -503,14 +495,7 @@ entries:
     attrs:
       order: 0
 
-  # ── Sonarr Anime (native OIDC; replaces the old forward-auth proxy) ───────────
-  # Remove the superseded proxy provider first; the app below keeps its slug and
-  # is re-pointed at the OAuth2 provider.
-  - model: authentik_providers_proxy.proxyprovider
-    state: absent
-    identifiers:
-      name: sonarr anime
-
+  # ── Sonarr Anime ──────────────────────────────────────────────────────────────
   - id: sonarr_anime_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
@@ -522,7 +507,7 @@ entries:
       redirect_uris:
         - url: https://sonarr-anime.materia.wtf/signin-oidc
           matching_mode: strict
-      # Sonarr authorises exactly one user by sub (or verified email): make sub the username
+      # Sonarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
