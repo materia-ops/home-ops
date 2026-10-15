@@ -20,19 +20,10 @@ sonarr:
     # select lists only non-default CFs: required and default CFs always sync
     custom_format_groups:
       add:
-        - trash_id: 59c3af66780d08332fdc64e68297098f  # [Unwanted] Unwanted Formats
-          select:
-            - 6f808933a71bd9666531610cb8c059cc  # BR-DISK (BTN)
-            - 82d40da2bc6923f41e14394075dd4b03  # No-RlsGroup
-            - e1a997ddb54e3ecbfe06341ad323c458  # Obfuscated
-            - 06d66ab109d4d2eddb2794d21526d140  # Retags
-            - 1b3994c551cbb92a2c781af061f4ab44  # Scene
         - trash_id: e0b2774083df4265f25c9e5bc6c80940  # [HDR Formats] DV Boost
-        - trash_id: d920fd959d220306888f40b6f38e1578  # [Optional] Season Packs
-        - trash_id: 35fb4585dcd9e2a5ac732e4309f5a45a  # [Streaming Services] Asian
-        - trash_id: f60f4401ce880aad62e9d21c8bb6b91a  # [Streaming Services] Dutch
-        - trash_id: 848fd356c200568fc5a6248150e7e7ea  # [Streaming Services] French
-        - trash_id: ddab3095a5d2f436f369263840af34f9  # [Streaming Services] UK
+        - trash_id: e1053c0ef622df3749fa43c22865663a  # [HDR Formats] SDR
+          select:
+            - 83304f261cf516bb208c18c54c0adf97  # SDR (no WEBDL)
         - trash_id: f4a0410a1df109a66d6e47dcadcce014  # [Optional] Miscellaneous
           select:
             - ef4963043b0987f8485bc9106f16db38  # DV (Disk)
@@ -43,9 +34,18 @@ sonarr:
             - cddfb4e32db826151d97352b8e37c648  # x264
             - c9eafd50846d299b862ca9bb6ea91950  # x265
             - 041d90b435ebd773271cea047a457a6a  # x266
-        - trash_id: e1053c0ef622df3749fa43c22865663a  # [HDR Formats] SDR
+        - trash_id: d920fd959d220306888f40b6f38e1578  # [Optional] Season Packs
+        - trash_id: 35fb4585dcd9e2a5ac732e4309f5a45a  # [Streaming Services] Asian
+        - trash_id: f60f4401ce880aad62e9d21c8bb6b91a  # [Streaming Services] Dutch
+        - trash_id: 848fd356c200568fc5a6248150e7e7ea  # [Streaming Services] French
+        - trash_id: ddab3095a5d2f436f369263840af34f9  # [Streaming Services] UK
+        - trash_id: 59c3af66780d08332fdc64e68297098f  # [Unwanted] Unwanted Formats
           select:
-            - 83304f261cf516bb208c18c54c0adf97  # SDR (no WEBDL)
+            - 6f808933a71bd9666531610cb8c059cc  # BR-DISK (BTN)
+            - 82d40da2bc6923f41e14394075dd4b03  # No-RlsGroup
+            - e1a997ddb54e3ecbfe06341ad323c458  # Obfuscated
+            - 06d66ab109d4d2eddb2794d21526d140  # Retags
+            - 1b3994c551cbb92a2c781af061f4ab44  # Scene
 
     custom_formats:
       # FLUX at its guide default score (the CF isn't part of the profile by default)

@@ -177,16 +177,18 @@ its quoted block.
 ### `recyclarr-drift.yaml` — TRaSH Guides changes to review
 
 The recyclarr configs use guide-backed profiles, so scores, default CF groups and
-default CFs already follow TRaSH on every sync. What cannot follow on its own is
-anything optional: a new non-default CF group offered to one of our profiles, or a new
-non-default CF inside a group we sync. Weekly (and on pushes that touch the configs or
+default CFs follow TRaSH on every sync without a config edit, and the configs list
+only deliberate deviations. That makes upstream changes silent, and the optional ones
+can never arrive on their own. Weekly (and on pushes that touch the configs or
 baseline), [`.github/scripts/recyclarr_drift.py`](../.github/scripts/recyclarr_drift.py)
 shallow-clones the TRaSH JSON, lists everything it offers each instance, and diffs that
 against the reviewed baseline in `kubernetes/apps/media/arr-apps/recyclarr/drift-baseline.json`.
-It also flags config problems: trash_ids that no longer exist upstream, and `select`
-entries the guide has since made default or required. Findings go to a single open
-issue ("recyclarr: TRaSH Guides changes to review"), refreshed in place and closed
-when clean. It is report-only (L1) and never edits the configs.
+It reports new optional groups and CFs (a decision to make), default flips in either
+direction (something started or stopped syncing), groups and CFs that left upstream,
+and config problems: trash_ids that no longer exist, `select` entries the guide has
+since made default or required, and a baseline older than the configs. Findings go to
+a single open issue ("recyclarr: TRaSH Guides changes to review"), refreshed in place
+and closed when clean. It is report-only (L1) and never edits the configs.
 
 To clear the issue, decide each item in the config (`add`, `select`, `exclude`, `skip`),
 then accept the rest and commit both:

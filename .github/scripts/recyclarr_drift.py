@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
-"""Report TRaSH Guides changes that the recyclarr configs cannot pick up alone.
+"""Report TRaSH Guides changes to review in the recyclarr configs.
 
 Guide-backed profiles already track TRaSH for scores, default CF groups and
-default/required CFs. What needs a human decision is anything *optional* that
-appears upstream: a new non-default CF group offered to one of our profiles,
-or a new non-default CF inside a group we sync. This script lists everything
-TRaSH currently offers each instance, diffs it against a reviewed baseline,
-and prints a Markdown report of what is new. It also flags trash_ids our
-configs reference that no longer exist, and selects that became redundant
-because the guide promoted the CF to default/required.
+default/required CFs, so most upstream changes reach the cluster on the next
+sync without a config edit. This script makes those silent changes visible
+and lists the ones that need a decision:
+
+- new optional CF groups offered to one of our profiles, and new optional CFs
+  inside a group we sync (decide whether to add/select them);
+- default flips: a group or CF that became default (now syncing) or stopped
+  being default (stopped syncing unless the config adds/selects it);
+- groups and CFs that disappeared upstream;
+- config problems: trash_ids that no longer exist, selects the guide has made
+  redundant, and a baseline older than the configs.
+
+It lists everything TRaSH currently offers each instance, diffs that against
+the reviewed baseline, and prints a Markdown report (empty when clean).
 
 Usage:
-  recyclarr_drift.py [--trash DIR] [--out FILE|-]   report (default)
+  recyclarr_drift.py [--trash DIR] [--out FILE|-]    report (default)
   recyclarr_drift.py [--trash DIR] --update-baseline  accept current upstream
 
 Without --trash the TRaSH-Guides JSON is fetched with a shallow sparse git
 clone. Needs PyYAML. Report-only: the exit status is 0 unless arguments or
-inputs are bad; the report is empty when there is nothing to review.
+inputs are bad.
 """
 import argparse
 import glob
@@ -26,7 +33,10 @@ import subprocess
 import sys
 import tempfile
 
-import yaml
+try:
+    import yaml
+except ImportError:  # pragma: no cover - PyYAML ships on ubuntu-latest
+    yaml = None
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
@@ -37,16 +47,13 @@ TRASH_REPO = "https://github.com/TRaSH-Guides/Guides.git"
 MARKER = "<!-- recyclarr-drift -->"
 
 
-class _Loader(yaml.SafeLoader):
-    pass
-
-
-_Loader.add_constructor("!env_var", lambda loader, node: None)
-_Loader.add_constructor("!secret", lambda loader, node: None)
-
-
 def is_true(value):
     return value is True or str(value).lower() == "true"
+
+
+def code(text):
+    """Upstream names are third-party text: render them inert in the issue."""
+    return "`" + str(text).replace("`", "'") + "`"
 
 
 # --------------------------------------------------------------------------
@@ -56,33 +63,37 @@ def fetch_trash(dest):
     subprocess.run(["git", "clone", "--quiet", "--depth", "1", "--filter=blob:none",
                     "--sparse", TRASH_REPO, dest], check=True)
     subprocess.run(["git", "-C", dest, "sparse-checkout", "set", "docs/json"], check=True)
-    sha = subprocess.run(["git", "-C", dest, "rev-parse", "--short", "HEAD"],
-                         check=True, capture_output=True, text=True).stdout.strip()
-    return sha
+    return subprocess.run(["git", "-C", dest, "rev-parse", "--short", "HEAD"],
+                          check=True, capture_output=True, text=True).stdout.strip()
 
 
 def load_guide(trash_dir, app):
     base = os.path.join(trash_dir, "docs", "json", app)
-    groups, cfs, profiles = {}, {}, set()
-    for path in glob.glob(os.path.join(base, "quality-profiles", "*.json")):
-        with open(path, encoding="utf-8") as f:
-            profiles.add(json.load(f)["trash_id"])
-    for path in glob.glob(os.path.join(base, "cf-groups", "*.json")):
-        with open(path, encoding="utf-8") as f:
-            g = json.load(f)
-        groups[g["trash_id"]] = g
-    for path in glob.glob(os.path.join(base, "cf", "*.json")):
-        with open(path, encoding="utf-8") as f:
-            c = json.load(f)
-        cfs[c["trash_id"]] = c["name"]
+
+    def each(sub):
+        for path in glob.glob(os.path.join(base, sub, "*.json")):
+            with open(path, encoding="utf-8") as f:
+                yield json.load(f)
+
+    profiles = {p["trash_id"] for p in each("quality-profiles")}
+    groups = {g["trash_id"]: g for g in each("cf-groups")}
+    cfs = {c["trash_id"]: c["name"] for c in each("cf")}
     return groups, cfs, profiles
 
 
 def load_instances(config_dir):
     """Yield (app, instance, config) for every instance in every config file."""
+    if yaml is None:
+        raise SystemExit("recyclarr_drift.py needs PyYAML")
+
+    class Loader(yaml.SafeLoader):
+        pass
+
+    for tag in ("!env_var", "!secret"):
+        Loader.add_constructor(tag, lambda loader, node: None)
     for path in sorted(glob.glob(os.path.join(config_dir, "*.yaml"))):
         with open(path, encoding="utf-8") as f:
-            doc = yaml.load(f, Loader=_Loader) or {}
+            doc = yaml.load(f, Loader=Loader) or {}
         for app in ("radarr", "sonarr"):
             for name, cfg in (doc.get(app) or {}).items():
                 yield app, name, cfg or {}
@@ -92,11 +103,11 @@ def load_instances(config_dir):
 # model
 
 def offered(cfg, groups):
-    """Everything TRaSH offers this instance: {group_id: {...}} for groups whose
+    """Everything TRaSH offers this instance, keyed by group trash_id: groups whose
     compatibility list includes one of our guide-backed profiles."""
     profiles = {p["trash_id"] for p in cfg.get("quality_profiles") or [] if p.get("trash_id")}
     cg = cfg.get("custom_format_groups") or {}
-    added = {a["trash_id"] for a in cg.get("add") or []}
+    adds = {a["trash_id"]: a for a in cg.get("add") or []}
     skipped = set(cg.get("skip") or [])
     out = {}
     for gid, g in groups.items():
@@ -104,12 +115,15 @@ def offered(cfg, groups):
         if not profiles & include:
             continue
         default = is_true(g.get("default"))
-        synced = gid in added or (default and gid not in skipped)
+        entry = adds.get(gid, {})
         out[gid] = {
             "name": g["name"],
             "default": default,
-            "synced": synced,
-            # only CFs we could still decide on: required ones always sync
+            "synced": gid in adds or (default and gid not in skipped),
+            "select": set(entry.get("select") or []),
+            "select_all": bool(entry.get("select_all")),
+            "exclude": set(entry.get("exclude") or []),
+            # required CFs always sync, so only the rest are choices
             "cfs": {c["trash_id"]: {"name": c["name"], "default": is_true(c.get("default"))}
                     for c in g["custom_formats"] if not is_true(c.get("required"))},
         }
@@ -117,10 +131,13 @@ def offered(cfg, groups):
 
 
 def snapshot(offer):
-    """The baseline shape: names only, so the committed JSON diffs readably."""
+    """The committed baseline: every offered group and every CF choice in the
+    groups we sync, with the default flags so flips can be detected."""
     return {
-        "groups": {gid: g["name"] for gid, g in sorted(offer.items())},
-        "cfs": {gid: {cid: c["name"] for cid, c in sorted(g["cfs"].items())}
+        "groups": {gid: {"name": g["name"], "default": g["default"]}
+                   for gid, g in sorted(offer.items())},
+        "cfs": {gid: {cid: {"name": c["name"], "default": c["default"]}
+                      for cid, c in sorted(g["cfs"].items())}
                 for gid, g in sorted(offer.items()) if g["synced"]},
     }
 
@@ -139,14 +156,14 @@ def config_problems(cfg, groups, cfs, profiles):
         for cid in entry.get("select") or []:
             c = members.get(cid)
             if c is None:
-                problems.append(f"{g['name']}: selected CF `{cid}` is no longer in the group")
+                problems.append(f"{code(g['name'])}: selected CF `{cid}` is no longer in the group")
             elif is_true(c.get("required")) or is_true(c.get("default")):
                 kind = "required" if is_true(c.get("required")) else "default"
-                problems.append(f"{g['name']}: selected CF {c['name']} is now {kind} "
+                problems.append(f"{code(g['name'])}: selected CF {code(c['name'])} is now {kind} "
                                 "(the select is redundant; drop it)")
         for cid in entry.get("exclude") or []:
             if cid not in members:
-                problems.append(f"{g['name']}: excluded CF `{cid}` is no longer in the group")
+                problems.append(f"{code(g['name'])}: excluded CF `{cid}` is no longer in the group")
     for gid in cg.get("skip") or []:
         if gid not in groups:
             problems.append(f"`custom_format_groups.skip` references unknown group `{gid}`")
@@ -160,36 +177,66 @@ def config_problems(cfg, groups, cfs, profiles):
     return problems
 
 
-def new_items(offer, base):
-    """Human-readable lines for what upstream offers now but the baseline lacks."""
-    lines = []
+def cf_syncs(g, cid, default):
+    if cid in g["exclude"]:
+        return False
+    return default or cid in g["select"] or g["select_all"]
+
+
+def changes(offer, base):
+    """(stale, lines): whether the baseline predates the configs, and one line
+    per upstream change since the baseline."""
     seen_groups = (base or {}).get("groups", {})
     seen_cfs = (base or {}).get("cfs", {})
+    stale, lines = False, []
     for gid, g in sorted(offer.items(), key=lambda kv: kv[1]["name"]):
-        if gid not in seen_groups:
-            kind = "default" if g["default"] else "optional"
+        name = code(g["name"])
+        was = seen_groups.get(gid)
+        if was is None:
             if g["synced"]:
-                lines.append(f"New {kind} group **{g['name']}** (`{gid}`): already syncing")
+                kind = "default" if g["default"] else "optional"
+                lines.append(f"New {kind} group {name} (`{gid}`): already syncing")
             elif g["default"]:
-                lines.append(f"New default group **{g['name']}** (`{gid}`): skipped by config")
+                lines.append(f"New default group {name} (`{gid}`): skipped by config")
             else:
-                lines.append(f"New optional group **{g['name']}** (`{gid}`): decide whether to `add` it")
+                lines.append(f"New optional group {name} (`{gid}`): decide whether to `add` it")
             continue
+        if was["default"] != g["default"]:
+            if g["default"]:
+                state = "already syncing" if g["synced"] else "skipped by config"
+                lines.append(f"Group {name} is now default: {state}")
+            elif not g["synced"]:
+                lines.append(f"Group {name} is no longer default: stopped syncing; `add` it to keep it")
         if not g["synced"]:
             continue
         known = seen_cfs.get(gid)
         if known is None:
-            continue  # group newly synced by our own config change; nothing upstream
+            stale = True  # synced since the baseline was taken: a config change
+            continue
         for cid, c in sorted(g["cfs"].items(), key=lambda kv: kv[1]["name"]):
-            if cid in known:
-                continue
-            if c["default"]:
-                lines.append(f"{g['name']}: new default CF **{c['name']}** (`{cid}`): already "
-                             "syncing; `exclude` it if unwanted")
-            else:
-                lines.append(f"{g['name']}: new optional CF **{c['name']}** (`{cid}`): decide "
-                             "whether to `select` it")
-    return lines
+            cname = code(c["name"])
+            prior = known.get(cid)
+            if prior is None:
+                if cf_syncs(g, cid, c["default"]):
+                    lines.append(f"{name}: new default CF {cname} (`{cid}`): already syncing; "
+                                 "`exclude` it if unwanted")
+                else:
+                    lines.append(f"{name}: new optional CF {cname} (`{cid}`): decide whether to "
+                                 "`select` it")
+            elif prior["default"] != c["default"]:
+                if cf_syncs(g, cid, c["default"]) != cf_syncs(g, cid, prior["default"]):
+                    if c["default"]:
+                        lines.append(f"{name}: CF {cname} is now default: started syncing")
+                    else:
+                        lines.append(f"{name}: CF {cname} is no longer default: stopped syncing; "
+                                     "`select` it to keep it")
+        for cid in sorted(set(known) - set(g["cfs"])):
+            lines.append(f"{name}: CF {code(known[cid]['name'])} (`{cid}`) left the group "
+                         "or became required")
+    for gid in sorted(set(seen_groups) - set(offer)):
+        lines.append(f"Group {code(seen_groups[gid]['name'])} (`{gid}`) is no longer offered to "
+                     "this profile (removed upstream or dropped from its compatibility list)")
+    return stale, lines
 
 
 # --------------------------------------------------------------------------
@@ -197,11 +244,13 @@ def new_items(offer, base):
 
 def run(trash_dir, config_dir, baseline_file, update, trash_ref):
     guides = {app: load_guide(trash_dir, app) for app in ("radarr", "sonarr")}
-    try:
-        with open(baseline_file, encoding="utf-8") as f:
-            baseline = json.load(f)
-    except FileNotFoundError:
-        baseline = {}
+    baseline = {}
+    if not update:  # accepting must not depend on the old baseline's shape
+        try:
+            with open(baseline_file, encoding="utf-8") as f:
+                baseline = json.load(f)
+        except FileNotFoundError:
+            pass
     current, sections = {}, []
     for app, name, cfg in load_instances(config_dir):
         groups, cfs, profiles = guides[app]
@@ -209,11 +258,14 @@ def run(trash_dir, config_dir, baseline_file, update, trash_ref):
         key = f"{app}/{name}"
         current[key] = snapshot(offer)
         problems = config_problems(cfg, groups, cfs, profiles)
-        news = new_items(offer, baseline.get("instances", {}).get(key))
-        if problems or news:
+        stale, lines = changes(offer, baseline.get("instances", {}).get(key))
+        if stale:
+            problems.append("the baseline predates a config change (a newly synced group has no "
+                            "recorded CFs): run `--update-baseline`")
+        if problems or lines:
             body = [f"### {key}"]
             body += [f"- :warning: {p}" for p in problems]
-            body += [f"- {n}" for n in news]
+            body += [f"- {line}" for line in lines]
             sections.append("\n".join(body))
     if update:
         with open(baseline_file, "w", encoding="utf-8", newline="\n") as f:
@@ -222,11 +274,11 @@ def run(trash_dir, config_dir, baseline_file, update, trash_ref):
         return ""
     if not sections:
         return ""
-    head = (f"{MARKER}\nTRaSH Guides offers items the recyclarr configs have not reviewed yet "
+    head = (f"{MARKER}\nTRaSH Guides changes since the reviewed recyclarr baseline "
             f"(guide `{trash_ref}`, baseline `{baseline.get('trash_ref', 'none')}`).\n\n"
-            "Decide each one in `kubernetes/apps/media/arr-apps/recyclarr/app/config/`, then "
+            "Decide each item in `kubernetes/apps/media/arr-apps/recyclarr/app/config/`, then "
             "accept the rest with `python3 .github/scripts/recyclarr_drift.py --update-baseline` "
-            "and commit both. :warning: lines are config problems and need a config fix.\n")
+            "and commit both. Lines marked :warning: are config problems that need a config fix.\n")
     return head + "\n" + "\n\n".join(sections) + "\n"
 
 

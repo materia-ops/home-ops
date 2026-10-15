@@ -23,13 +23,10 @@ radarr:
     # select lists only non-default CFs: required and default CFs always sync
     custom_format_groups:
       add:
-        - trash_id: 15b1cf0b6f1a1493856a4355907affee  # [Unwanted] Unwanted Formats SQP
-          select:
-            - 7357cf5161efbf8c4d5d0c30b4815ee2  # Obfuscated
-            - 5c44f52a8714fdd79bb4d98e2673be1f  # Retags
-            - f537cf427b64c38c8e36298f657e4828  # Scene
         - trash_id: 1616617ab3a14397a2b2321bcbda44d1  # [HDR Formats] DV Boost
-        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c  # [Streaming Services] UK
+        - trash_id: 47f0d69750de9e16855915fa73bb7b08  # [HDR Formats] SDR
+          select:
+            - 25c12f78430a3a23413652cbd1d48d77  # SDR (no WEBDL)
         - trash_id: 9337080378236ce4c0b183e35790d2a7  # [Optional] Miscellaneous
           select:
             - f700d29429c023a5734505e77daeaea7  # DV (Disk)
@@ -51,6 +48,9 @@ radarr:
             - 957d0f44b592285f26449575e8b1167e  # Special Edition
             - e9001909a4c88013a359d0b9920d7bea  # Theatrical Cut
             - db9b4c4b53d312a3ca5f1378f6440fc9  # Vinegar Syndrome
-        - trash_id: 47f0d69750de9e16855915fa73bb7b08  # [HDR Formats] SDR
+        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c  # [Streaming Services] UK
+        - trash_id: 15b1cf0b6f1a1493856a4355907affee  # [Unwanted] Unwanted Formats SQP
           select:
-            - 25c12f78430a3a23413652cbd1d48d77  # SDR (no WEBDL)
+            - 7357cf5161efbf8c4d5d0c30b4815ee2  # Obfuscated
+            - 5c44f52a8714fdd79bb4d98e2673be1f  # Retags
+            - f537cf427b64c38c8e36298f657e4828  # Scene

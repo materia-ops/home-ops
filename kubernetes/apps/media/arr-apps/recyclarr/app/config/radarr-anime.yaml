@@ -20,8 +20,6 @@ radarr:
     # select lists only non-default CFs: required and default CFs always sync
     custom_format_groups:
       add:
-        - trash_id: b22449f789b16a4163b59f1b70cbc580  # [Streaming Services] Asian
-        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c  # [Streaming Services] UK
         - trash_id: 9337080378236ce4c0b183e35790d2a7  # [Optional] Miscellaneous
           select:
             - f700d29429c023a5734505e77daeaea7  # DV (Disk)
@@ -31,3 +29,5 @@ radarr:
             - 2899d84dc9372de3408e6d8cc18e9666  # x264
             - 9170d55c319f4fe40da8711ba9d8050d  # x265
             - 390455c22a9cac81a738f6cbad705c3c  # x266
+        - trash_id: b22449f789b16a4163b59f1b70cbc580  # [Streaming Services] Asian
+        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c  # [Streaming Services] UK
