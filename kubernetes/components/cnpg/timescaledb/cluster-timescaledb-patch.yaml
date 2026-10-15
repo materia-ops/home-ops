@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-${APP}
+spec:
+  # CNPG's standard image plus TimescaleDB (TSL build), toolkit and PostGIS
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:18.6-3.6.4-202608311018-standard-bookworm@sha256:225d62e311a1603c841ab9297d6ae9b3e673f3dcb06791d1cc7aa4e387e8f2c2
+  bootstrap:
+    initdb:
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS timescaledb
+        - CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit
+  postgresql:
+    parameters:
+      timescaledb.license: timescale
+      timescaledb.telemetry_level: "off"
+    shared_preload_libraries:
+      - timescaledb

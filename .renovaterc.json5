@@ -167,6 +167,14 @@
       allowedVersions: "<19",
       automerge: false,
     },
+    {
+      description: "TimescaleDB CNPG operand (components/cnpg/timescaledb): tags are <pg>-<postgis>-<build>-<flavour>; hold at 18.x, never auto-merge",
+      matchDatasources: [ "docker" ],
+      matchPackageNames: [ "ghcr.io/imusmanmalik/timescaledb-postgis" ],
+      versioning: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-\\d+\\.\\d+\\.\\d+-(?<patch>\\d+)-(?<compatibility>standard-bookworm)$",
+      allowedVersions: "/^18\\./",
+      automerge: false,
+    },
     // The mise manager resolves aqua: tools via github-tags with a generic
     // ^v?(.+) extractor and does not read the aqua registry's version_prefix,
     // so tools with prefixed tags never get an update. Strip the prefix here.

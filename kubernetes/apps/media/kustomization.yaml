@@ -30,3 +30,4 @@ resources:
   - ./shelfmark/ks.yaml
   - ./stash/ks.yaml
   - ./tautulli/ks.yaml
+  - ./tracearr/ks.yaml
