@@ -6,6 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./prometheusrule.yaml
   - ./externalsecret-blueprints.yaml
+  - ./externalsecret-postgres.yaml
   - ./grafanadashboard.yaml
   - ./helmrelease.yaml
   - ./httproute.yaml
