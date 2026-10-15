@@ -460,7 +460,8 @@ entries:
   - id: sonarr_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:
-      name: sonarr
+      # provider names are unique across types: not "sonarr" (the old proxy's name)
+      name: sonarr-oidc
     attrs:
       client_id: !Env SONARR_CLIENT_ID
       client_secret: !Env SONARR_CLIENT_SECRET
