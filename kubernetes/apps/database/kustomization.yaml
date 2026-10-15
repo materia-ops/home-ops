@@ -10,4 +10,5 @@ components:
 
 resources:
   - ./cnpg-operator/ks.yaml
+  - ./dragonfly/ks.yaml
   - ./plugin-barman-cloud/ks.yaml
