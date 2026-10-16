@@ -12,4 +12,5 @@ resources:
   - ./authentik/ks.yaml
   - ./cert-manager/ks.yaml
   - ./external-secrets/ks.yaml
+  - ./geoip-mirror/ks.yaml
   - ./onepassword-connect/ks.yaml

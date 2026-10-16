@@ -55,7 +55,7 @@ spec:
           value: "false"
       envFrom:
         - secretRef:
-            name: &secret authentik-secret
+            name: authentik-secret
         - secretRef:
             name: postgres-authentik-credentials
         - secretRef:
@@ -100,6 +100,47 @@ spec:
         enabled: true
         serviceMonitor:
           enabled: true
+      # authentik only opens an mmdb present at boot (refreshed on restart only)
+      # and crashes on an invalid one, so fetch + validate before boot. Fail-open:
+      # no mirror = no GeoIP, never a blocked pod. The worker doesn't use GeoIP.
+      initContainers:
+        - name: geoip-fetch
+          image: quay.io/curl/curl:8.23.0@sha256:a134550be58ab783810e613ae96fd253c38f7bdd16d9bf9be350700c7a29ac06
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              retry="--retry 4 --retry-connrefused --retry-delay 5 --retry-max-time 40"
+              for db in ASN City; do
+                f=/geoip/GeoLite2-$db.mmdb
+                if curl -fsS $retry --connect-timeout 3 --max-time 30 -o "$f.tmp" "http://geoip-mirror.security.svc.cluster.local:8080/GeoLite2-$db.mmdb" \
+                  && [ "$(wc -c < "$f.tmp")" -gt 1048576 ] \
+                  && tail -c 131072 "$f.tmp" | tr -c 'A-Za-z.' '\n' | grep -qx 'MaxMind.com'; then
+                  mv "$f.tmp" "$f"
+                else
+                  rm -f "$f.tmp"
+                  retry=""
+                  echo "GeoLite2-$db unavailable from geoip-mirror; starting without it"
+                fi
+              done
+              exit 0
+          resources:
+            requests:
+              cpu: 10m
+            limits:
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: geoip
+              mountPath: /geoip
+      volumeMounts:
+        - name: geoip
+          mountPath: /geoip
+      volumes:
+        - name: geoip
+          emptyDir: {}
     worker:
       autoscaling:
         enabled: true
@@ -117,20 +158,6 @@ spec:
           memory: 256Mi
         limits:
           memory: 1Gi
-    geoip:
-      enabled: true
-      # MaxMind rate limit: 1 download per database per server per day.
-      updateInterval: 24
-      existingSecret:
-        secretName: *secret
-        accountId: "AUTHENTIK_GEOIP_ACCOUNT_ID"
-        licenseKey: "AUTHENTIK_GEOIP_LICENSE_KEY"
-      resources:
-        requests:
-          cpu: 10m
-          memory: 64Mi
-        limits:
-          memory: 128Mi
     prometheus:
       rules:
         enabled: false  # managed via prometheusrule.yaml with corrected metric names
