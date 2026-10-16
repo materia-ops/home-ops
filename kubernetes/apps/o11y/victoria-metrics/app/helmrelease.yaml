@@ -323,23 +323,38 @@ spec:
             type: vlogs
             interval: 30m
             rules:
-              # The mirror retries 6h later and keeps serving its last good DBs, so
-              # authentik is unaffected; a 429 means something burned the quota.
-              - alert: GeoIPMirrorUpdateFailing
-                annotations:
-                  summary: >-
-                    geoip-mirror failed to update the MaxMind GeoLite DBs ({{ $value }} failure line(s) in 30m) — check its geoipupdate logs for a 429 or bad credentials.
-                expr: |-
-                  kubernetes.pod_namespace:=security kubernetes.container_name:=geoipupdate ("geoipupdate failed" OR "Error retrieving updates") | stats count() as failures | filter failures:>0
-                labels:
-                  severity: warning
+              # Fires for 30m per miss, but the pod stays without GeoIP until restarted.
               - alert: AuthentikGeoIPMissing
                 annotations:
                   summary: >-
-                    An authentik server started without its GeoIP/ASN database — it stays without GeoIP until restarted once geoip-mirror is healthy.
+                    An authentik server booted without its GeoIP/ASN database and stays without GeoIP until restarted.
+                  description: >-
+                    Once geoip-mirror logs "geoipupdate ok": kubectl -n security rollout restart deploy/authentik-server
                 expr: |-
                   kubernetes.pod_namespace:=security kubernetes.container_name:=geoip-fetch "unavailable from geoip-mirror" | stats count() as misses | filter misses:>0
                 labels:
+                  severity: warning
+              # The loop logs "geoipupdate ok" every 12h; silence means a wedged loop,
+              # a persistent failure, or broken log collection.
+              - alert: GeoIPMirrorStale
+                annotations:
+                  summary: >-
+                    geoip-mirror has logged no successful geoipupdate run in 2d (expected every 12h) — authentik is serving stale or no GeoIP data.
+                expr: |-
+                  _time:2d kubernetes.pod_namespace:=security kubernetes.container_name:=geoipupdate "geoipupdate ok" | stats count() as ok | filter ok:=0
+                labels:
+                  depends_on: internet
+                  severity: warning
+              # Window spans the 6h retry, so a persistent failure is one alert, not
+              # one per retry. The mirror keeps serving its last good DBs meanwhile.
+              - alert: GeoIPMirrorUpdateFailing
+                annotations:
+                  summary: >-
+                    geoip-mirror failed to update the MaxMind GeoLite DBs in the last 6.5h — check its geoipupdate logs for a 429 or bad credentials.
+                expr: |-
+                  _time:6h30m kubernetes.pod_namespace:=security kubernetes.container_name:=geoipupdate ("geoipupdate failed" OR "Error retrieving updates") | stats count() as failures | filter failures:>0
+                labels:
+                  depends_on: internet
                   severity: warning
       oom-rules:
         create: true

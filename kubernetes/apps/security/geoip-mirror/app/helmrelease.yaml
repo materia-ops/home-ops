@@ -27,7 +27,7 @@ spec:
                 custom: true
                 spec:
                   tcpSocket:
-                    port: 8080
+                    port: &port 8080
                   periodSeconds: 30
                   timeoutSeconds: 5
                   failureThreshold: 3
@@ -45,16 +45,17 @@ spec:
             image:
               repository: ghcr.io/maxmind/geoipupdate
               tag: v7.1.1@sha256:faecdca22579730ab0b7dea5aa9af350bb3c93cb9d39845c173639ead30346d2
-            # The image's entrypoint exits on any failure (a 429 crashlooped
-            # authentik's sidecars); this loop logs and retries instead. Unchanged
-            # DBs are md5-checked against MaxMind and don't count against the limit.
+            # Image entrypoint exits on any failure; this loop logs and retries.
+            # Unchanged DBs are md5-checked and don't count against MaxMind's limit.
             command: ["/bin/sh", "-c"]
             args:
               - |
-                trap 'exit 0' TERM
+                trap 'kill "$pid" 2>/dev/null; exit 0' TERM
                 while true; do
-                  if /usr/bin/geoipupdate -v; then wait=43200; else echo "geoipupdate failed; retrying in 6h"; wait=21600; fi
-                  sleep "$wait" & wait $!
+                  /usr/bin/geoipupdate -v & pid=$!
+                  if wait "$pid"; then echo "geoipupdate ok"; delay=43200; else echo "geoipupdate failed; retrying in 6h"; delay=21600; fi
+                  sleep "$delay" & pid=$!
+                  wait "$pid"
                 done
             env:
               GEOIPUPDATE_CONF_FILE: ""
@@ -88,7 +89,7 @@ spec:
       app:
         ports:
           http:
-            port: 8080
+            port: *port
     persistence:
       # Re-downloadable cache: deliberately not backed up by kopiur.
       data:
