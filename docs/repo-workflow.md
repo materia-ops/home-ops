@@ -24,8 +24,10 @@ mise trust && mise install   # installs pinned talosctl, flux, kubectl, helmfile
 just                         # lists available recipes (bootstrap, kube, talos modules)
 ```
 
-`mise` also wires `KUBECONFIG`/`TALOSCONFIG` to the repo-local files and loads
-`.secrets.env`. Git hooks come from lefthook (`.lefthook.toml`).
+`mise` also wires `KUBECONFIG` to the repo-local file and loads `.secrets.env`.
+It does not set `TALOSCONFIG`: export it yourself before running `just talos` or
+`just bootstrap` recipes (here it is loaded just-in-time from 1Password, never kept
+in the checkout). Git hooks come from lefthook (`.lefthook.toml`).
 
 Every tool is pinned to an exact version in `.mise/config.toml`, and `.mise/mise.lock`
 records each one's download URL and sha256 for linux-x64 and windows-x64; `mise install`

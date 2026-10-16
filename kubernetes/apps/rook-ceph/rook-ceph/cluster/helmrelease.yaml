@@ -46,6 +46,10 @@ spec:
         # fixed there — many-to-many mgr-failover join, rook#10691)
         CephNodeDiskspaceWarning:
           disabled: true
+        # igc rx FIFO overruns are a steady trickle; at night-time packet rates the
+        # 0.5% ratio crosses for 1-4m and flaps. Sustained loss still fires.
+        CephNodeNetworkPacketDrops:
+          for: 15m
         CephPoolGrowthWarning:
           disabled: true
         # no RBD mirroring on this cluster
