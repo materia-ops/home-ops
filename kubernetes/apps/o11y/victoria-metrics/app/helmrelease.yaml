@@ -316,6 +316,31 @@ spec:
                 expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
                 labels:
                   severity: critical
+      geoip-rules:
+        create: true
+        groups:
+          - name: geoip
+            type: vlogs
+            interval: 30m
+            rules:
+              # The mirror retries 6h later and keeps serving its last good DBs, so
+              # authentik is unaffected; a 429 means something burned the quota.
+              - alert: GeoIPMirrorUpdateFailing
+                annotations:
+                  summary: >-
+                    geoip-mirror failed to update the MaxMind GeoLite DBs ({{ $value }} failure line(s) in 30m) — check its geoipupdate logs for a 429 or bad credentials.
+                expr: |-
+                  kubernetes.pod_namespace:=security kubernetes.container_name:=geoipupdate ("geoipupdate failed" OR "Error retrieving updates") | stats count() as failures | filter failures:>0
+                labels:
+                  severity: warning
+              - alert: AuthentikGeoIPMissing
+                annotations:
+                  summary: >-
+                    An authentik server started without its GeoIP/ASN database — it stays without GeoIP until restarted once geoip-mirror is healthy.
+                expr: |-
+                  kubernetes.pod_namespace:=security kubernetes.container_name:=geoip-fetch "unavailable from geoip-mirror" | stats count() as misses | filter misses:>0
+                labels:
+                  severity: warning
       oom-rules:
         create: true
         groups:
