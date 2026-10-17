@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app upbrr
+spec:
+  components:
+    - ../../../../components/kopiur/backup
+    - ../../../../components/zeroscaler
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  interval: 30m
+  path: ./kubernetes/apps/torrents/upbrr/app
+  postBuild:
+    substitute:
+      APP: *app
+      KOPIUR_CAPACITY: 5Gi
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: torrents
+  wait: false

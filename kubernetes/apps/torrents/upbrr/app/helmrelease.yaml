@@ -1,0 +1,92 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: upbrr
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: upbrr
+  interval: 1h
+  values:
+    controllers:
+      upbrr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            nameOverride: "{{ .Release.Name }}"
+            image:
+              repository: ghcr.io/autobrr/upbrr
+              tag: 0.4.0@sha256:cfd21650a797acc6a303a34f7fc6c004a03c9cbd1c364016bc89e7105126c937
+            env:
+              TZ: Australia/Melbourne
+              UPBRR_WEB_HOST: 0.0.0.0
+              UPBRR_WEB_OPEN_BROWSER: false
+              UPBRR_WEB_PORT: &port 80
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/auth/status
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+              # ffmpeg screenshot capture of large remuxes spikes memory
+              limits:
+                memory: 4Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.materia.wtf"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+      # same mount as qbittorrent so injected torrents resolve to the same save paths
+      data:
+        type: nfs
+        server: nas.internal
+        path: /mnt/tank/data
+        globalMounts:
+          - path: /data
+      tmpfs:
+        type: emptyDir
+        advancedMounts:
+          upbrr:
+            app:
+              - path: /config/logs
+                subPath: logs
+              - path: /tmp
+                subPath: tmp
