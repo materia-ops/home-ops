@@ -1,7 +1,7 @@
 ---
 # dnscrypt-proxy role defaults
 # renovate: datasource=github-releases depName=DNSCrypt/dnscrypt-proxy
-dnscrypt_version: "2.1.18"
+dnscrypt_version: "2.1.19"
 
 # Architecture is derived automatically from gathered facts
 _dnscrypt_arch_map:
