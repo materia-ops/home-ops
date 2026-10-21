@@ -19,7 +19,7 @@ spec:
             nameOverride: "{{ .Release.Name }}"
             image:
               repository: ghcr.io/home-operations/emby
-              tag: 4.10.2.0@sha256:796cad25aa5834f7e3f26901aa7f67f34db7dabd3bfb3fc4e1e10c16c3050255
+              tag: 4.10.2.0@sha256:3926aa2a20747561bdd7d8885f5e6bdc335c89c9a15cb0e55ec9a3b636c1d598
             env:
               DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
             probes:
