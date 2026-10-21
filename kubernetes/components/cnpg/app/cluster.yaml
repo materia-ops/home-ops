@@ -54,6 +54,9 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: postgres-${APP}-backup
+        # Archive prefix per Postgres major; the default is PG18's (pre-dates the suffix).
+        # A major upgrade MUST set DB_SERVER_NAME=postgres-${APP}-pg<NN> in the same change.
+        serverName: ${DB_SERVER_NAME:-postgres-${APP}}
 
   monitoring:
     enablePodMonitor: true

@@ -30,4 +30,5 @@ spec:
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: postgres-${APP}-backup
-          serverName: postgres-${APP}
+          # Must match the archiver's serverName in cnpg/app/cluster.yaml
+          serverName: ${DB_SERVER_NAME:-postgres-${APP}}

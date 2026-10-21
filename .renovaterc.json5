@@ -161,14 +161,14 @@
       allowedVersions: "<9.0.0",
     },
     {
-      description: "Hold CNPG Postgres at 18.x and never auto-merge — a major in imageName makes CNPG run an offline in-place pg_upgrade",
+      description: "Hold CNPG Postgres at 18.x and never auto-merge — a major in imageName makes CNPG run an offline in-place pg_upgrade; set the app's DB_SERVER_NAME to a new -pgNN archive prefix in the same PR",
       matchDatasources: [ "docker" ],
       matchPackageNames: [ "ghcr.io/cloudnative-pg/postgresql" ],
       allowedVersions: "<19",
       automerge: false,
     },
     {
-      description: "TimescaleDB CNPG operand (components/cnpg/timescaledb): tags are <pg>-<postgis>-<build>-<flavour>; hold at 18.x, never auto-merge",
+      description: "TimescaleDB CNPG operand (components/cnpg/timescaledb): tags are <pg>-<postgis>-<build>-<flavour>; hold at 18.x, never auto-merge; a major bump needs a new DB_SERVER_NAME archive prefix",
       matchDatasources: [ "docker" ],
       matchPackageNames: [ "ghcr.io/imusmanmalik/timescaledb-postgis" ],
       versioning: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-\\d+\\.\\d+\\.\\d+-(?<patch>\\d+)-(?<compatibility>standard-bookworm)$",
