@@ -52,19 +52,19 @@ url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854760"
 provenance = "github-attestations"
 
 [[tools."aqua:cloudflare/cloudflared"]]
-version = "2026.10.1"
+version = "2026.10.3"
 backend = "aqua:cloudflare/cloudflared"
-specifiers = ["2026.10.1"]
+specifiers = ["2026.10.3"]
 
 [tools."aqua:cloudflare/cloudflared"."platforms.linux-x64"]
-checksum = "sha256:3bfc539f45d2620c71debb7a86be0efa737ed5ccbad9eb85c787116900e5c586"
-url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.1/cloudflared-linux-amd64"
-url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/644585706"
+checksum = "sha256:053b80b0a23031a038fdbf3c073f59f82b8f1f152aa67971d7383ffafc0dbab0"
+url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-linux-amd64"
+url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/662570969"
 
 [tools."aqua:cloudflare/cloudflared"."platforms.windows-x64"]
-checksum = "sha256:4d2490e74082c5d48dbfedaf92576fa5bd1702379ab88eb7faa0cfbe8dc891b6"
-url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.1/cloudflared-windows-amd64.exe"
-url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/644587621"
+checksum = "sha256:76b2805253d0d6ffacb092a7acfbee99e7af6917835c0c5410e23f3ef5052da2"
+url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.3/cloudflared-windows-amd64.exe"
+url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/662573817"
 
 [[tools."aqua:elsesiy/kubectl-view-secret"]]
 version = "0.16.0"
