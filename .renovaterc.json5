@@ -176,7 +176,7 @@
       automerge: false,
     },
     {
-      description: "Hold the ansible workflow's setup-python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed); lift once ansible-core supports 3.15",
+      description: "Hold the ansible workflow's setup-python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed); lift once ansible-core 2.22 (adds 3.15) is GA",
       matchManagers: [ "github-actions" ],
       matchDepNames: [ "python" ],
       allowedVersions: "<3.15",
