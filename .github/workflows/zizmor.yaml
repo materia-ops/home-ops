@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Zizmor
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: Zizmor - Workflow Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Report-only: findings go to code scanning as SARIF, never a failing
+    # check. Fork PRs can't get security-events: write, so they're skipped.
+    if: >-
+      ${{
+        github.event_name == 'push' ||
+        github.event.pull_request.head.repo.full_name == github.repository
+      }}
+    permissions:
+      contents: read
+      security-events: write # SARIF upload to code scanning
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          advanced-security: true
