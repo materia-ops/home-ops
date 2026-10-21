@@ -112,6 +112,15 @@ jobs:
             rendered-diff comment, read it: it is the ground truth for what
             reconciles onto the cluster.
 
+            Unrendered means unverified, never safe. For any change under
+            `kubernetes/`, if there is no konflate comment, it reports a
+            render error for an affected app, or its "rendered" commit is not
+            the PR head (`gh pr view --json headRefOid`), say the rendered
+            impact is unverified. Never call it unchanged or safe from the
+            git diff alone, and never claim you rendered anything yourself.
+            konflate may leave out CRDs and Secret data; absence from the
+            render is not evidence that they did not change.
+
             Then cover whichever of the two sections below apply to the diff.
 
             ## Dependency upgrades
@@ -148,6 +157,22 @@ jobs:
                usually live on other apps' routes and services. A breaking
                change in a feature that is not used here is not actionable;
                leave it out.
+            4. Check the rendered diff, not just the version line: chart and
+               app-template bumps change rendered manifests through their
+               defaults even when this repository's values do not change.
+               Look explicitly at resource names, label values as well as
+               keys, selectors, Service names and ports, probes, RBAC, CRDs,
+               storage classes and PVCs, and immutable fields (workload
+               `spec.selector`, StatefulSet `volumeClaimTemplates`, Service
+               `clusterIP`, Job templates): a changed immutable field fails
+               reconciliation, and a changed label value silently breaks
+               every selector, ServiceMonitor, NetworkPolicy and route that
+               matches on it.
+            5. For a Talos or Kubernetes bump, confirm the target Kubernetes
+               version is in that specific Talos release's support matrix and
+               cite it. For a digest-only refresh with an unchanged tag, the
+               rendered digest change plus consistent upstream metadata is
+               enough; do not invent breaking changes.
 
             ## Other changes
 
@@ -165,7 +190,11 @@ jobs:
               or with the conventions in CLAUDE.md
 
             Report only problems you are confident in; do not comment on style
-            or praise the change.
+            or praise the change. A problem names the changed line, the
+            affected consumer path, the concrete failure mode and the rendered
+            or upstream evidence for it. When the evidence is incomplete,
+            report it as unknown and needing verification rather than
+            asserting either a failure or that it is fine.
 
             ## Report
 
@@ -173,7 +202,7 @@ jobs:
             structure and omitting empty sections:
 
             ```
-            **Verdict**: Safe to merge | Changes required before merge
+            **Verdict**: Safe to merge | Changes required before merge | Unverified: [what evidence is missing]
 
             **Breaking changes**:
             - [package] OLD ➔ NEW: [what changed], introduced in [version]. Affects `path/to/file`. Fix: [brief description]
