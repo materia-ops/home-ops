@@ -143,8 +143,6 @@ spec:
             enabled: true
       network:
         provider: host
-        connections:
-          requireMsgr2: true
       security:
         cephx:
           allowedCiphers:
