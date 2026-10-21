@@ -28,25 +28,8 @@ spec:
     controllerServiceAccount:
       name: actions-runner-controller
       namespace: actions-runner-system
-    # ndots:1 so external lookups query the bare name first, bypassing the
-    # search path. REQUIRED while the actions-runner-egress toFQDNs policy
-    # selects these pods: coredns autopath answers suffixed queries with the
-    # public record, which Cilium's DNS proxy keys to a name the policy never
-    # matches -> silent SYN drops (2026-07-18 listener outage). Applies to the
-    # runner pods (template) and the listener (listenerTemplate) alike.
-    listenerTemplate:
-      spec:
-        dnsConfig: &ndots
-          options:
-            - name: ndots
-              value: "1"
-        # merge-stub: the CRD requires containers whenever listenerTemplate is
-        # set; an entry naming the generated container changes nothing else.
-        containers:
-          - name: listener
     template:
       spec:
-        dnsConfig: *ndots
         containers:
           - name: runner
             image: ghcr.io/home-operations/actions-runner:2.338.0@sha256:7ece17219b5ce764fff8bd2206bf66a612580fdc82d84b0097fbe6f4e8729801
