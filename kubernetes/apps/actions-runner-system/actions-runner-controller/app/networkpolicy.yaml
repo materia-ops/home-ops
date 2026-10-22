@@ -6,11 +6,9 @@
 # unenforced (nothing routes to runners; the controller only polls out).
 #
 # Egress is CIDR-based (public 80/443 minus the private ranges), NOT a
-# per-host FQDN allowlist — see the toCIDRSet rule below for why. The
-# runner HRs still set dnsConfig ndots:1; that is now belt-and-suspenders
-# (no toFQDNs rule remains to be tripped by autopath) but harmless, and
-# keeps the door open to reintroducing an FQDN rule later. LAN access is
-# whatever the explicit :22 and :50000 rules grant and nothing more.
+# per-host FQDN allowlist — see the toCIDRSet rule below for why. LAN
+# access is whatever the explicit :22 and :50000 rules grant and nothing
+# more.
 #
 # If a workflow fails on a blocked destination it will be a private-range
 # or metadata address (by design) — grant it narrowly like the SSH rule,
