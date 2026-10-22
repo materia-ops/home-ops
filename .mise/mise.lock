@@ -142,19 +142,19 @@ url = "https://github.com/helmfile/helmfile/releases/download/v1.8.2/helmfile_1.
 url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/647791182"
 
 [[tools."aqua:helmfile/vals"]]
-version = "0.47.0"
+version = "0.50.0"
 backend = "aqua:helmfile/vals"
-specifiers = ["0.47.0"]
+specifiers = ["0.50.0"]
 
 [tools."aqua:helmfile/vals"."platforms.linux-x64"]
-checksum = "sha256:b327e52811c0c84c5adad26bf2536491e07fc75018a84a66109e1e5325a3d833"
-url = "https://github.com/helmfile/vals/releases/download/v0.47.0/vals_0.47.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/578292795"
+checksum = "sha256:4cb1664b1e0aa49481cb05fabe2c52d4944dcaab31c4805924b668ae9f54c379"
+url = "https://github.com/helmfile/vals/releases/download/v0.50.0/vals_0.50.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/662121543"
 
 [tools."aqua:helmfile/vals"."platforms.windows-x64"]
-checksum = "sha256:bdb7e5e08d73637ccb57083f42961b4385e4a3270891f812dc53f8d1807847c8"
-url = "https://github.com/helmfile/vals/releases/download/v0.47.0/vals_0.47.0_windows_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/578292791"
+checksum = "sha256:61c406f205eb5ea2668de554a8be857d1178f2c4f34b6033b62e9d69070ead2a"
+url = "https://github.com/helmfile/vals/releases/download/v0.50.0/vals_0.50.0_windows_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/662121526"
 
 [[tools."aqua:jqlang/jq"]]
 version = "1.8.2"
