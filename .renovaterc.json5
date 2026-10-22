@@ -15,6 +15,9 @@
     // branch, so every automerge goes via a PR that Renovate auto-merges.
     "github>materia-ops/.github//renovate/default",
   ],
+  // The org ruleset does not require up-to-date branches, and `auto` would
+  // still rebase every automerge PR each time main moves
+  rebaseWhen: "conflicted",
   packageRules: [
     // Auto-merge rules
     {
