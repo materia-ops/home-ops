@@ -4,12 +4,12 @@ machine:
   install:
     diskSelector:
       model: Samsung SSD 980 1TB
-  # Experiment: no C7s-C10 (124-890us exit latency) while comparing igc rx FIFO
-  # overruns against c2. Revert by setting "0" and applying before removing the keys.
+  # Reverting the C7s-C10 experiment (#2032): "0" re-enables the states on the
+  # running node; remove this block once applied (removing keys doesn't reset sysfs).
   sysfs:
     {% for cpu in range(12) %}
     {% for state in range(5, 9) %}
-    devices.system.cpu.cpu{{ cpu }}.cpuidle.state{{ state }}.disable: "1"
+    devices.system.cpu.cpu{{ cpu }}.cpuidle.state{{ state }}.disable: "0"
     {% endfor %}
     {% endfor %}
 ---
