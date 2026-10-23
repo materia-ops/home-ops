@@ -14,6 +14,9 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit
   postgresql:
     parameters:
+      # drop_chunks/retention locks every chunk, compressed chunk and index in
+      # one transaction; the default 64 starves the lock table
+      max_locks_per_transaction: "256"
       timescaledb.license: timescale
       timescaledb.telemetry_level: "off"
     shared_preload_libraries:
