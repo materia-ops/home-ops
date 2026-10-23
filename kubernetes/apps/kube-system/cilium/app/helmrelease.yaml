@@ -35,7 +35,16 @@ spec:
     envoy:
       enabled: false
     hubble:
-      enabled: false
+      enabled: true
+      metrics:
+        # Workload-level contexts keep cardinality stable across pod churn.
+        enabled:
+          - drop:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace
+        serviceMonitor:
+          enabled: true
+      relay:
+        enabled: true
+        rollOutPods: true
     ipam:
       mode: kubernetes
     ipv4NativeRoutingCIDR: 10.42.0.0/16
