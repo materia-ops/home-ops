@@ -1,8 +1,5 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/cilium.io/ciliumnetworkpolicy_v2.json
-# Plex is internet-facing: a server RCE must not reach the LAN, the cluster,
-# or non-web ports. Egress is public 80/443 for now; tighten to toFQDNs once
-# `cilium-dbg fqdn cache list` shows what Plex actually resolves.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -45,12 +42,10 @@ spec:
                 - tautulli
                 - tracearr
       toPorts: *plex
-    # Kubelet probes.
     - fromEntities:
         - host
       toPorts: *plex
   egress:
-    # The DNS rule also feeds the FQDN cache used to build the allowlist.
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: kube-system
