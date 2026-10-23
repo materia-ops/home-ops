@@ -137,9 +137,10 @@ spec:
         prometheusEndpoint: http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428
       mgr:
         modules:
+          # deprecated; dropping it from this list never disabled it in ceph
+          - name: diskprediction_local
+            enabled: false
           - name: insights
-            enabled: true
-          - name: rook
             enabled: true
       network:
         provider: host
@@ -169,7 +170,7 @@ spec:
       resources:
         mgr:
           limits:
-            memory: 1Gi # default
+            memory: 2Gi # active mgr leaks ~95MiB/day on tentacle; 1Gi default OOMs
           requests:
             cpu: 500m # 500m is default
             memory: 768Mi #512Mi is default
