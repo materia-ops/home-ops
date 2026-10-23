@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: plex
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/controller: plex
+      app.kubernetes.io/name: plex
+  ingress:
+    # LAN clients via the LoadBalancer IP; DSR preserves their source address.
+    - fromCIDR:
+        - 192.168.0.0/16
+      toPorts: &plex
+        - ports:
+            - port: "32400"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: network
+            gateway.envoyproxy.io/owning-gateway-name: envoy-external
+      toPorts: *plex
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: media
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - bazarr
+                - bazarr-anime
+                - lidarr
+                - notifiarr
+                - radarr
+                - radarr-4k
+                - radarr-anime
+                - seerr
+                - sonarr
+                - sonarr-anime
+                - tautulli
+                - tracearr
+      toPorts: *plex
+    - fromEntities:
+        - host
+      toPorts: *plex
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+            - 169.254.169.254/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
