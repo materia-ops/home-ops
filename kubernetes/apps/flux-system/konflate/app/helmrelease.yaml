@@ -12,6 +12,8 @@ spec:
   values:
     config:
       repo: github://materia-ops/home-ops
+      # auto (4) let two concurrent cold renders OOM the 1Gi pod
+      maxDiffConcurrency: 2
       refreshInterval: 15m
       statusChecks: true
       prComments: true
@@ -34,6 +36,6 @@ spec:
     resources:
       requests:
         cpu: 50m
-        memory: 256Mi
+        memory: 512Mi
       limits:
-        memory: 1Gi
+        memory: 1536Mi
