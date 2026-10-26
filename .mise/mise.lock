@@ -234,20 +234,20 @@ url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.3/minijinja-
 url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/668257043"
 
 [[tools."aqua:siderolabs/talos"]]
-version = "1.14.4"
+version = "1.14.5"
 backend = "aqua:siderolabs/talos"
-specifiers = ["1.14.4"]
+specifiers = ["1.14.5"]
 
 [tools."aqua:siderolabs/talos"."platforms.linux-x64"]
-checksum = "sha256:0a69e3f9b682c5cd844b78dae305f6056ceb86c5fcc6913dcea78c527ed97cee"
-url = "https://github.com/siderolabs/talos/releases/download/v1.14.4/talosctl-linux-amd64"
-url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/647547727"
+checksum = "sha256:ff432b68986709e6b69c563a08a2ced4232d5196b0dccd6d2e783e9d714d7d7d"
+url = "https://github.com/siderolabs/talos/releases/download/v1.14.5/talosctl-linux-amd64"
+url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/678470893"
 provenance = "cosign"
 
 [tools."aqua:siderolabs/talos"."platforms.windows-x64"]
-checksum = "sha256:c62eea25aab8d27ec9c392ff0b736fd503051974abfc8aae724711e04ab79f8a"
-url = "https://github.com/siderolabs/talos/releases/download/v1.14.4/talosctl-windows-amd64.exe"
-url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/647547741"
+checksum = "sha256:45b25be0ceef02b55110a2858f2fcc4e2f711f8b3dcd64bbc3c842d45adfd696"
+url = "https://github.com/siderolabs/talos/releases/download/v1.14.5/talosctl-windows-amd64.exe"
+url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/678470928"
 provenance = "cosign"
 
 [[tools."github:home-operations/flate"]]
