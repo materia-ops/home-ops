@@ -23,8 +23,10 @@ spec:
             env:
               RADARR__APP__INSTANCENAME: Radarr-4k
               RADARR__APP__THEME: dark
-              RADARR__AUTH__METHOD: External
-              RADARR__AUTH__REQUIRED: DisabledForLocalAddresses
+              RADARR__AUTH__METHOD: Oidc
+              RADARR__AUTH__OIDCAUTHORITY: https://auth.materia.wtf/application/o/radarr-4k/
+              RADARR__AUTH__OIDCUSERIDENTIFIER: vince
+              RADARR__AUTH__REQUIRED: Enabled
               RADARR__LOG__DBENABLED: "False"
               RADARR__LOG__LEVEL: info
               RADARR__SERVER__ALLOWEDHOSTS: radarr-4k.materia.wtf,radarr-4k.media.svc.cluster.local,localhost
