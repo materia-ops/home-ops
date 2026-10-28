@@ -9,7 +9,7 @@ spec:
   timeout: 60s
   url: oci://ghcr.io/k8tz/k8tz/charts/k8tz
   ref:
-    tag: 0.19.0
+    tag: 0.21.0
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
