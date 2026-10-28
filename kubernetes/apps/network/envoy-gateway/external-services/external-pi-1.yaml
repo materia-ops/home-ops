@@ -40,6 +40,11 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      # Pi-hole FTL 6.8+ 403s the web UI for Host names it doesn't know
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            hostname: pi-1.internal
       backendRefs:
         - group: gateway.envoyproxy.io
           kind: Backend
