@@ -11,7 +11,7 @@ entries:
     attrs:
       type: proxy
       providers:
-        # Media apps ("calibre" and "shelfmark" are native OIDC - see 15-apps-oidc.yaml)
+        # Media apps (calibre, radarr*, shelfmark, sonarr* are native OIDC - see 15-apps-oidc.yaml)
         - !Find [authentik_providers_proxy.proxyprovider, [name, "bazarr"]]
         - !Find [authentik_providers_proxy.proxyprovider, [name, "bazarr anime"]]
         - !Find [authentik_providers_proxy.proxyprovider, [name, "lidarr"]]
