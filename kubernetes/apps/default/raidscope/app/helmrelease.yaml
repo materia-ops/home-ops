@@ -25,7 +25,7 @@ spec:
               # under the old personal namespace before the org move to
               # materia-ops; see docs/cicd.md "GHCR namespace migration").
               repository: ghcr.io/materia-ops/raidscope
-              tag: 3.9.28@sha256:8ed72cb45860749d50f3fadfcd76408cd0b4217256f7855e54c04b6a1c00701b
+              tag: 3.9.29@sha256:ef7b29ad9904e69608f9881cb43e2efebe1b8a9804bd4481f9043e8a4c1dc445
             env:
               # OIDC via Authentik (client id/secret + session key come from the secret).
               OIDC_ISSUER: https://auth.materia.wtf/application/o/raidscope
