@@ -13,7 +13,7 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 | [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization) |
 | [`talos/`](../talos) | Talos machine configuration (minijinja templates + per-node overrides) |
 | [`bootstrap/`](../bootstrap) | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources |
-| [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability) |
+| [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability, pihole) |
 | [`.github/workflows/`](../.github/workflows) | CI — see [cicd.md](./cicd.md) |
 | [`.mise/`](../.mise/config.toml) | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment |
 | [`.justfile`](../.justfile) | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules |
@@ -124,7 +124,8 @@ from the same files Flux reconciles. Fully documented in [bootstrap.md](./bootst
 ## Infrastructure (Ansible)
 
 [`infrastructure/`](../infrastructure) manages the two Pi-holes: a `dnscrypt` play
-(serial, one Pi at a time, with a resolve check) and an `observability` play. Secrets
+(serial, one Pi at a time, with a resolve check), a `pihole` play (FTL settings such
+as `webserver.domain`, serial with a web UI check) and an `observability` play. Secrets
 come from 1Password via the `op` CLI. CI runs check mode on PRs and applies on merge —
 see [cicd.md](./cicd.md).
 

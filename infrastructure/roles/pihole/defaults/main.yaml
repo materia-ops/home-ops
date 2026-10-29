@@ -1,0 +1,6 @@
+---
+# pihole role defaults
+# Name the web UI is reached by (the ingress hostname). With no web password
+# set, FTL 6.8+ only serves Host names it considers its own: IPs, localhost,
+# pi.hole, its hostname(.dns.domain) and this one. FTL default: pi.hole.
+pihole_webserver_domain: "pi.hole"
