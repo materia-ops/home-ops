@@ -12,6 +12,13 @@
   failed_when: false
   check_mode: false   # read-only probe
 
+# openssl spaces RDNs differently across versions (O=Pi-hole vs O = Pi-hole);
+# the SAN match is anchored so pi.hole doesn't match pi.hole.example
+- name: Classify the TLS certificate
+  ansible.builtin.set_fact:
+    _pihole_tls_ours: "{{ _pihole_tls_cert.rc == 0 and _pihole_tls_cert.stdout is search('O *= *Pi-hole') }}"
+    _pihole_tls_san: "{{ 'DNS:' ~ (pihole_webserver_domain | regex_escape) ~ '(,|$)' }}"
+
 # FTL only generates its self-signed cert when the file is missing, so after a
 # domain change it keeps serving the old name (CERTIFICATE_DOMAIN_MISMATCH).
 # Never touch a cert FTL didn't issue.
@@ -24,9 +31,8 @@
     - "{{ pihole_tls_cert | dirname }}/tls.crt"
     - "{{ pihole_tls_cert | dirname }}/tls_ca.crt"
   when:
-    - _pihole_tls_cert.rc == 0
-    - "'O=Pi-hole' in _pihole_tls_cert.stdout"
-    - "('DNS:' ~ pihole_webserver_domain) not in _pihole_tls_cert.stdout"
+    - _pihole_tls_ours | bool
+    - _pihole_tls_cert.stdout is not search(_pihole_tls_san, multiline=True)
   notify: Restart pihole-FTL
 
 - name: Set webserver.domain
@@ -58,10 +64,10 @@
 - name: Validate the TLS certificate covers the domain
   ansible.builtin.command: openssl x509 -in {{ pihole_tls_cert }} -noout -ext subjectAltName
   register: _pihole_tls_validate
-  until: ("DNS:" ~ pihole_webserver_domain) in _pihole_tls_validate.stdout
+  until: _pihole_tls_validate.stdout is search(_pihole_tls_san, multiline=True)
   retries: 10
   delay: 3
   changed_when: false
   when:
     - not ansible_check_mode
-    - "'O=Pi-hole' in _pihole_tls_cert.stdout"   # a custom cert is the admin's to manage
+    - _pihole_tls_ours | bool   # a custom cert is the admin's to manage
