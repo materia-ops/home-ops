@@ -4,3 +4,6 @@
 # set, FTL 6.8+ only serves Host names it considers its own: IPs, localhost,
 # pi.hole, its hostname(.dns.domain) and this one. FTL default: pi.hole.
 pihole_webserver_domain: "pi.hole"
+
+# FTL's webserver.tls.cert (self-signed, regenerated for the domain above)
+pihole_tls_cert: "/etc/pihole/tls.pem"
