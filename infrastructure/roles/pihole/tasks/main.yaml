@@ -1,0 +1,29 @@
+---
+- name: Read current webserver.domain
+  ansible.builtin.command: pihole-FTL --config webserver.domain
+  register: _pihole_webserver_domain
+  changed_when: false
+  check_mode: false   # read-only probe; must run even in --check so dry-runs are accurate
+
+- name: Set webserver.domain
+  ansible.builtin.command:
+    argv: [pihole-FTL, --config, webserver.domain, "{{ pihole_webserver_domain }}"]
+  when: _pihole_webserver_domain.stdout | trim != pihole_webserver_domain
+  # FTL rereads pihole.toml and restarts itself (restart-flagged key): a few
+  # seconds without DNS on this Pi only, since the play is serial
+  changed_when: true
+
+# Functional gate: with serial:1 + any_errors_fatal, a failure here on the
+# first Pi aborts the rollout before the next Pi is touched.
+- name: Validate the web UI serves its configured name
+  ansible.builtin.uri:
+    url: http://127.0.0.1/admin/
+    headers:
+      Host: "{{ pihole_webserver_domain }}"
+    follow_redirects: none
+    status_code: [200, 302]   # 302 = login redirect once a password is set; 403 = Host refused
+  register: _pihole_validate
+  until: _pihole_validate.status in [200, 302]
+  retries: 10   # covers the FTL self-restart
+  delay: 3
+  when: not ansible_check_mode   # the new setting isn't really applied in --check
