@@ -167,21 +167,27 @@ spec:
       external-dns.kubernetes.io/hostname: *hostname-plex
       lbipam.cilium.io/ips: 192.168.10.8
   listeners:
-    # The only target of the WAN:443 forward; keep it to Plex so the tunnel-only
-    # routes on envoy-external stay unreachable from the WAN IP.
+    # The only target of the WAN:443/32400 forwards; keep it to Plex so the
+    # tunnel-only routes on envoy-external stay unreachable from the WAN IP.
     - name: https
       protocol: HTTPS
       port: 443
-      allowedRoutes:
+      allowedRoutes: &plex-routes
         namespaces:
           from: Selector
           selector:
             matchLabels:
               kubernetes.io/metadata.name: media
-      tls:
+      tls: &plex-tls
         certificateRefs:
           - kind: Secret
             name: materia-wtf-tls
+    # Inbound WAN:443 never reaches the cluster; 32400 does.
+    - name: https-plex
+      protocol: HTTPS
+      port: 32400
+      allowedRoutes: *plex-routes
+      tls: *plex-tls
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
