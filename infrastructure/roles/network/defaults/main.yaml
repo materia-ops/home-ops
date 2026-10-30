@@ -7,8 +7,7 @@
 network_conn_name: "Wired connection 1"
 network_ifname: eth0
 
-# Upstream resolvers the Pi OS itself uses for its own lookups: the local Pihole
-# first (cluster-independent via local dnscrypt), the cluster dnscrypt as fallback.
+# Upstream resolvers the Pi OS itself uses for its own lookups.
 # NOTE: distinct from the Pihole ULA addresses advertised to LAN clients via RA.
 network_v4_dns:
   - 127.0.0.1
