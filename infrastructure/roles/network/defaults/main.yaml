@@ -10,5 +10,5 @@ network_ifname: eth0
 # Upstream resolvers the Pi OS itself uses for its own lookups.
 # NOTE: distinct from the Pihole ULA addresses advertised to LAN clients via RA.
 network_v4_dns:
+  - 127.0.0.1
   - 192.168.10.2
-  - 192.168.20.22
