@@ -8,6 +8,43 @@ pihole_webserver_domain: "pi.hole"
 # FTL's webserver.tls.cert (self-signed, regenerated for the domain above)
 pihole_tls_cert: "/etc/pihole/tls.pem"
 
-pihole_dns_upstreams:
-  - "127.0.0.1#5053"
-  - "192.168.10.2#53"
+# FTL settings both Pis must hold (nested like pihole.toml; merged over the live
+# config, so keys not listed keep their current value).
+pihole_ftl_config:
+  dns:
+    domain:
+      name: internal
+    domainNeeded: true
+    expandHosts: true
+    interface: eth0
+    listeningMode: ALL
+    piholePTR: HOSTNAMEFQDN
+    revServers:
+      - "true,192.168.1.0/24,192.168.1.1,internal"
+      - "true,192.168.10.0/24,192.168.1.1,internal"
+      - "true,192.168.20.0/24,192.168.1.1,internal"
+    upstreams:
+      - "127.0.0.1#5053"
+      - "192.168.10.2#53"
+  ntp:
+    sync:
+      server: au.pool.ntp.org
+  webserver:
+    headers:
+      - "X-DNS-Prefetch-Control: off"
+      - "Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+      - "X-Frame-Options: DENY"
+      - "X-XSS-Protection: 0"
+      - "X-Content-Type-Options: nosniff"
+      - "Referrer-Policy: strict-origin-when-cross-origin"
+
+# Set on the primary only (host_vars/pi-0.yaml); nebula-sync copies them to pi-1.
+# Empty = leave that part alone.
+pihole_adlists: []        # {type, comment, address}; authoritative
+pihole_domains: []        # {type, kind, comment, domain}; authoritative
+pihole_local_hosts: []    # "ip name" entries ensured in dns.hosts
+pihole_local_cnames: []   # "alias,target" entries ensured in dns.cnameRecords
+
+# Inventory host that mirrors the primary via nebula-sync; its gravity is rebuilt
+# after adlist changes once the sync has landed.
+pihole_replica: pi-1

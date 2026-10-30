@@ -1,16 +1,6 @@
 ---
-- name: Read current dns.upstreams
-  ansible.builtin.command: pihole-FTL --config dns.upstreams
-  register: _pihole_upstreams
-  changed_when: false
-  check_mode: false   # read-only probe
-
-# FTL prints the array as `[ a, b ]`; compare the bare entries.
-- name: Set dns.upstreams
-  ansible.builtin.command:
-    argv: [pihole-FTL, --config, dns.upstreams, "{{ pihole_dns_upstreams | to_json }}"]
-  when: (_pihole_upstreams.stdout | regex_findall('[^\[\],"\s]+')) != pihole_dns_upstreams
-  changed_when: true
+- name: FTL settings
+  ansible.builtin.import_tasks: config.yaml
 
 - name: Read current webserver.domain
   ansible.builtin.command: pihole-FTL --config webserver.domain
@@ -84,3 +74,6 @@
   when:
     - not ansible_check_mode
     - _pihole_tls_ours | bool   # a custom cert is the admin's to manage
+
+- name: Adlists, domains and local DNS records
+  ansible.builtin.import_tasks: lists.yaml

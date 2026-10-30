@@ -124,8 +124,11 @@ from the same files Flux reconciles. Fully documented in [bootstrap.md](./bootst
 ## Infrastructure (Ansible)
 
 [`infrastructure/`](../infrastructure) manages the two Pi-holes: a `dnscrypt` play
-(serial, one Pi at a time, with a resolve check), a `pihole` play (FTL settings such
-as `webserver.domain`, serial with a web UI check) and an `observability` play. Secrets
+(serial, one Pi at a time, with a resolve check), a `pihole` play (the FTL settings
+in `pihole_ftl_config` plus `webserver.domain`, serial with a web UI check; on pi-0 it
+also enforces the adlists and domain entries and ensures the hand-made local DNS records
+in `host_vars/pi-0.yaml`, which nebula-sync copies to pi-1, then rebuilds gravity on both)
+and an `observability` play. Secrets
 come from 1Password via the `op` CLI. CI runs check mode on PRs and applies on merge —
 see [cicd.md](./cicd.md).
 
