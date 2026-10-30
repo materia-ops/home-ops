@@ -53,3 +53,55 @@ pihole_adlists:
   - { type: allow, comment: "GoodnessJSON Whitelist", address: "https://raw.githubusercontent.com/GoodnessJSON/PiHole-Whitelist/refs/heads/master/lists/referral-sites.txt" }
   - { type: allow, comment: "GoodnessJSON Whitelist", address: "https://raw.githubusercontent.com/GoodnessJSON/PiHole-Whitelist/refs/heads/master/lists/whitelist.txt" }
   - { type: allow, comment: "My Whitelist", address: "https://raw.githubusercontent.com/materia-ops/home-ops/refs/heads/main/kubernetes/apps/network/pihole-nebula-sync/resources/whitelist.txt" }
+
+# Hand-made local DNS (FTL dns.hosts / dns.cnameRecords). Ensured present only:
+# external-dns owns the *.materia.wtf entries in the same arrays.
+pihole_local_hosts:
+  - '192.168.20.30 garage.internal'
+  - '192.168.1.14 jumpbox'
+  - '192.168.1.14 jumpbox.internal'
+  - '192.168.1.41 kiterium.internal'
+  - '192.168.20.10 matalos-c1'
+  - '192.168.20.10 matalos-c1.internal'
+  - '192.168.20.11 matalos-c2'
+  - '192.168.20.11 matalos-c2.internal'
+  - '192.168.20.12 matalos-c3'
+  - '192.168.20.12 matalos-c3.internal'
+  - '192.168.10.20 matalos.internal'
+  - '192.168.10.20 matalos.materia.k8s'
+  - '192.168.1.16 materitv'
+  - '192.168.1.16 materitv.internal'
+  - '192.168.20.22 nas'
+  - '192.168.1.21 nas-ipmi'
+  - '192.168.1.21 nas-ipmi.internal'
+  - '192.168.20.22 nas.internal'
+  - '192.168.1.2 pi-0'
+  - '192.168.1.2 pi-0.internal'
+  - '192.168.20.2 pi-1'
+  - '192.168.20.2 pi-1.internal'
+  - '192.168.10.2 pi-2'
+  - '192.168.10.2 pi-2.internal'
+  - '192.168.1.22 pikvm'
+  - '192.168.1.22 pikvm.internal'
+  - '192.168.20.9 pve-0'
+  - '192.168.20.9 pve-0.internal'
+  - '192.168.1.1 unifi'
+  - '192.168.1.1 unifi.internal'
+  - '192.168.10.120 wow.internal'
+pihole_local_cnames:
+  - 's3.internal,garage.internal'
+
+# Domain allow/deny entries: the complete set, like pihole_adlists.
+pihole_domains:
+  - { type: allow, kind: exact, comment: 'Added from Query Log', domain: 'cdn.tailwindcss.com' }
+  - { type: allow, kind: exact, comment: 'WotLK Project Reforged', domain: 'pub-0f05631d243e4046993fc02ca7be9542.r2.dev' }
+  - { type: allow, kind: regex, comment: 'Westpac', domain: '(\.|^)banking\.westpac\.com\.au$' }
+  - { type: allow, kind: regex, comment: 'Reddit', domain: '(\.|^)redd\.it$' }
+  - { type: allow, kind: regex, comment: 'Reddit', domain: '(\.|^)reddit\.com$' }
+  - { type: allow, kind: regex, comment: 'Twitter', domain: '(\.|^)twimg\.com$' }
+  - { type: allow, kind: regex, comment: 'Unity', domain: '(\.|^)unity3d\.com$' }
+  - { type: allow, kind: regex, comment: 'Westpac', domain: '(\.|^)westpac\.com$' }
+  - { type: allow, kind: regex, comment: 'Westpac', domain: '(\.|^)westpac\.com\.au$' }
+  - { type: allow, kind: regex, comment: 'Reddit', domain: '[a-z]\.thumbs\.redditmedia\.com' }
+  - { type: allow, kind: regex, comment: 'WhatsApp', domain: '^((www|(w[0-9]\.)?web|media((-[a-z]{3}|\.[a-z]{4})[0-9]{1,2}-[0-9](\.|-)(cdn|fna))?)\.)?whatsapp\.(com|net)$' }
+  - { type: allow, kind: regex, comment: 'WhatsApp', domain: '^whatsapp-cdn-shv-[0-9]{2}-[a-z]{3}[0-9]\.fbcdn\.net$' }

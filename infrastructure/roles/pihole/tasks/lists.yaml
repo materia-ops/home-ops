@@ -1,0 +1,187 @@
+---
+# Primary-only state (set in host_vars/pi-0.yaml); nebula-sync carries it to the
+# replica. Items are keyed by type|address (adlists) or type|kind|domain (domains);
+# the API takes the key's last part URL-encoded in the path.
+
+- name: Adlists
+  when: pihole_adlists | length > 0
+  block:
+    - name: Read current adlists
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/lists
+      register: _pihole_lists
+      check_mode: false   # read-only probe
+
+    - name: Index current and wanted adlists
+      ansible.builtin.set_fact:
+        _adlists_have: "{{ dict(_lists | map(attribute='type') | zip(_lists | map(attribute='address')) | map('join', '|') | zip(_lists)) }}"
+        _adlists_want: "{{ pihole_adlists | map(attribute='type') | zip(pihole_adlists | map(attribute='address')) | map('join', '|') | list }}"
+      vars:
+        _lists: "{{ _pihole_lists.json.lists }}"
+
+    - name: Add missing adlists
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/lists?type={{ item.type }}"
+        method: POST
+        body_format: json
+        body: { address: "{{ item.address }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
+        status_code: [200, 201]
+      loop: "{{ pihole_adlists }}"
+      loop_control: { label: "{{ item.type }} {{ item.address }}" }
+      when: (item.type ~ '|' ~ item.address) not in _adlists_have
+      register: _adlists_added
+      changed_when: true
+
+    - name: Fix adlist comment or enabled drift
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/lists/{{ item.address | urlencode | replace('/', '%2F') }}?type={{ item.type }}"
+        method: PUT
+        body_format: json
+        body: { comment: "{{ item.comment }}", groups: [0], enabled: true }
+      loop: "{{ pihole_adlists }}"
+      loop_control: { label: "{{ item.type }} {{ item.address }}" }
+      when:
+        - (item.type ~ '|' ~ item.address) in _adlists_have
+        - _have.comment != item.comment or not _have.enabled
+      vars:
+        _have: "{{ _adlists_have[item.type ~ '|' ~ item.address] }}"
+      register: _adlists_fixed
+      changed_when: true
+
+    - name: Remove adlists not in the inventory
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/lists/{{ item.value.address | urlencode | replace('/', '%2F') }}?type={{ item.value.type }}"
+        method: DELETE
+        status_code: [204]
+      loop: "{{ _adlists_have | dict2items }}"
+      loop_control: { label: "{{ item.key }}" }
+      when: item.key not in _adlists_want
+      register: _adlists_removed
+      changed_when: true
+
+    - name: Note whether the adlist set changed
+      ansible.builtin.set_fact:
+        _adlists_changed: "{{ (_adlists_added.results + _adlists_fixed.results + _adlists_removed.results) | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0 }}"
+
+    - name: Rebuild gravity after adlist changes
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/action/gravity
+        method: POST
+        timeout: 900
+      when: _adlists_changed | bool
+      changed_when: true
+
+    # nebula-sync copies the list set every 10 minutes but never runs gravity there.
+    - name: Wait for nebula-sync to carry the adlists to the replica
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/lists
+      register: _replica_lists
+      until: (_replica_lists.json.lists | map(attribute='address') | sort) == (pihole_adlists | map(attribute='address') | sort)
+      retries: 40   # nebula-sync runs every 10 minutes
+      delay: 30
+      delegate_to: "{{ pihole_replica }}"
+      when: _adlists_changed | bool
+
+    - name: Rebuild gravity on the replica
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/action/gravity
+        method: POST
+        timeout: 900
+      delegate_to: "{{ pihole_replica }}"
+      when: _adlists_changed | bool
+      changed_when: true
+
+    - name: Re-read adlists after gravity
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/lists
+      register: _pihole_lists_after
+      check_mode: false
+
+    # Warn, don't fail: a list host being briefly down must not block a DNS rollout.
+    - name: Warn about adlists gravity could not download
+      ansible.builtin.debug:
+        msg: "Unavailable adlists (status 3/4): {{ _unavailable | map(attribute='address') | list }}"
+      when: _unavailable | length > 0
+      vars:
+        _unavailable: "{{ _pihole_lists_after.json.lists | selectattr('status', 'in', [3, 4]) | list }}"
+
+- name: Domain allow/deny entries
+  when: pihole_domains | length > 0
+  block:
+    - name: Read current domain entries
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/domains
+      register: _pihole_domains
+      check_mode: false   # read-only probe
+
+    - name: Index current and wanted domain entries
+      ansible.builtin.set_fact:
+        _domains_have: "{{ dict(_doms | map(attribute='type') | zip(_doms | map(attribute='kind'), _doms | map(attribute='domain')) | map('join', '|') | zip(_doms)) }}"
+        _domains_want: "{{ pihole_domains | map(attribute='type') | zip(pihole_domains | map(attribute='kind'), pihole_domains | map(attribute='domain')) | map('join', '|') | list }}"
+      vars:
+        _doms: "{{ _pihole_domains.json.domains }}"
+
+    - name: Add missing domain entries
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/domains/{{ item.type }}/{{ item.kind }}"
+        method: POST
+        body_format: json
+        body: { domain: "{{ item.domain }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
+        status_code: [200, 201]
+      loop: "{{ pihole_domains }}"
+      loop_control: { label: "{{ item.type }} {{ item.kind }} {{ item.domain }}" }
+      when: (item.type ~ '|' ~ item.kind ~ '|' ~ item.domain) not in _domains_have
+      changed_when: true
+
+    - name: Fix domain entry comment or enabled drift
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/domains/{{ item.type }}/{{ item.kind }}/{{ item.domain | urlencode | replace('/', '%2F') }}"
+        method: PUT
+        body_format: json
+        body: { type: "{{ item.type }}", kind: "{{ item.kind }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
+      loop: "{{ pihole_domains }}"
+      loop_control: { label: "{{ item.type }} {{ item.kind }} {{ item.domain }}" }
+      when:
+        - (item.type ~ '|' ~ item.kind ~ '|' ~ item.domain) in _domains_have
+        - _have.comment != item.comment or not _have.enabled
+      vars:
+        _have: "{{ _domains_have[item.type ~ '|' ~ item.kind ~ '|' ~ item.domain] }}"
+      changed_when: true
+
+    - name: Remove domain entries not in the inventory
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/domains/{{ item.value.type }}/{{ item.value.kind }}/{{ item.value.domain | urlencode | replace('/', '%2F') }}"
+        method: DELETE
+        status_code: [204]
+      loop: "{{ _domains_have | dict2items }}"
+      loop_control: { label: "{{ item.key }}" }
+      when: item.key not in _domains_want
+      changed_when: true
+
+# Ensure-present only: external-dns writes *.materia.wtf into the same arrays.
+- name: Hand-made local DNS records
+  when: (pihole_local_hosts + pihole_local_cnames) | length > 0
+  block:
+    - name: Read current local DNS records
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/config/dns
+      register: _pihole_dns
+      check_mode: false   # read-only probe
+
+    - name: Add missing host records
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/config/dns/hosts/{{ item | urlencode | replace('/', '%2F') }}"
+        method: PUT
+        status_code: [200, 201]
+      loop: "{{ pihole_local_hosts }}"
+      when: item not in _pihole_dns.json.config.dns.hosts
+      changed_when: true
+
+    - name: Add missing CNAME records
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/config/dns/cnameRecords/{{ item | urlencode | replace('/', '%2F') }}"
+        method: PUT
+        status_code: [200, 201]
+      loop: "{{ pihole_local_cnames }}"
+      when: item not in _pihole_dns.json.config.dns.cnameRecords
+      changed_when: true
