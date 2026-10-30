@@ -11,3 +11,6 @@ pihole_tls_cert: "/etc/pihole/tls.pem"
 pihole_dns_upstreams:
   - "127.0.0.1#5053"
   - "192.168.10.2#53"
+
+# Authoritative adlist set ({type, comment, address}); empty = leave lists alone.
+pihole_adlists: []
