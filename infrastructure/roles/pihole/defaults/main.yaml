@@ -7,3 +7,8 @@ pihole_webserver_domain: "pi.hole"
 
 # FTL's webserver.tls.cert (self-signed, regenerated for the domain above)
 pihole_tls_cert: "/etc/pihole/tls.pem"
+
+# FTL dns.upstreams: the Pi's own dnscrypt-proxy, then the in-cluster one (VIP).
+pihole_dns_upstreams:
+  - "127.0.0.1#5053"
+  - "192.168.10.2#53"
