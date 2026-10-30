@@ -26,7 +26,8 @@ spec:
       hostRoot: /sys/fs/cgroup
     cni:
       exclusive: false
-    devices: bond+
+    # Not bond+: that also attaches to the Multus VLAN legs (bond0.70/.90).
+    devices: bond0
     enableIPv4BIGTCP: true
     dashboards:
       enabled: true
