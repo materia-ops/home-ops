@@ -20,7 +20,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: network
-            gateway.envoyproxy.io/owning-gateway-name: envoy-external
+            gateway.envoyproxy.io/owning-gateway-name: envoy-plex
       toPorts: *plex
     - fromEndpoints:
         - matchLabels:

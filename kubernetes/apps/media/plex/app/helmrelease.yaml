@@ -102,7 +102,7 @@ spec:
         hostnames:
           - "{{ .Release.Name }}.materia.wtf"
         parentRefs:
-          - name: envoy-external
+          - name: envoy-plex
             namespace: network
         rules:
           - name: app
