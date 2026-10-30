@@ -21,9 +21,9 @@ spec:
               repository: ghcr.io/home-operations/plex
               tag: 1.43.5.11079@sha256:06ef0fc23e9af9bbaf284c3f27972f94e703d13d6f745edeb6818fcbebf6c673
             env:
-              ADVERTISE_IP: "https://plex.materia.wtf:443,http://192.168.10.111:32400"
+              ADVERTISE_IP: "https://plex.materia.wtf:32400,https://plex.materia.wtf:443,http://192.168.10.111:32400"
               ALLOWED_NETWORKS: "192.168.1.0/24,192.168.20.0/24,192.168.10.0/24,10.42.0.0/16,materia.wtf"
-              PLEX_ADVERTISE_URL: "https://plex.materia.wtf:443,http://192.168.10.111:32400,http://plex.media.svc.cluster.local:32400"
+              PLEX_ADVERTISE_URL: "https://plex.materia.wtf:32400,https://plex.materia.wtf:443,http://192.168.10.111:32400,http://plex.media.svc.cluster.local:32400"
               PLEX_NO_AUTH_NETWORKS: "192.168.1.0/24, 192.168.20.0/24, 10.42.0.0/16"
             probes:
               liveness:

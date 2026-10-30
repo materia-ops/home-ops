@@ -122,7 +122,7 @@ Cilium replaces kube-proxy and announces LoadBalancer VIPs from the
 | `192.168.10.5` | `envoy-internal` gateway |
 | `192.168.10.6` | `envoy-external` gateway |
 | `192.168.10.7` | `envoy-internal-tls` gateway (TLS passthrough) |
-| `192.168.10.8` | `envoy-plex` gateway (target of the WAN:443 forward) |
+| `192.168.10.8` | `envoy-plex` gateway (target of the WAN:443/32400 forwards) |
 | `192.168.10.20` | Kubernetes API (`matalos.materia.wtf`) |
 | `192.168.10.110` / `.111` / `.113` | Emby / Plex / Notifiarr |
 | `192.168.10.120` | AzerothCore realm (`Materia`) |
@@ -155,9 +155,11 @@ flowchart TD
   records the pihole/unifi external-dns providers write into Pi-hole and UniFi.
 - **Plex is grey-clouded** — Plex ToS forbids proxying video through Cloudflare, so its
   record is an unproxied CNAME to the WAN IP (`dynamic.materia.wtf`, kept current by
-  the UDM's Cloudflare DDNS), not the tunnel. The UDM forwards WAN:443 to its own
-  `envoy-plex` gateway, which admits only `media` routes, so the tunnel-only apps on
-  `envoy-external` are not reachable from the WAN IP.
+  the UDM's Cloudflare DDNS), not the tunnel. The UDM forwards WAN:32400 (and
+  WAN:443, which in practice never reaches the cluster) to its own `envoy-plex`
+  gateway, which admits only `media` routes, so the tunnel-only apps on
+  `envoy-external` are not reachable from the WAN IP. Plex advertises
+  `https://plex.materia.wtf:32400` to clients via plex.tv.
 - **Home DNS chain:** clients → Pi-hole (blocklists) → dnscrypt/NextDNS upstream
   (security heuristics). The in-cluster dnscrypt-proxy at `.2` is the Pi-holes'
   encrypted upstream. A GitHub-webhooks **Skip rule** in the Cloudflare WAF sits above
