@@ -152,6 +152,37 @@ spec:
         namespaces:
           from: Same
 ---
+# yaml-language-server: $schema=https://schemas.materia.wtf/gateway.networking.k8s.io/gateway_v1.json
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-plex
+  annotations:
+    external-dns.kubernetes.io/target: &hostname-plex plex-gateway.materia.wtf
+    gatus.home-operations.com/enabled: "false"
+spec:
+  gatewayClassName: envoy
+  infrastructure:
+    annotations:
+      external-dns.kubernetes.io/hostname: *hostname-plex
+      lbipam.cilium.io/ips: 192.168.10.8
+  listeners:
+    # The only target of the WAN:443 forward; keep it to Plex so the tunnel-only
+    # routes on envoy-external stay unreachable from the WAN IP.
+    - name: https
+      protocol: HTTPS
+      port: 443
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: materia-wtf-tls
+---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
