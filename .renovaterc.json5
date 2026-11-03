@@ -267,6 +267,10 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       minimumGroupSize: 2,
+      // The talosFactory preset sets this for its datasource only, which
+      // would split a patch release into patch-talos (node pins) and talos
+      // (mise + talosctl pins); set it group-wide to keep them together.
+      separateMinorPatch: true,
       // Clear the mise rule's 3-day age for the mise member: with it, the
       // tuppr + image-pull pins ship as a group of two and the mise pin is
       // stranded alone below minimumGroupSize (#1761). An age gate on the
