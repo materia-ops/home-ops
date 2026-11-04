@@ -38,3 +38,4 @@ configMapGenerator:
       - ./blueprints/18-outpost.yaml
       - ./blueprints/19-notifications.yaml
       - ./blueprints/20-apps-proxy-games.yaml
+      - ./blueprints/21-monitoring.yaml

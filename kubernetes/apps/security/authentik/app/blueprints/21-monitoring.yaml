@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://version-2026-5.goauthentik.io/blueprints/v1/schema.json
+version: 1
+metadata:
+  name: Materia - Monitoring
+entries:
+  # Read-only identity for the gatus blueprint-status check (o11y/gatus-sidecar)
+  - id: role_gatus
+    model: authentik_rbac.role
+    identifiers:
+      name: gatus-blueprint-reader
+    attrs:
+      permissions:
+        - authentik_blueprints.view_blueprintinstance
+
+  - id: user_gatus
+    model: authentik_core.user
+    identifiers:
+      username: gatus
+    attrs:
+      name: Gatus
+      type: service_account
+      path: service-accounts
+      roles:
+        - !KeyOf role_gatus
+
+  - id: token_gatus
+    model: authentik_core.token
+    identifiers:
+      identifier: gatus-blueprint-status
+    attrs:
+      user: !KeyOf user_gatus
+      intent: api
+      expiring: false
+      key: !Env GATUS_AUTHENTIK_TOKEN
+      description: Gatus blueprint-status check
