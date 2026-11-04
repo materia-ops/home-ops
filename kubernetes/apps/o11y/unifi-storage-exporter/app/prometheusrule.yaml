@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: unifi-storage-exporter-rules
+spec:
+  groups:
+    - name: unifi-storage.rules
+      rules:
+        - alert: UnifiStorageScrapeFailing
+          expr: |-
+            max(unifi_storage_up) == 0 or absent(unifi_storage_up)
+          for: 15m
+          annotations:
+            summary: >-
+              Can't read the UDMP's disk health (login or /api/system failing), so its disk alerts are blind
+          labels:
+            severity: warning
+
+        - alert: UnifiStorageDiskMissing
+          expr: |-
+            unifi_storage_disks < 1 and on() unifi_storage_up == 1
+          for: 10m
+          annotations:
+            summary: >-
+              The UDMP reports no disk in its drive bay
+          labels:
+            severity: critical
+
+        - alert: UnifiStorageDiskUnhealthy
+          expr: |-
+            unifi_storage_disk_healthy == 0
+          for: 5m
+          annotations:
+            summary: >-
+              UDMP disk in slot {{ $labels.slot }} is no longer rated good by UniFi OS
+          labels:
+            severity: critical
+
+        - alert: UnifiStorageDiskBadSectors
+          expr: |-
+            unifi_storage_disk_bad_sectors > 0
+          for: 5m
+          annotations:
+            summary: >-
+              UDMP disk in slot {{ $labels.slot }} has {{ $value }} bad sectors
+          labels:
+            severity: critical
+
+        - alert: UnifiStorageDiskWearout
+          expr: |-
+            unifi_storage_disk_life_span_percent < 20
+          for: 1h
+          annotations:
+            summary: >-
+              UDMP disk in slot {{ $labels.slot }} has {{ $value }}% of its rated endurance left
+          labels:
+            severity: warning
+
+        - alert: UnifiStorageDiskHighTemperature
+          expr: |-
+            unifi_storage_disk_temperature_celsius > 60
+          for: 15m
+          annotations:
+            summary: >-
+              UDMP disk in slot {{ $labels.slot }} is at {{ $value }}°C
+          labels:
+            severity: critical
+
+        - alert: UnifiStorageVolumeUnhealthy
+          expr: |-
+            unifi_storage_volume_healthy == 0 or unifi_storage_volume_errors > 0
+          for: 5m
+          annotations:
+            summary: >-
+              UDMP volume {{ $labels.device }} ({{ $labels.space_type }}) is unhealthy or has errors
+          labels:
+            severity: critical
