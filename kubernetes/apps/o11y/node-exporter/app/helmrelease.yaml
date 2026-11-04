@@ -10,6 +10,11 @@ spec:
     name: node-exporter
   interval: 1h
   values:
+    # igc pause-frame/queue counters for the c2/c3 rx FIFO drops; scoped to keep cardinality small.
+    extraArgs:
+      - --collector.ethtool
+      - --collector.ethtool.device-include=^enp[34]s0$
+      - --collector.ethtool.metrics-include=^(rx_flow_control_xo(n|ff)|tx_flow_control_xo(n|ff)|rx_missed_errors|rx_no_buffer_count|rx_queue_[0-9]+_(packets|drops)|rx_lpi_counter|tx_lpi_counter)$
     fullnameOverride: node-exporter
     prometheus:
       monitor:
