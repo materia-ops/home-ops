@@ -63,4 +63,4 @@ spec:
       cpu: 100m
       memory: 256Mi
     limits:
-      memory: 2Gi
+      memory: ${DB_MEMORY_LIMIT:-2Gi}

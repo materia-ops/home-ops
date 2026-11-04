@@ -6,7 +6,7 @@ metadata:
   name: postgres-${APP}
 spec:
   # CNPG's standard image plus TimescaleDB (TSL build), toolkit and PostGIS
-  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:18.6-3.6.4-202608311018-standard-bookworm@sha256:225d62e311a1603c841ab9297d6ae9b3e673f3dcb06791d1cc7aa4e387e8f2c2
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:18.6-3.6.4-202611021011-standard-bookworm@sha256:d19a887acca25082b66e307b03c89e64cd6976598e318bfed432c0ec480db633
   bootstrap:
     initdb:
       postInitApplicationSQL:
@@ -14,6 +14,9 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit
   postgresql:
     parameters:
+      # drop_chunks/retention locks every chunk, compressed chunk and index in
+      # one transaction; the default 64 starves the lock table
+      max_locks_per_transaction: "256"
       timescaledb.license: timescale
       timescaledb.telemetry_level: "off"
     shared_preload_libraries:

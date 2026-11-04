@@ -17,13 +17,5 @@ spec:
     spegel:
       containerdSock: /run/containerd/containerd.sock
       containerdRegistryConfigPath: /etc/cri/conf.d/hosts
-    service:
-      registry:
-        hostPort: 29999
     serviceMonitor:
       enabled: true
-    grafanaDashboard:
-      enabled: true
-      # Sidecar emits the spegel-dashboard ConfigMap that grafanadashboard.yaml
-      # reads; GrafanaOperator would emit a second, unmapped CR of the same name
-      mode: Sidecar

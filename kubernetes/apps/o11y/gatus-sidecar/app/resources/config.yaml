@@ -1,8 +1,6 @@
 ---
-connectivity:
-  checker:
-    target: 1.1.1.1:53
-    interval: 1m
+# No connectivity.checker: while it reads offline gatus skips every check and the
+# gauges freeze, which blinds InternetDown and every LAN check during a WAN outage.
 endpoints:
   # Dead-man checks for GitHub Actions pipelines, pulled via the API because
   # Cloudflare Bot Fight Mode would eat a push from GitHub runners. One
@@ -52,19 +50,19 @@ endpoints:
   - name: Cloudflare
     group: connectivity
     url: icmp://1.1.1.1
-    interval: 1m
+    interval: 30s
     conditions:
       - "[CONNECTED] == true"
   - name: Google
     group: connectivity
     url: icmp://8.8.8.8
-    interval: 1m
+    interval: 30s
     conditions:
       - "[CONNECTED] == true"
   - name: Quad9
     group: connectivity
     url: icmp://9.9.9.9
-    interval: 1m
+    interval: 30s
     conditions:
       - "[CONNECTED] == true"
   # Third-party sources Materia Core (WoW client tooling) pulls from —

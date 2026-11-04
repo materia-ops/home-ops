@@ -65,13 +65,13 @@ jobs:
       # /tmp into the container, and Renovate lowercases this value.
       RENOVATE_LOG_FILE: /tmp/renovate-${{ github.run_id }}-${{ github.run_attempt }}.log
       # The runner pin. Not RENOVATE_-prefixed: it must not reach the container.
-      RUNNER_VERSION: '44.155.1'
+      RUNNER_VERSION: '44.202.1'
     steps:
       - name: Load Secrets
         id: load-secrets
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
-          version: 2.41.0
+          version: 2.41.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           GITHUB_BOT_APP_CLIENT_ID: op://ci/github-bot/GITHUB_BOT_APP_CLIENT_ID
@@ -138,7 +138,7 @@ jobs:
           echo "signature verified: ${IMAGE}"
 
       - name: Run Renovate
-        uses: renovatebot/github-action@f0f41e5f2e706165f6814b1d0f0d0e319de7d1d9 # v46.3.8
+        uses: renovatebot/github-action@1c0cf989c02653fba0efe7ca5772338860ca71dc # v46.3.12
         env:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           # Renovate's unhandledRejection handler only logs, so a rejection
@@ -207,7 +207,7 @@ jobs:
         id: pushover
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
-          version: 2.41.0
+          version: 2.41.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           PUSHOVER_TOKEN: op://ci/pushover/token

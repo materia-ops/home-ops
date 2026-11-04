@@ -24,6 +24,8 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      # headroom until the library_snapshots chunk backlog is dropped
+      DB_MEMORY_LIMIT: 3Gi
   prune: true
   sourceRef:
     kind: GitRepository

@@ -59,6 +59,7 @@ spec:
             probe_success{service="blackbox-exporter-vpn"} == 0
           for: 15m
           labels:
+            depends_on: internet
             severity: critical
           annotations:
             summary: |-

@@ -7,3 +7,6 @@ perform_smartctl_cleanup: true
 network_v4_address: 192.168.20.2/24
 network_v4_gateway: 192.168.20.1
 network_v6_address: fdbd:4657:e91a:20::2/64
+
+# Pi-hole web UI (managed by the `pihole` role) — envoy-internal route hostname
+pihole_webserver_domain: pi-1.materia.wtf

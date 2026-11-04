@@ -5,16 +5,19 @@
     // earlier tags nest UNPINNED self-references that break when upstream
     // restructures (issue #1381). App presets stay opt-in: extend only what
     // this repo uses: CNPG image pins, GrafanaDashboard CRs, Talos factory.
-    "github>home-operations/renovate-presets#8.1.0",
-    "github>home-operations/renovate-presets//apps/cnpg.json5#8.1.0",
-    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.1.0",
-    "github>home-operations/renovate-presets//apps/talosFactory.json5#8.1.0",
+    "github>home-operations/renovate-presets#11.0.0",
+    "github>home-operations/renovate-presets//apps/cnpg.json5#11.0.0",
+    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#11.0.0",
+    "github>home-operations/renovate-presets//apps/talosFactory.json5#11.0.0",
     ":timezone(Australia/Melbourne)",
     // Org policy — LAST so it wins over the upstream :automergeBranch: forces
     // PR-based automerge. The org ruleset forbids direct pushes to the default
     // branch, so every automerge goes via a PR that Renovate auto-merges.
     "github>materia-ops/.github//renovate/default",
   ],
+  // The org ruleset does not require up-to-date branches, and `auto` would
+  // still rebase every automerge PR each time main moves
+  rebaseWhen: "conflicted",
   packageRules: [
     // Auto-merge rules
     {
@@ -175,6 +178,12 @@
       allowedVersions: "/^18\\./",
       automerge: false,
     },
+    {
+      description: "Hold the ansible workflow's setup-python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed); lift once ansible-core 2.22 (adds 3.15) is GA",
+      matchManagers: [ "github-actions" ],
+      matchDepNames: [ "python" ],
+      allowedVersions: "<3.15",
+    },
     // The mise manager resolves aqua: tools via github-tags with a generic
     // ^v?(.+) extractor and does not read the aqua registry's version_prefix,
     // so tools with prefixed tags never get an update. Strip the prefix here.
@@ -258,6 +267,10 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       minimumGroupSize: 2,
+      // The talosFactory preset sets this for its datasource only, which
+      // would split a patch release into patch-talos (node pins) and talos
+      // (mise + talosctl pins); set it group-wide to keep them together.
+      separateMinorPatch: true,
       // Clear the mise rule's 3-day age for the mise member: with it, the
       // tuppr + image-pull pins ship as a group of two and the mise pin is
       // stranded alone below minimumGroupSize (#1761). An age gate on the

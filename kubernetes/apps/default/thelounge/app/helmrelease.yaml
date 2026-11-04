@@ -19,7 +19,7 @@ spec:
             nameOverride: "{{ .Release.Name }}"
             image:
               repository: ghcr.io/thelounge/thelounge
-              tag: 4.5.2@sha256:708fbedbec293e6a80c30300a8786355539035f9ca35751af40d96eec280b710
+              tag: 4.5.2@sha256:00b0f614c4414dbd195ed1ece958095d29c7013ad608c038717076bf8582cb22
             env:
               THELOUNGE_HOME: /config/thelounge
             securityContext:

@@ -6,4 +6,5 @@ resources:
   - ./backendtrafficpolicy.yaml
   - ./dnsendpoint.yaml
   - ./helmrelease.yaml
+  - ./networkpolicy.yaml
   - ./ocirepository.yaml

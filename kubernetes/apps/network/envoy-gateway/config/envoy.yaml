@@ -18,8 +18,7 @@ spec:
       envoyDeployment:
         replicas: 2
         container:
-          image: mirror.gcr.io/envoyproxy/envoy:v1.39.4
-          # imageRepository: mirror.gcr.io/envoyproxy/envoy
+          imageRepository: mirror.gcr.io/envoyproxy/envoy
           resources:
             requests:
               cpu: 100m
@@ -152,6 +151,43 @@ spec:
       allowedRoutes:
         namespaces:
           from: Same
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/gateway.networking.k8s.io/gateway_v1.json
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-plex
+  annotations:
+    external-dns.kubernetes.io/target: &hostname-plex plex-gateway.materia.wtf
+    gatus.home-operations.com/enabled: "false"
+spec:
+  gatewayClassName: envoy
+  infrastructure:
+    annotations:
+      external-dns.kubernetes.io/hostname: *hostname-plex
+      lbipam.cilium.io/ips: 192.168.10.8
+  listeners:
+    # The only target of the WAN:443/32400 forwards; keep it to Plex so the
+    # tunnel-only routes on envoy-external stay unreachable from the WAN IP.
+    - name: https
+      protocol: HTTPS
+      port: 443
+      allowedRoutes: &plex-routes
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+      tls: &plex-tls
+        certificateRefs:
+          - kind: Secret
+            name: materia-wtf-tls
+    # Inbound WAN:443 never reaches the cluster; 32400 does.
+    - name: https-plex
+      protocol: HTTPS
+      port: 32400
+      allowedRoutes: *plex-routes
+      tls: *plex-tls
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
