@@ -20,6 +20,12 @@ spec:
       - url: http://victoria-logs.o11y.svc.cluster.local:9428
         maxDiskUsagePerURL: 10GB
     collector:
+      # first match wins; `event` is the message field in Authentik's structlog JSON
+      msgField:
+        - message
+        - msg
+        - log
+        - event
       streamFields:
         - kubernetes.pod_name
         - kubernetes.pod_namespace
