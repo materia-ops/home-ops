@@ -27,7 +27,7 @@ spec:
             image: &image
               # keep this digest in step with the azerothcore-db StatefulSet
               repository: docker.io/library/mysql
-              tag: 8.4@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+              tag: 8.4@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902
             command: ["bash", "/scripts/backup-main.sh"]
             env: &env
               # mysql/mysqldump read the password from MYSQL_PWD; keeps it off argv

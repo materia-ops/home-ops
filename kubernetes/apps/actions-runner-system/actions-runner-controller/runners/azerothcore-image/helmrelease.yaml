@@ -25,38 +25,21 @@ spec:
     # CPU limit 5 is a hard CFS ceiling — the build throttles, neighbors
     # never notice; the workflow passes BUILD_JOBS=4 to match (nproc inside
     # the container still reports host cores).
-    # ndots:1 so external lookups query the bare name first, bypassing the
-    # search path. REQUIRED while the actions-runner-egress toFQDNs policy
-    # selects these pods: coredns autopath answers suffixed queries with the
-    # public record, which Cilium's DNS proxy keys to a name the policy never
-    # matches -> silent SYN drops (2026-07-18 listener outage). Applies to the
-    # runner pods (template) and the listener (listenerTemplate) alike.
-    listenerTemplate:
-      spec:
-        dnsConfig: &ndots
-          options:
-            - name: ndots
-              value: "1"
-        # merge-stub: the CRD requires containers whenever listenerTemplate is
-        # set; an entry naming the generated container changes nothing else.
-        containers:
-          - name: listener
     template:
       spec:
-        dnsConfig: *ndots
         # The pod runs privileged dind for a public repo's builds - it must
         # not carry a Kubernetes API credential at all.
         automountServiceAccountToken: false
         initContainers:
           - name: init-dind-externals
-            image: ghcr.io/actions/actions-runner:2.338.0@sha256:4ffadc0002b2581327e06101fc8c06cd189232baf79fe561fac9caeb76f5e807
+            image: ghcr.io/actions/actions-runner:2.338.2@sha256:759a1d94a15b05941aba5196974ff43fe15b4cbba29b694b35cbc32a1166b232
             command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
             volumeMounts:
               - name: dind-externals
                 mountPath: /home/runner/tmpDir
         containers:
           - name: runner
-            image: ghcr.io/actions/actions-runner:2.338.0@sha256:4ffadc0002b2581327e06101fc8c06cd189232baf79fe561fac9caeb76f5e807
+            image: ghcr.io/actions/actions-runner:2.338.2@sha256:759a1d94a15b05941aba5196974ff43fe15b4cbba29b694b35cbc32a1166b232
             command: ["/home/runner/run.sh"]
             env:
               - name: DOCKER_HOST
@@ -76,7 +59,7 @@ spec:
               - name: dind-sock
                 mountPath: /var/run
           - name: dind
-            image: docker:29-dind@sha256:0b6d18a4a222e71c88be6034926b4f6cde2fc33c2218643d03ccfddc65995470
+            image: docker:29-dind@sha256:9e79b879b177fbd72c34376a3dd3d91747da5db49e1f560f76aea59561471977
             args:
               - dockerd
               - --host=unix:///var/run/docker.sock

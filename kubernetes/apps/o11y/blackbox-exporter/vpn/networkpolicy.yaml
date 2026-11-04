@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: blackbox-exporter-vpn
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: blackbox-exporter-vpn
+      app.kubernetes.io/name: prometheus-blackbox-exporter
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: o11y
+      toPorts: &http
+        - ports:
+            - port: "9115"
+              protocol: TCP
+    - fromEntities:
+        - host
+      toPorts: *http
+  # Probes must exit via the Multus VPN leg; no world egress on the pod network
+  # means a lost VPN route fails the probe instead of measuring the WAN.
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toEntities:
+        - cluster
+    - toCIDR:
+        - 192.168.0.0/16

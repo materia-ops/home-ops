@@ -76,3 +76,12 @@
   any_errors_fatal: true
   roles:
     - role: dnscrypt_proxy
+
+- name: Configure Pi-hole on Piholes
+  hosts: raspberry_pis
+  become: true
+  tags: ["pihole"]
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: pihole

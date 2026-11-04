@@ -107,13 +107,15 @@ to `main` (and manual dispatch) the self-hosted runners (LAN access to the Pis) 
 three stages:
 
 1. **Plan** — derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
-   `inventory/group_vars/` → `observability`, structural files → everything).
+   `roles/pihole/` → `pihole`, `inventory/group_vars/` → `observability`, structural
+   files → everything).
 2. **Check** — `ansible-playbook --check --diff` against the live Pis.
 3. **Apply** — gated on Check; runs on push to `main` (or manual dispatch with
    `check_only=false`).
 
-The dnscrypt play is `serial: 1` + `any_errors_fatal` with a DNS-resolve verification
-between hosts, so a bad change can only take out one Pi-hole before the rollout stops.
+The dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a verification
+between hosts (a DNS resolve; the web UI answering on its ingress hostname), so a bad
+change can only take out one Pi-hole before the rollout stops.
 
 ### `tag.yaml` — monthly repo tag
 

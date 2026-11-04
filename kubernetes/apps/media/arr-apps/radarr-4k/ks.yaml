@@ -6,7 +6,6 @@ metadata:
   name: &app radarr-4k
 spec:
   components:
-    - ../../../../../components/authentik-forward-auth
     - ../../../../../components/kopiur/backup
     - ../../../../../components/zeroscaler
   dependsOn:

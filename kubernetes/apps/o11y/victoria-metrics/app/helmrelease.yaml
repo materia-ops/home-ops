@@ -23,6 +23,11 @@ spec:
             - receiver: blackhole
               matchers:
                 - alertname = InfoInhibitor
+            # Only deliverable once the WAN is back; don't re-send through a long outage.
+            - receiver: pushover
+              matchers:
+                - alertname = InternetDown
+              repeat_interval: 24h
           group_by:
             - alertname
             - cluster
@@ -37,6 +42,55 @@ spec:
               - severity = "critical"
             target_matchers:
               - severity = "warning"
+          # InternetDown (gatus-sidecar rules): mute what only fails because the WAN did.
+          # Rules this repo owns opt in with a depends_on: internet label; chart rules
+          # can't carry one, so they are matched by name and scoped to the affected apps.
+          - source_matchers: &internet-down
+              - alertname = "InternetDown"
+            target_matchers:
+              - depends_on = "internet"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname =~ "AlertmanagerClusterFailedToSendAlerts|AlertmanagerFailedToSendAlerts|TooManyScrapeErrors"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "GatusEndpointDown"
+              - group = "external"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "KubeContainerWaiting"
+              - reason =~ "ErrImagePull|ImagePullBackOff"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname =~ "KubeContainerWaiting|KubePodCrashLooping|KubePodNotReady"
+              - namespace = "actions-runner-system"
+              - pod =~ ".+-listener"
+          # Deployment pods only (<deploy>-<rs hash>-<suffix>): the alphabet has no 0/1/3,
+          # so kopiur mover pods (<app>-<timestamp>-<suffix>) never match.
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname =~ "KubeContainerWaiting|KubePodCrashLooping|KubePodNotReady"
+              - namespace =~ "media|network"
+              - pod =~ "(cloudflare-tunnel|external-dns-cloudflare|seerr)-[bcdfghjklmnpqrstvwxz2456789]+-[bcdfghjklmnpqrstvwxz2456789]{5}"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "KubeDeploymentReplicasMismatch"
+              - namespace =~ "media|network"
+              - deployment =~ "cloudflare-tunnel|external-dns-cloudflare|seerr"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "KubePdbNotEnoughHealthyPods"
+              - namespace = "network"
+              - poddisruptionbudget = "cloudflare-tunnel"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "TargetDown"
+              - namespace = "network"
+              - job = "external-dns-cloudflare"
+          - source_matchers: *internet-down
+            target_matchers:
+              - alertname = "TooManyLogs"
+              - job = "vmagent-victoria-metrics"
         receivers:
           - name: blackhole
           - name: pushover
@@ -62,7 +116,7 @@ spec:
                     {{- end }}
                   {{- end }}
                 priority: |-
-                  {{ if eq .Status "firing" }}1{{ else }}0{{ end }}
+                  {{ if and (eq .Status "firing") (ne .CommonLabels.alertname "InternetDown") }}1{{ else }}0{{ end }}
                 send_resolved: true
                 sound: gamelan
                 title: >-
@@ -262,6 +316,46 @@ spec:
                 expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
                 labels:
                   severity: critical
+      geoip-rules:
+        create: true
+        groups:
+          - name: geoip
+            type: vlogs
+            interval: 30m
+            rules:
+              # Fires for 30m per miss, but the pod stays without GeoIP until restarted.
+              - alert: AuthentikGeoIPMissing
+                annotations:
+                  summary: >-
+                    An authentik server booted without its GeoIP/ASN database and stays without GeoIP until restarted.
+                  description: >-
+                    Once geoip-mirror logs "geoipupdate ok": kubectl -n security rollout restart deploy/authentik-server
+                expr: |-
+                  kubernetes.pod_namespace:=security kubernetes.container_name:=geoip-fetch "unavailable from geoip-mirror" | stats count() as misses | filter misses:>0
+                labels:
+                  severity: warning
+              # The loop logs "geoipupdate ok" every 12h; silence means a wedged loop,
+              # a persistent failure, or broken log collection.
+              - alert: GeoIPMirrorStale
+                annotations:
+                  summary: >-
+                    geoip-mirror has logged no successful geoipupdate run in 2d (expected every 12h) — authentik is serving stale or no GeoIP data.
+                expr: |-
+                  _time:2d kubernetes.pod_namespace:=security kubernetes.container_name:=geoipupdate "geoipupdate ok" | stats count() as ok | filter ok:=0
+                labels:
+                  depends_on: internet
+                  severity: warning
+              # Window spans the 6h retry, so a persistent failure is one alert, not
+              # one per retry. The mirror keeps serving its last good DBs meanwhile.
+              - alert: GeoIPMirrorUpdateFailing
+                annotations:
+                  summary: >-
+                    geoip-mirror failed to update the MaxMind GeoLite DBs in the last 6.5h — check its geoipupdate logs for a 429 or bad credentials.
+                expr: |-
+                  _time:6h30m kubernetes.pod_namespace:=security kubernetes.container_name:=geoipupdate ("geoipupdate failed" OR "Error retrieving updates") | stats count() as failures | filter failures:>0
+                labels:
+                  depends_on: internet
+                  severity: warning
       oom-rules:
         create: true
         groups:

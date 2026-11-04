@@ -20,51 +20,55 @@ url_api = "https://api.github.com/repos/charmbracelet/gum/releases/assets/585508
 provenance = "cosign"
 
 [[tools."aqua:cilium/cilium-cli"]]
-version = "0.20.1"
+version = "0.20.2"
 backend = "aqua:cilium/cilium-cli"
-specifiers = ["0.20.1"]
+specifiers = ["0.20.2"]
 
 [tools."aqua:cilium/cilium-cli"."platforms.linux-x64"]
-checksum = "sha256:24e817dcfcc8a12e325ce7547617bcbcf171c5b0b335bb24d2bb1207ba047f61"
-url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.1/cilium-linux-amd64.tar.gz"
-url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/585358772"
+checksum = "sha256:b7224a62bfed0e84f1a84567d274fefc5017df76a936e067c42012bb7fc30856"
+checksum_source = "mise-versions"
+url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.2/cilium-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/687888470"
 
 [tools."aqua:cilium/cilium-cli"."platforms.windows-x64"]
-checksum = "sha256:869bc322c880db7c566995f8e251dd3270e15814f26e4c7c8c13922319a939e3"
-url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.1/cilium-windows-amd64.zip"
-url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/585358777"
+checksum = "sha256:b72fe6bbef143d2ab5c308a3384c0e97a5e82242b209626721ee0a1e72dddd5d"
+checksum_source = "mise-versions"
+url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.2/cilium-windows-amd64.zip"
+url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/687888457"
 
 [[tools."aqua:cli/cli"]]
-version = "2.102.0"
+version = "2.103.3"
 backend = "aqua:cli/cli"
-specifiers = ["2.102.0"]
+specifiers = ["2.103.3"]
 
 [tools."aqua:cli/cli"."platforms.linux-x64"]
-checksum = "sha256:bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386"
-url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854672"
+checksum = "sha256:4c806978ffce1cec70853302a56d70ac6da4f19bae7adca4e1a8ab00633dd91d"
+url = "https://github.com/cli/cli/releases/download/v2.103.3/gh_2.103.3_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/679195621"
 provenance = "github-attestations"
 
 [tools."aqua:cli/cli"."platforms.windows-x64"]
-checksum = "sha256:ae64e556ecc240b200f7eba60d550e4bb60d78e860e69dd88c449405b86067f4"
-url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_windows_amd64.zip"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854760"
+checksum = "sha256:98d0cfa794721665d7973dd728c78aff7bd836d58f10f6d7a03568eccb0a22e0"
+url = "https://github.com/cli/cli/releases/download/v2.103.3/gh_2.103.3_windows_amd64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/679195750"
 provenance = "github-attestations"
 
 [[tools."aqua:cloudflare/cloudflared"]]
-version = "2026.10.0"
+version = "2026.10.7"
 backend = "aqua:cloudflare/cloudflared"
-specifiers = ["2026.10.0"]
+specifiers = ["2026.10.7"]
 
 [tools."aqua:cloudflare/cloudflared"."platforms.linux-x64"]
-checksum = "sha256:d33ff2d14475178d2012c2c56beba87389ac5ded27649519f198a7d3134a99db"
-url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.0/cloudflared-linux-amd64"
-url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/613255386"
+checksum = "sha256:1f99fb518b83dec2ba8d870a7cc991d82a77e6196295a3d2754ba17ab9f91872"
+checksum_source = "mise-versions"
+url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.7/cloudflared-linux-amd64"
+url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/692817008"
 
 [tools."aqua:cloudflare/cloudflared"."platforms.windows-x64"]
-checksum = "sha256:86aee4017b26625cee8484c113558f48effa4cd47f7aa05fcf425604e5d2b23c"
-url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.0/cloudflared-windows-amd64.exe"
-url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/613255868"
+checksum = "sha256:2493dbc168923bb3e59e5e7716f71deced92992eea9acd6e9d74f84ac7751343"
+checksum_source = "mise-versions"
+url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.7/cloudflared-windows-amd64.exe"
+url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/692820426"
 
 [[tools."aqua:elsesiy/kubectl-view-secret"]]
 version = "0.16.0"
@@ -99,19 +103,21 @@ url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/63
 provenance = "github-attestations"
 
 [[tools."aqua:fluxcd/flux2"]]
-version = "2.9.6"
+version = "2.10.0"
 backend = "aqua:fluxcd/flux2"
-specifiers = ["2.9.6"]
+specifiers = ["2.10.0"]
 
 [tools."aqua:fluxcd/flux2"."platforms.linux-x64"]
-checksum = "sha256:b4d22673e9246cbd628881f1a9ef3b090085dced291e42d804555cee8e8d42c5"
-url = "https://github.com/fluxcd/flux2/releases/download/v2.9.6/flux_2.9.6_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/fluxcd/flux2/releases/assets/602941244"
+checksum = "sha256:208dd7012c04fedeed5b2d0b6e63df3b15b1c34a381527811685c098bc9f8659"
+checksum_source = "mise-versions"
+url = "https://github.com/fluxcd/flux2/releases/download/v2.10.0/flux_2.10.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/fluxcd/flux2/releases/assets/678609567"
 
 [tools."aqua:fluxcd/flux2"."platforms.windows-x64"]
-checksum = "sha256:164e87a13ee8be864a96dbfe597d938cfcea60b9f309a2bd8eaad3e539fba054"
-url = "https://github.com/fluxcd/flux2/releases/download/v2.9.6/flux_2.9.6_windows_amd64.zip"
-url_api = "https://api.github.com/repos/fluxcd/flux2/releases/assets/602941233"
+checksum = "sha256:750250d4dcc828c395d7edaf72c1787d34af697fc3d7bc310d32955a5269823d"
+checksum_source = "mise-versions"
+url = "https://github.com/fluxcd/flux2/releases/download/v2.10.0/flux_2.10.0_windows_amd64.zip"
+url_api = "https://api.github.com/repos/fluxcd/flux2/releases/assets/678609573"
 
 [[tools."aqua:helm/helm"]]
 version = "4.3.1"
@@ -127,34 +133,34 @@ checksum = "sha256:5735a2bd59071b814546c6d0a76f29a8fd3ebe06e3a4791dd2784804ae895
 url = "https://get.helm.sh/helm-v4.3.1-windows-amd64.tar.gz"
 
 [[tools."aqua:helmfile/helmfile"]]
-version = "1.8.1"
+version = "1.8.2"
 backend = "aqua:helmfile/helmfile"
-specifiers = ["1.8.1"]
+specifiers = ["1.8.2"]
 
 [tools."aqua:helmfile/helmfile"."platforms.linux-x64"]
-checksum = "sha256:ccabbe75dddbc25008d055fe92a44f95a184342211e7244d32b870409239c7a3"
-url = "https://github.com/helmfile/helmfile/releases/download/v1.8.1/helmfile_1.8.1_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/599703520"
+checksum = "sha256:f179485c5bb9f8e20fbd8ea16d8807915988aba4d60131ee864fb3232452716e"
+url = "https://github.com/helmfile/helmfile/releases/download/v1.8.2/helmfile_1.8.2_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/647791185"
 
 [tools."aqua:helmfile/helmfile"."platforms.windows-x64"]
-checksum = "sha256:7ade732368fcc4bb7c0bb75df8b9b3ac542a4ae79ba2a63352f96099b4a86546"
-url = "https://github.com/helmfile/helmfile/releases/download/v1.8.1/helmfile_1.8.1_windows_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/599703418"
+checksum = "sha256:c13185673f1ee1547419a9312be6f3e18f0a715c1fdbd214df535c6358298e95"
+url = "https://github.com/helmfile/helmfile/releases/download/v1.8.2/helmfile_1.8.2_windows_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/647791182"
 
 [[tools."aqua:helmfile/vals"]]
-version = "0.47.0"
+version = "0.50.0"
 backend = "aqua:helmfile/vals"
-specifiers = ["0.47.0"]
+specifiers = ["0.50.0"]
 
 [tools."aqua:helmfile/vals"."platforms.linux-x64"]
-checksum = "sha256:b327e52811c0c84c5adad26bf2536491e07fc75018a84a66109e1e5325a3d833"
-url = "https://github.com/helmfile/vals/releases/download/v0.47.0/vals_0.47.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/578292795"
+checksum = "sha256:4cb1664b1e0aa49481cb05fabe2c52d4944dcaab31c4805924b668ae9f54c379"
+url = "https://github.com/helmfile/vals/releases/download/v0.50.0/vals_0.50.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/662121543"
 
 [tools."aqua:helmfile/vals"."platforms.windows-x64"]
-checksum = "sha256:bdb7e5e08d73637ccb57083f42961b4385e4a3270891f812dc53f8d1807847c8"
-url = "https://github.com/helmfile/vals/releases/download/v0.47.0/vals_0.47.0_windows_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/578292791"
+checksum = "sha256:61c406f205eb5ea2668de554a8be857d1178f2c4f34b6033b62e9d69070ead2a"
+url = "https://github.com/helmfile/vals/releases/download/v0.50.0/vals_0.50.0_windows_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/vals/releases/assets/662121526"
 
 [[tools."aqua:jqlang/jq"]]
 version = "1.8.2"
@@ -189,17 +195,17 @@ url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/
 url_api = "https://api.github.com/repos/kubernetes-sigs/kustomize/releases/assets/621661357"
 
 [[tools."aqua:kubernetes/kubectl"]]
-version = "1.37.1"
+version = "1.37.2"
 backend = "aqua:kubernetes/kubectl"
-specifiers = ["1.37.1"]
+specifiers = ["1.37.2"]
 
 [tools."aqua:kubernetes/kubectl"."platforms.linux-x64"]
-checksum = "sha256:65691ff77eb6fa44c908b77a1082c9f092c3b9733b5cefabec0d1104890e21a8"
-url = "https://dl.k8s.io/v1.37.1/bin/linux/amd64/kubectl"
+checksum = "sha256:c04487523e7aa7d1493f7808174c899db93d7a9cf57531420cd76b9bd415f8f4"
+url = "https://dl.k8s.io/v1.37.2/bin/linux/amd64/kubectl"
 
 [tools."aqua:kubernetes/kubectl"."platforms.windows-x64"]
-checksum = "sha256:14b93c4916a6f37a06fbc1f46b0a1d2404c4f9741be09f00d6caf8af3b05f1d3"
-url = "https://dl.k8s.io/v1.37.1/bin/windows/amd64/kubectl.exe"
+checksum = "sha256:1691938f7de0e931969f9968c3601cf32d6b0d573573afb4ce471f3d28f51984"
+url = "https://dl.k8s.io/v1.37.2/bin/windows/amd64/kubectl.exe"
 
 [[tools."aqua:mikefarah/yq"]]
 version = "4.54.1"
@@ -219,35 +225,37 @@ url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/597222575"
 provenance = "cosign"
 
 [[tools."aqua:mitsuhiko/minijinja"]]
-version = "3.0.0"
+version = "3.0.5"
 backend = "aqua:mitsuhiko/minijinja"
-specifiers = ["3.0.0"]
+specifiers = ["3.0.5"]
 
 [tools."aqua:mitsuhiko/minijinja"."platforms.linux-x64"]
-checksum = "sha256:475e12d8b29b321b6176b664cafb09043a67a96449a9c8fa4772424f6edb50b4"
-url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.0/minijinja-cli-x86_64-unknown-linux-gnu.tar.xz"
-url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/624062606"
+checksum = "sha256:d25b5e931f8f3f4df9d25db4c81e5bcb01a752aad9c05312234321d9bb869d14"
+checksum_source = "mise-versions"
+url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.5/minijinja-cli-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/690302426"
 
 [tools."aqua:mitsuhiko/minijinja"."platforms.windows-x64"]
-checksum = "sha256:dae7105051d2b1300549862e362a31b8036dbc93cc99eeb42c48372f44329eca"
-url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.0/minijinja-cli-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/624062597"
+checksum = "sha256:df61e0e2a33f92553be1ab79b53fb894b0a3fbae3e9f5f12a0e21ce17b46fdc8"
+checksum_source = "mise-versions"
+url = "https://github.com/mitsuhiko/minijinja/releases/download/3.0.5/minijinja-cli-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/690302404"
 
 [[tools."aqua:siderolabs/talos"]]
-version = "1.14.2"
+version = "1.14.5"
 backend = "aqua:siderolabs/talos"
-specifiers = ["1.14.2"]
+specifiers = ["1.14.5"]
 
 [tools."aqua:siderolabs/talos"."platforms.linux-x64"]
-checksum = "sha256:c6c9552b0e5f767352c595fa1c0af4f186f697488646872955057d23990a66c4"
-url = "https://github.com/siderolabs/talos/releases/download/v1.14.2/talosctl-linux-amd64"
-url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/599059721"
+checksum = "sha256:ff432b68986709e6b69c563a08a2ced4232d5196b0dccd6d2e783e9d714d7d7d"
+url = "https://github.com/siderolabs/talos/releases/download/v1.14.5/talosctl-linux-amd64"
+url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/678470893"
 provenance = "cosign"
 
 [tools."aqua:siderolabs/talos"."platforms.windows-x64"]
-checksum = "sha256:0f0b6fc765f78a78161f01c70f044c73e70536b772fd0ea023918849e9744998"
-url = "https://github.com/siderolabs/talos/releases/download/v1.14.2/talosctl-windows-amd64.exe"
-url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/599059709"
+checksum = "sha256:45b25be0ceef02b55110a2858f2fcc4e2f711f8b3dcd64bbc3c842d45adfd696"
+url = "https://github.com/siderolabs/talos/releases/download/v1.14.5/talosctl-windows-amd64.exe"
+url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/678470928"
 provenance = "cosign"
 
 [[tools."github:home-operations/flate"]]
@@ -266,33 +274,33 @@ url = "https://github.com/home-operations/flate/releases/download/v0.6.5/flate_0
 url_api = "https://api.github.com/repos/home-operations/flate/releases/assets/541337344"
 
 [[tools."github:woodruffw/zizmor"]]
-version = "1.30.1"
+version = "1.31.1"
 backend = "github:woodruffw/zizmor"
-specifiers = ["1.30.1"]
+specifiers = ["v1.31.1"]
 
 [tools."github:woodruffw/zizmor"."platforms.linux-x64"]
-checksum = "sha256:e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a"
-url = "https://github.com/woodruffw/zizmor/releases/download/v1.30.1/zizmor-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/woodruffw/zizmor/releases/assets/552067642"
+checksum = "sha256:d185f726bdaf92df78273217dfdd24ebcd6b0ef48cf3ce776ff5762b6e138c99"
+url = "https://github.com/woodruffw/zizmor/releases/download/v1.31.1/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/woodruffw/zizmor/releases/assets/645467284"
 provenance = "github-attestations"
 
 [tools."github:woodruffw/zizmor"."platforms.windows-x64"]
-checksum = "sha256:b183b1e996eddfab9659f1e9b46e059f1ef1cf984a1f14e5da09f7876a4b3a1c"
-url = "https://github.com/woodruffw/zizmor/releases/download/v1.30.1/zizmor-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/woodruffw/zizmor/releases/assets/552067645"
+checksum = "sha256:4de30371c8a3b483aecbcf0dec1fd6a2b6aae65051ca226b4f6527baac6a8c7a"
+url = "https://github.com/woodruffw/zizmor/releases/download/v1.31.1/zizmor-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/woodruffw/zizmor/releases/assets/645467286"
 provenance = "github-attestations"
 
 [[tools.just]]
-version = "1.58.0"
+version = "1.59.0"
 backend = "aqua:casey/just"
-specifiers = ["1.58.0"]
+specifiers = ["1.59.0"]
 
 [tools.just."platforms.linux-x64"]
-checksum = "sha256:4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d"
-url = "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/casey/just/releases/assets/500509978"
+checksum = "sha256:409044617b6f06517c1035e55ca38c8c856ff8b650e41bc2aa1ef82d5903a23e"
+url = "https://github.com/casey/just/releases/download/1.59.0/just-1.59.0-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/casey/just/releases/assets/642949555"
 
 [tools.just."platforms.windows-x64"]
-checksum = "sha256:759f16fb7aa17c5c8b9594b6d4a8c1a6630dfd042cf2b3ff84841454d3d188dc"
-url = "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/casey/just/releases/assets/500511374"
+checksum = "sha256:9c5463e2d0974e31bee71346aa5cbf19167de1585a4abc1bae7b3b04604ea9c0"
+url = "https://github.com/casey/just/releases/download/1.59.0/just-1.59.0-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/casey/just/releases/assets/643131303"

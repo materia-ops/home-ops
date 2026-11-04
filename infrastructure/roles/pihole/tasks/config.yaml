@@ -1,0 +1,30 @@
+---
+# The full config includes the password hash and TOTP secret: keep it out of logs.
+- name: Read current FTL config
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/config
+  register: _pihole_config
+  check_mode: false   # read-only probe
+  no_log: true
+
+- name: Apply FTL settings
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/config
+    method: PATCH
+    body_format: json
+    body: { config: "{{ pihole_ftl_config }}" }
+  when: (_live | combine(pihole_ftl_config, recursive=True)) != _live
+  vars:
+    _live: "{{ _pihole_config.json.config }}"
+  register: _pihole_config_set
+  changed_when: true
+
+# Some keys (dns.interface, dns.listeningMode) make FTL restart itself.
+- name: Wait for the FTL API after a settings change
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/info/version
+  register: _pihole_api
+  until: _pihole_api.status == 200
+  retries: 20
+  delay: 3
+  when: _pihole_config_set is changed

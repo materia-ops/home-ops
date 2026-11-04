@@ -10,7 +10,7 @@ machine:
     diskQuotaSupport: true
     rbac: true
   install:
-    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.2
+    image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.5
     wipe: false
     grubUseUKICmdline: true
   token: ref+op://kubernetes/talos/MACHINE_TOKEN
@@ -129,6 +129,15 @@ params:
 ---
 apiVersion: v1alpha1
 kind: EtcFileConfig
+name: nfs.conf
+mode: 0o644
+contents: |
+  [nfsrahead]
+  nfs4=16384
+  default=128
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
 name: nfsmount.conf
 mode: 0o644
 contents: |
@@ -167,7 +176,7 @@ config:
   maxParallelImagePulls: 3
   serializeImagePulls: false
 defaultRuntimeSeccompProfileEnabled: true
-image: ghcr.io/siderolabs/kubelet:v1.37.1
+image: ghcr.io/siderolabs/kubelet:v1.37.2
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig

@@ -62,15 +62,6 @@ spec:
             configBlock: |-
               pods verified
               fallthrough in-addr.arpa ip6.arpa
-          # autopath is INCOMPATIBLE with Cilium toFQDNs policies: it answers
-          # search-suffixed queries (name.<ns>.svc.cluster.local.) with the
-          # public record, so the DNS proxy keys the IP to a name no matchName
-          # matches and traffic is policy-dropped (took ARC down, 2026-07-18).
-          # Any pod selected by a toFQDNs policy MUST set dnsConfig ndots:1 so
-          # its external lookups bypass the search path — see the runner scale
-          # sets. Do not add a toFQDNs policy without that override.
-          - name: autopath
-            parameters: "@kubernetes"
           - name: forward
             parameters: . 192.168.10.2
           - name: cache

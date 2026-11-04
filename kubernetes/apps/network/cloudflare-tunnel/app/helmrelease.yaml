@@ -28,7 +28,7 @@ spec:
             nameOverride: "{{ .Release.Name }}"
             image:
               repository: mirror.gcr.io/cloudflare/cloudflared
-              tag: 2026.10.0@sha256:9b49eed8f62806d5d45ddf59ecefb5710429598ea6d3fcccd2af938f621b2b07
+              tag: 2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
             env:
               NO_AUTOUPDATE: true
               TUNNEL_METRICS: 0.0.0.0:8080

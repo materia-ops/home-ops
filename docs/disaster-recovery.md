@@ -21,9 +21,11 @@ Everything runs from a workstation checkout of this repo:
 
 - **Toolchain:** `mise trust && mise install` (talosctl, kubectl, helmfile, kustomize,
   minijinja, vals, gum, just — pinned in [`.mise/config.toml`](../.mise/config.toml)).
-- **Local secret files** (gitignored, wired up by mise): the repo-local `talosconfig`
-  (Talos API identity — needed to reach the nodes at all), the repo-local `kubeconfig`
-  (re-fetched automatically during bootstrap), and `.secrets.env` (environment loaded
+- **Talos API identity:** a `talosconfig`, needed to reach the nodes at all. It lives
+  only in 1Password (`talosconfig-matalos`, `kubernetes` vault) and is loaded
+  just-in-time into `TALOSCONFIG` (tmpfs/temp file) — mise deliberately does not set it.
+- **Local secret files** (gitignored, wired up by mise): the repo-local `kubeconfig`
+  (re-fetched automatically during bootstrap) and `.secrets.env` (environment loaded
   by mise).
 - **1Password:** an authenticated `op` session (or service account) that can read the
   `kubernetes` vault — `vals` resolves every `ref+op://` reference through it. The two

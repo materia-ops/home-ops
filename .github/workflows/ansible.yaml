@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tags:
-        description: "Ansible --tags (comma-sep: dnscrypt, observability). Blank = all."
+        description: "Ansible --tags (comma-sep: dnscrypt, network, observability, pihole). Blank = all."
         required: false
         type: string
       limit:
@@ -20,6 +20,7 @@ on:
   pull_request:
     branches: ["main"]
     paths:
+      - ".github/workflows/ansible.yaml"
       - "infrastructure/**"
       - "!infrastructure/**/*.md"
   push:
@@ -48,9 +49,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.15"
+          python-version: "3.14"
           cache: "pip"
           cache-dependency-path: infrastructure/requirements.txt
       - name: Install Requirements
@@ -62,7 +63,7 @@ jobs:
         run: ansible-playbook -i inventory/hosts.yaml playbook.yaml --syntax-check
 
   # Job 0: decide which play tags to run from the changed paths.
-  # Only roles/dnscrypt_proxy changed -> dnscrypt; only group_vars -> observability;
+  # Only roles/dnscrypt_proxy changed -> dnscrypt; roles/pihole -> pihole; only group_vars -> observability;
   # structural files (playbook/inventory/requirements/cfg) or a manual blank -> all.
   plan:
     name: Plan (decide tags)
@@ -109,6 +110,7 @@ jobs:
           fi
           SEL=""
           if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/dnscrypt_proxy/'; then SEL="${SEL:+$SEL,}dnscrypt"; fi
+          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/pihole/'; then SEL="${SEL:+$SEL,}pihole"; fi
           if printf '%s\n' "$FILES" | grep -qE '^infrastructure/inventory/group_vars/'; then SEL="${SEL:+$SEL,}observability"; fi
           echo "tags=$SEL" >> "$GITHUB_OUTPUT"
           echo "resolved tags='$SEL' (blank = all)"
@@ -127,9 +129,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.15" # Pin to stable 3.11
+          python-version: "3.14"
           cache: "pip" # Optional: caches pip dependencies
           cache-dependency-path: infrastructure/requirements.txt
       - name: Install Requirements
@@ -183,9 +185,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.15" # Pin to stable 3.11
+          python-version: "3.14"
           cache: "pip" # Optional: caches pip dependencies
           cache-dependency-path: infrastructure/requirements.txt
       - name: Install Requirements
