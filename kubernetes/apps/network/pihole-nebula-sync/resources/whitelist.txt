@@ -1,258 +1,202 @@
-# Pi-hole Whitelist
-# Combined from multiple sources with organized sections
-# Last updated: November 2026
+# Pi-hole allow list ("My Whitelist"): subscribed on pi-0, synced to pi-1.
+# Exact domains only. Regex allows live in pihole_domains in
+# infrastructure/inventory/host_vars/pi-0.yaml; the GoodnessJSON lists are
+# also subscribed, so don't repeat their entries here.
+# Sections and entries are alphabetical; comments say what breaks if blocked.
 
-# Exact domains only. Subscribed on pi-0 as the "My Whitelist" allow list
-# alongside the GoodnessJSON lists, so don't repeat their entries here:
-# https://github.com/GoodnessJSON/PiHole-Whitelist/tree/master/lists
-# Regex allows (Reddit, Twitter images, Unity, Westpac, WhatsApp) live in
-# pihole_domains in infrastructure/inventory/host_vars/pi-0.yaml.
-
-### From https://discourse.pi-hole.net/t/commonly-whitelisted-domains/212
-
-## Google (Maps, Youtube, etc)
-# YouTube App for iOS
-youtubei.googleapis.com
-oauthaccountmanager.googleapis.com
-# Google Keep Chrome App
-reminders-pa.googleapis.com
-firestore.googleapis.com
-# Google Fonts
-gstaticadssl.l.google.com
-# Gmail (iOS app)
-googleapis.l.google.com
-# Android TV
-redirector.gvt1.com
-# Push Notifications for Android Apps
-mtalk.google.com
-## End Google
-
-## Microsoft (Windows, Office, Skype, etc)
-# Microsoft Web Pages (Outlook, Office365, Live, Microsoft.com)
-# Windows 10 Update
-tlu.dl.delivery.mp.microsoft.com
-# Microsoft Edge Browser Update
-msedge.api.cdp.microsoft.com
-# Store App on Series X/S
-arc.msn.com
-# EA Play on Xbox
-activity.windows.com
-# Skype
-m.hotmail.com
-s1.symcb.com
-s2.symcb.com
-# Windows store / updates
-slscr.update.microsoft.com
-sls.update.microsoft.com
-# teams / office
-self.events.data.microsoft.com
-# teams on mobile
-mobile.pipe.aria.microsoft.com
-# Windows Insider
-insideruser.microsoft.com
-## End Microsoft
-
-## Spotify
-# Spotify TV API
-api-tv.spotify.com
-# Additional Spotify domains
-wl.spotify.com
-
-## Facebook / Meta
-upload.facebook.com
-b-graph.facebook.com
-connect.facebook.com
-api.facebook.com
-mqtt.c10r.facebook.com
-portal.fb.com
-star.c10r.facebook.com
-star-mini.c10r.facebook.com
-b-api.facebook.com
-fb.me
-bigzipfiles.facebook.com
-l.facebook.com
-www.facebook.com
-scontent-atl3-1.xx.fbcdn.net
-static.xx.fbcdn.net
-edge-chat.messenger.com
-video.xx.fbcdn.net
-scontent-mia3-1.xx.fbcdn.net
-web.facebook.com
-rupload.facebook.com
-l.messenger.com
-
-## Plex Domains
-# Plex services specific to this list
-tvthemes.plexapp.com.cdn.cloudflare.net
-www.plex.tv
-app.plex.tv
-# Plex app casting to Chromecast / Google TV
-config.claspws.tv
-## End plex
-
-## Sony Services
-api.erabu.sony.tv
-
-## Apple Services
-# Apple Music
+## Apple
+# App Store search-ads attribution; commonly allowed for App Store errors
+ca.iadsdk.apple.com
+# Apple Music and App Store catalogue and artwork
 itunes.apple.com
 s.mzstatic.com
-# iOS Weather app
-gsp-ssl.ls.apple.com
-gsp-ssl.ls-apple.com.akadns.net
-# iOS/Apple Captive Portal
+# Captive-portal checks (Wi-Fi sign-in detection)
 captive.apple.com
 gsp1.apple.com
 www.apple.com
 www.appleiphonecell.com
-# Apple iAd SDK
-ca.iadsdk.apple.com
+# Weather and Maps
+gsp-ssl.ls-apple.com.akadns.net
+gsp-ssl.ls.apple.com
 
-## E-commerce and Retail
-# The Iconic (Australian retailer)
-ablink.o.theiconic.com.au
-# G2A Gaming Marketplace
-www.g2a.com
-# eBay
-rover.ebay.com
-# Etsy
+## Banking
+# ThreatMetrix device check: banking app logins fail without it
+h-sdk.online-metrix.net
+
+## Browsers
+# Edge updates
+msedge.api.cdp.microsoft.com
+# Firefox web push notifications
+push.services.mozilla.com
+# Firefox Enhanced Tracking Protection list downloads
+tracking-protection.cdn.mozilla.net
+
+## Email and link redirects
+# Click-tracking redirects: links in these senders' emails break without them
 ablink.email.etsy.com
-
-## Australian Post Services
+ablink.o.theiconic.com.au
 click.collectandreturn.auspost.com.au
-
-## Communication Tools
-# Discord
 click.discord.com
-# Zoom
+click.redditmail.com
 click.zoom.us
-# Slack
-slackb.com
+mailchi.mp
+mandrillapp.com
+r20.rs6.net
+rover.ebay.com
+# Bitly short links
+j.mp
 
-## Content/Promotional Platforms
-gleam.io
+## Gaming
+# EA app library and downloads
+sdk.split.io
+# EA site and Origin cloud saves
+cloudsync-prod.s3.amazonaws.com
+ea.com
+# Epic Games Store purchases and launcher 2FA
+tracking.epicgames.com
+# PS5 Recently Played and trophies
+telemetry-console.api.playstation.com
 
-## Usenet Services
-www.usenetserver.com
-
-## Google Beacons (connectivity checks)
+## Google
+# Android push notifications (FCM)
+mtalk.google.com
+# Android TV and Play Store downloads
+redirector.gvt1.com
+# Chrome connectivity checks
 beacons.gcp.gvt2.com
 beacons.gvt2.com
 beacons2.gvt2.com
+# Gmail iOS app
+googleapis.l.google.com
+# Google Fonts (gstatic CNAME target)
+gstaticadssl.l.google.com
+# Google Keep and Firebase-backed apps
+firestore.googleapis.com
+reminders-pa.googleapis.com
+# YouTube iOS app and Google sign-in
+oauthaccountmanager.googleapis.com
+youtubei.googleapis.com
 
-## SnapChat
-cf-st.sc-cdn.net
-
-### From https://wally3k.github.io/
-
-## Link Shorteners (Openphish, Hostsfile.org)
-j.mp
-
-## EA / Origin Gaming
-ea.com
-# EA app library and downloads
-sdk.split.io
-
-## CDN and Cloud Services
-# Shopify CDN
-cdn.shopify.com
-s.shopify.com
-# Fastly CDN
-global.imgix.map.fastly.net
-
-### Additional domains from custom sources
-
-## News and Media Sites
-# Netflix
-netflix.com
-# Tech sites
-tomshardware.com
-serverfault.com
-www.howtogeek.com
-medium.com
-
-## Development and Tech
-# GitHub
-codeload.github.com
-# AWS
-aws.amazon.com
-# Supermicro
-www.supermicro.com
-supermicro.com
-
-## Browser Services
-# Bing
-a-0001.a-msedge.net
-# Live.com
-a-0010.a-msedge.net
-
-## Email Services
-# Patreon and other services using Mandrill
-mandrillapp.com
-# Mailchimp campaign links
-mailchi.mp
-# Constant Contact email links
-r20.rs6.net
-
-## Other Services
-# Honey browser extension
-joinhoney.com
-d.joinhoney.com
-s.joinhoney.com
-# Brandon Sanderson's website
-hb.wpmucdn.com
+## Home and network
+# Sony Bravia TV services
+api.erabu.sony.tv
 # UniFi Live Support chat widget (Ada)
 static.ada.support
 
-## Plex Podcast / iHeart Radio
+## Media
+# Plex casting to Chromecast / Google TV
+config.claspws.tv
+# Plex TV theme music
+tvthemes.plexapp.com.cdn.cloudflare.net
+# Plex web app and account
+app.plex.tv
+www.plex.tv
+# Podcast episode download redirects (Chartable)
 chtbl.com
+# Spotify apps and TV app
+api-tv.spotify.com
+wl.spotify.com
 
-## Epic Games Store
-# Required for purchases and two-factor authentication
-tracking.epicgames.com
-
-## Origin (Savegame-Sync)
-cloudsync-prod.s3.amazonaws.com
-
-## Mozilla Firefox
-# Tracking Protection lists
-tracking-protection.cdn.mozilla.net
-# Web push notifications
-push.services.mozilla.com
-
-## PlayStation 5
-# Recently Played Games and Trophies
-telemetry-console.api.playstation.com
-
-## Reddit
-styles.redditmedia.com
-www.redditstatic.com
-reddit.map.fastly.net
-www.redditmedia.com
+## Messaging and social
+# Facebook and Messenger: API, uploads, chat, link redirects
+api.facebook.com
+b-api.facebook.com
+b-graph.facebook.com
+bigzipfiles.facebook.com
+connect.facebook.com
+edge-chat.messenger.com
+fb.me
+l.facebook.com
+l.messenger.com
+mqtt.c10r.facebook.com
+portal.fb.com
+rupload.facebook.com
+star-mini.c10r.facebook.com
+star.c10r.facebook.com
+static.xx.fbcdn.net
+upload.facebook.com
+video.xx.fbcdn.net
+web.facebook.com
+www.facebook.com
+# Reddit styles, static assets and uploads
 reddit-uploaded-media.s3-accelerate.amazonaws.com
-# Links in Reddit emails
-click.redditmail.com
-
-## WhatsApp
-wa.me
-
-## Signal
-chat.signal.org
-storage.signal.org
-signal.org
-www.signal.org
-updates2.signal.org
+reddit.map.fastly.net
+styles.redditmedia.com
+www.redditmedia.com
+www.redditstatic.com
+# Signal messaging, storage, attachments and updates
 cdn.signal.org
-whispersystems-textsecure-attachments.s3-accelerate.amazonaws.com
-d83eunklitikj.cloudfront.net
+chat.signal.org
 contentproxy.signal.org
-
-## Twitter
-twitter.com
-upload.twitter.com
+d83eunklitikj.cloudfront.net
+signal.org
+storage.signal.org
+updates2.signal.org
+whispersystems-textsecure-attachments.s3-accelerate.amazonaws.com
+www.signal.org
+# Slack desktop shows connection warnings without it
+slackb.com
+# Snapchat media CDN
+cf-st.sc-cdn.net
+# Twitter / X site, API and uploads
 api.twitter.com
 mobile.twitter.com
+twitter.com
+upload.twitter.com
+# WhatsApp click-to-chat links
+wa.me
 
-## Banking Services
-# ThreatMetrix device check used by banking apps
-h-sdk.online-metrix.net
+## Microsoft
+# Bing and Outlook.com (CNAME targets)
+a-0001.a-msedge.net
+a-0010.a-msedge.net
+# Outlook / Hotmail mobile sync
+m.hotmail.com
+# Skype certificate checks
+s1.symcb.com
+s2.symcb.com
+# Teams and Office
+mobile.pipe.aria.microsoft.com
+self.events.data.microsoft.com
+# Windows Insider
+insideruser.microsoft.com
+# Windows Update and Microsoft Store downloads
+sls.update.microsoft.com
+slscr.update.microsoft.com
+tlu.dl.delivery.mp.microsoft.com
+# Xbox Store, EA Play on Xbox, Windows Spotlight
+activity.windows.com
+arc.msn.com
+
+## Shopping
+# G2A store (caught by fraud lists)
+www.g2a.com
+# Honey browser extension
+d.joinhoney.com
+joinhoney.com
+s.joinhoney.com
+# Shopify storefront assets
+cdn.shopify.com
+s.shopify.com
+
+## Websites and CDNs
+# AWS console and docs
+aws.amazon.com
+# GitHub archive and release downloads
+codeload.github.com
+# gleam.io giveaways
+gleam.io
+# imgix image CDN
+global.imgix.map.fastly.net
+# Supermicro site and BIOS / IPMI downloads
+supermicro.com
+www.supermicro.com
+# Tech sites caught by blocklists in the past
+medium.com
+serverfault.com
+tomshardware.com
+www.howtogeek.com
+# UsenetServer (caught by malware lists)
+www.usenetserver.com
+# WPMU DEV CDN (Brandon Sanderson's site)
+hb.wpmucdn.com
