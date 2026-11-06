@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/cilium.io/ciliumclusterwidenetworkpolicy_v2.json
+# The Pi-holes have no web password: their webserver.acl admits the node IPs (pod
+# egress is masqueraded to them), and this policy keeps every pod except the API
+# consumers off the web UI/API. DNS (53) is untouched. See docs/operations.md.
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: pihole-api
+# Two rules because one selector can't say "not (network AND a consumer)"; the
+# namespace label is set by Cilium, so a pod can't fake it.
+specs:
+  - description: Deny the Pi-hole web UI/API to pods outside network
+    endpointSelector:
+      matchExpressions:
+        - { key: io.kubernetes.pod.namespace, operator: NotIn, values: ["network"] }
+    enableDefaultDeny: &noDefaultDeny
+      egress: false
+      ingress: false
+    egressDeny: &piholeApi
+      - toCIDR:
+          - 192.168.1.2/32 # pi-0
+          - 192.168.20.2/32 # pi-1
+        toPorts:
+          - ports:
+              - port: "80"
+                protocol: TCP
+              - port: "443"
+                protocol: TCP
+  - description: Deny the Pi-hole web UI/API to network pods that don't consume it
+    endpointSelector:
+      matchLabels:
+        io.kubernetes.pod.namespace: network
+      matchExpressions:
+        - { key: app.kubernetes.io/instance, operator: NotIn, values: ["external-dns-pihole"] }
+        - { key: app.kubernetes.io/name, operator: NotIn, values: ["pihole-nebula-sync"] }
+        - { key: gateway.envoyproxy.io/owning-gateway-name, operator: NotIn, values: ["envoy-internal"] }
+    enableDefaultDeny: *noDefaultDeny
+    egressDeny: *piholeApi

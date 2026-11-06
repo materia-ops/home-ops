@@ -46,7 +46,7 @@ spec:
           for: 15m
           annotations:
             summary: >-
-              Security check {{ $labels.name }} is failing (SSO guard bypassed or an Authentik blueprint is in error)
+              Security check {{ $labels.name }} is failing (SSO guard bypassed, Pi-hole API reachable from a pod, or an Authentik blueprint is in error)
           labels:
             severity: critical
 

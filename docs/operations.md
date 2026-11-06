@@ -51,6 +51,15 @@ Defence in depth, roughly outermost-in:
   snapshots.
 - **DNS resilience** — two Pi-holes on separate Pis; Ansible rolls DNS changes
   one Pi at a time with a resolve check between hosts.
+- **Pi-hole API access** — the Pi-holes run without a web password, so access is
+  limited at two layers instead. FTL's `webserver.acl` (Ansible `pihole` role) serves
+  the web UI and API only to localhost and the three k8s node IPs, which pod egress is
+  masqueraded to. The `pihole-api` CiliumClusterwideNetworkPolicy then denies ports
+  80/443 to both Pis from every pod except `external-dns-pihole`, `pihole-nebula-sync`
+  and the `envoy-internal` proxies. People reach the UI only through
+  `pi-0`/`pi-1.materia.wtf`, behind Authentik. Host-network pods and node processes
+  are not covered by the Cilium layer. The Gatus `pihole-*-api-guard` checks alert if
+  an ordinary pod can connect.
 - **Node-level** — hardware watchdog (5 min) reboots a hung node; the descheduler
   rebalances after disruptions; scheduler topology-spread defaults keep replicas off a
   single node.
@@ -67,6 +76,13 @@ Defence in depth, roughly outermost-in:
   zero, clean the stale staging dirs from a node debug pod, restart kubelet.
 - **PVC capacity bump** → bump `KOPIUR_CAPACITY` in the app's `ks.yaml`; the mover cache is
   `Ephemeral` and sized separately, so there is no cache PVC to clean up.
+- **Need the Pi-hole API directly** (cluster down, or debugging from a workstation),
+  but `curl http://192.168.1.2/api/...` is refused → the ACL is working. Query it on
+  the Pi itself: `ssh pi-0.internal 'curl -s http://127.0.0.1/api/info/version'`.
+  Break-glass, opening the API to everyone: `sudo pihole-FTL --config webserver.acl ''`
+  on the Pi. FTL may restart, which is a few seconds without DNS on that Pi only.
+  Restore it afterwards by dispatching the **Configure Infrastructure** workflow with
+  `tags=pihole`, `check_only=false`.
 - **Renovate workflow red** (a Pushover page links the run) → read the failing step. `Run Renovate` red with an
   uncaught rejection at startup, or `Assert every repository finished` red with
   "wrote no log": the runner pin is broken — revert `RUNNER_VERSION` in

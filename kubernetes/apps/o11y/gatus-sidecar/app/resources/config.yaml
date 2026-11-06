@@ -140,6 +140,20 @@ endpoints:
       ignore-redirect: true
     conditions:
       - "[STATUS] == 302"
+  # The Pi-hole API has no password; the Cilium pihole-api policy must keep this
+  # pod (like every non-consumer) off it. A connect means the policy is gone.
+  - &pihole-api-guard
+    name: pihole-0-api-guard
+    group: security
+    url: tcp://192.168.1.2:80
+    interval: 5m
+    client:
+      timeout: 5s
+    conditions:
+      - "[CONNECTED] == false"
+  - <<: *pihole-api-guard
+    name: pihole-1-api-guard
+    url: tcp://192.168.20.2:80
   # A failed Authentik blueprint stays `error` and is never retried until its
   # file changes or Authentik restarts (games proxy sat broken 2026-08-31..10-15).
   - name: authentik-blueprints
