@@ -2,36 +2,34 @@
 # Exact domains only. Regex allows live in pihole_domains in
 # infrastructure/inventory/host_vars/pi-0.yaml; the GoodnessJSON lists are
 # also subscribed, so don't repeat their entries here.
-# Sections and entries are alphabetical; comments say what breaks if blocked.
+# Sections, groups and entries are alphabetical; comments say what each is for.
 
 ## Apple
-# App Store search-ads attribution; commonly allowed for App Store errors
-ca.iadsdk.apple.com
 # Apple Music and App Store catalogue and artwork
 itunes.apple.com
 s.mzstatic.com
+# Apple Search Ads attribution; queried constantly by the iPhones
+ca.iadsdk.apple.com
 # Captive-portal checks (Wi-Fi sign-in detection)
 captive.apple.com
-gsp1.apple.com
 www.apple.com
 www.appleiphonecell.com
-# Weather and Maps
+# Location services, Weather and Maps
 gsp-ssl.ls-apple.com.akadns.net
 gsp-ssl.ls.apple.com
-
-## Banking
-# ThreatMetrix device check: banking app logins fail without it
-h-sdk.online-metrix.net
+gsp1.apple.com
 
 ## Browsers
 # Edge updates
 msedge.api.cdp.microsoft.com
-# Firefox web push notifications
-push.services.mozilla.com
 # Firefox Enhanced Tracking Protection list downloads
 tracking-protection.cdn.mozilla.net
+# Firefox web push notifications and instant Send Tab
+push.services.mozilla.com
 
 ## Email and link redirects
+# Bitly short links
+j.mp
 # Click-tracking redirects: links in these senders' emails break without them
 ablink.email.etsy.com
 ablink.o.theiconic.com.au
@@ -43,19 +41,18 @@ mailchi.mp
 mandrillapp.com
 r20.rs6.net
 rover.ebay.com
-# Bitly short links
-j.mp
 
 ## Gaming
-# EA app library and downloads
+# EA app library and download buttons fail without these Split.io feature flags
 sdk.split.io
-# EA site and Origin cloud saves
-cloudsync-prod.s3.amazonaws.com
+# EA site
 ea.com
 # Epic Games Store purchases and launcher 2FA
 tracking.epicgames.com
-# PS5 Recently Played and trophies
+# PS5 telemetry; reported to break Recently Played and trophies when blocked
 telemetry-console.api.playstation.com
+# Twitch Drops watch-time progress
+spade.twitch.tv
 
 ## Google
 # Android push notifications (FCM)
@@ -68,8 +65,6 @@ beacons.gvt2.com
 beacons2.gvt2.com
 # Gmail iOS app
 googleapis.l.google.com
-# Google Fonts (gstatic CNAME target)
-gstaticadssl.l.google.com
 # Google Keep and Firebase-backed apps
 firestore.googleapis.com
 reminders-pa.googleapis.com
@@ -78,26 +73,25 @@ oauthaccountmanager.googleapis.com
 youtubei.googleapis.com
 
 ## Home and network
-# Sony Bravia TV services
+# Sony Bravia home-screen content and recommendations
 api.erabu.sony.tv
 # UniFi Live Support chat widget (Ada)
 static.ada.support
 
 ## Media
-# Plex casting to Chromecast / Google TV
+# Plex mobile app casting to Chromecast / Google TV
 config.claspws.tv
 # Plex TV theme music
 tvthemes.plexapp.com.cdn.cloudflare.net
 # Plex web app and account
 app.plex.tv
 www.plex.tv
-# Podcast episode download redirects (Chartable)
-chtbl.com
-# Spotify apps and TV app
+# Spotify TV app
 api-tv.spotify.com
-wl.spotify.com
 
 ## Messaging and social
+# Braze in-app message images, used by many apps
+appboy-images.com
 # Facebook and Messenger: API, uploads, chat, link redirects
 api.facebook.com
 b-api.facebook.com
@@ -134,8 +128,6 @@ storage.signal.org
 updates2.signal.org
 whispersystems-textsecure-attachments.s3-accelerate.amazonaws.com
 www.signal.org
-# Slack desktop shows connection warnings without it
-slackb.com
 # Snapchat media CDN
 cf-st.sc-cdn.net
 # Twitter / X site, API and uploads
@@ -147,34 +139,28 @@ upload.twitter.com
 wa.me
 
 ## Microsoft
-# Bing and Outlook.com (CNAME targets)
-a-0001.a-msedge.net
-a-0010.a-msedge.net
-# Outlook / Hotmail mobile sync
-m.hotmail.com
-# Skype certificate checks
-s1.symcb.com
-s2.symcb.com
-# Teams and Office
+# Office / Teams telemetry (Aria, 1DS); reported to break Teams sign-in when blocked
 mobile.pipe.aria.microsoft.com
 self.events.data.microsoft.com
-# Windows Insider
+# Outlook / Hotmail mobile sync
+m.hotmail.com
+# Symantec / DigiCert certificate revocation (CRL)
+s1.symcb.com
+s2.symcb.com
+# Windows activity history and cross-device sync
+activity.windows.com
+# Windows Insider builds
 insideruser.microsoft.com
+# Windows Spotlight lock-screen images and Start / Store suggestions
+arc.msn.com
 # Windows Update and Microsoft Store downloads
 sls.update.microsoft.com
 slscr.update.microsoft.com
 tlu.dl.delivery.mp.microsoft.com
-# Xbox Store, EA Play on Xbox, Windows Spotlight
-activity.windows.com
-arc.msn.com
 
 ## Shopping
 # G2A store (caught by fraud lists)
 www.g2a.com
-# Honey browser extension
-d.joinhoney.com
-joinhoney.com
-s.joinhoney.com
 # Shopify storefront assets
 cdn.shopify.com
 s.shopify.com
