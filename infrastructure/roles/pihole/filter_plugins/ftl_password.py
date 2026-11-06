@@ -41,15 +41,21 @@ def _balloon_sha256(password, salt):
     return buf[_S_COST - 1]
 
 
+def _b64(s):
+    return base64.b64decode(s + "=" * (-len(s) % 4), validate=True)
+
+
 def ftl_password_matches(password, phc):
     """True if password verifies against an FTL BALLOON-SHA256 PHC string."""
-    parts = str(phc).split("$")
-    if len(parts) != 6 or parts[1] != "BALLOON-SHA256":
+    # Never raise: an exception message could carry input into public CI logs.
+    try:
+        parts = str(phc).split("$")
+        if len(parts) != 6 or parts[1] != "BALLOON-SHA256":
+            return False
+        salt, want = _b64(parts[4]), _b64(parts[5])
+        return hmac.compare_digest(_balloon_sha256(str(password).encode(), salt), want)
+    except Exception:  # noqa: BLE001
         return False
-    salt = base64.b64decode(parts[4])
-    want = base64.b64decode(parts[5])
-    got = _balloon_sha256(str(password).encode(), salt)
-    return hmac.compare_digest(got, want)
 
 
 class FilterModule:
