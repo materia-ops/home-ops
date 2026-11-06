@@ -160,7 +160,15 @@
 
 # Ensure-present only: external-dns writes *.materia.wtf into the same arrays.
 - name: Hand-made local DNS records
-  when: (pihole_local_hosts + pihole_local_cnames) | length > 0
+  when: (_hosts_want + pihole_local_cnames) | length > 0
+  vars:
+    _hosts_want: "{{ pihole_local_hosts + (_node_records if pihole_node_records else []) }}"
+    _node_records: >-
+      {%- set out = [] -%}
+      {%- for name, ip in _pihole_k8s_nodes | dictsort -%}
+      {%- set _ = out.extend([ip ~ ' ' ~ name, ip ~ ' ' ~ name ~ '.' ~ pihole_ftl_config.dns.domain.name]) -%}
+      {%- endfor -%}
+      {{ out }}
   block:
     - name: Read current local DNS records
       ansible.builtin.uri:
@@ -173,7 +181,7 @@
         url: "http://127.0.0.1/api/config/dns/hosts/{{ item | urlencode | replace('/', '%2F') }}"
         method: PUT
         status_code: [200, 201]
-      loop: "{{ pihole_local_hosts }}"
+      loop: "{{ _hosts_want }}"
       when: item not in _pihole_dns.json.config.dns.hosts
       changed_when: true
 

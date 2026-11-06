@@ -53,8 +53,9 @@ Defence in depth, roughly outermost-in:
   one Pi at a time with a resolve check between hosts.
 - **Pi-hole API access** — the Pi-holes run without a web password, so access is
   limited at two layers instead. FTL's `webserver.acl` (Ansible `pihole` role) serves
-  the web UI and API only to localhost and the three k8s node IPs, which pod egress is
-  masqueraded to. The `pihole-api` CiliumClusterwideNetworkPolicy then denies ports
+  the web UI and API only to localhost and the k8s node IPs, which pod egress is
+  masqueraded to. The role reads those IPs from the Talos node files, the single
+  source for node IPs. The `pihole-api` CiliumClusterwideNetworkPolicy then denies ports
   80/443 to both Pis from every pod except `external-dns-pihole`, `pihole-nebula-sync`
   and the `envoy-internal` proxies. People reach the UI only through
   `pi-0`/`pi-1.materia.wtf`, behind Authentik. Host-network pods and node processes

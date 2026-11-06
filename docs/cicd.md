@@ -107,7 +107,7 @@ to `main` (and manual dispatch) the self-hosted runners (LAN access to the Pis) 
 three stages:
 
 1. **Plan** — derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
-   `roles/pihole/` → `pihole`, `inventory/group_vars/` → `observability`, structural
+   `roles/pihole/` or `talos/nodes/` → `pihole`, `inventory/group_vars/` → `observability`, structural
    files → everything).
 2. **Check** — `ansible-playbook --check --diff` against the live Pis.
 3. **Apply** — gated on Check; runs on push to `main` (or manual dispatch with
