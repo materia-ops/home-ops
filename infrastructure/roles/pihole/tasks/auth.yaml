@@ -20,6 +20,16 @@
     _pihole_app_pwhash: "{{ _pihole_op.results[1].stdout }}"
   no_log: true
 
+# A Pi without a main password accepts any app password, so check the pair here.
+- name: Require APP_PASSWORD to match APP_PWHASH
+  ansible.builtin.assert:
+    that: _pihole_app_password | ftl_password_matches(_pihole_app_pwhash)
+    fail_msg: >-
+      1Password {{ pihole_op_vault }}/{{ pihole_op_item }}: APP_PASSWORD doesn't verify
+      against APP_PWHASH. Regenerate both from one `pihole api auth/app` call.
+    quiet: true
+  run_once: true
+
 - name: Log in to the API
   ansible.builtin.include_tasks: login.yaml
 
