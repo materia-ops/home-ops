@@ -1,33 +1,12 @@
 # Pi-hole Whitelist
 # Combined from multiple sources with organized sections
-# Last updated: November 2025
+# Last updated: November 2026
 
-
-# See also https://github.com/GoodnessJSON/PiHole-Whitelist/tree/master/lists
-# https://raw.githubusercontent.com/GoodnessJSON/PiHole-Whitelist/refs/heads/master/lists/whitelist.txt
-# https://raw.githubusercontent.com/GoodnessJSON/PiHole-Whitelist/refs/heads/master/lists/optional-list.txt
-# https://raw.githubusercontent.com/GoodnessJSON/PiHole-Whitelist/refs/heads/master/lists/referral-sites.txt
-
-# Reddit regex patterns would need to be added via pihole command:
-# pihole --white-regex [a-z]\.thumbs\.redditmedia\.com
-# pihole --white-regex "(\.|^)redd\.it$"
-# pihole --white-regex "(\.|^)reddit\.com$"
-
-# WhatsApp regex patterns would need to be added via pihole command:
-# pihole --white-regex "^whatsapp-cdn-shv-[0-9]{2}-[a-z]{3}[0-9]\.fbcdn\.net$"
-# pihole --white-regex "^((www|(w[0-9]\.)?web|media((-[a-z]{3}|\.[a-z]{4})[0-9]{1,2}-[0-9](\.|-)(cdn|fna))?)\.)?whatsapp\.(com|net)$"
-
-# Twitter images regex would need to be added via pihole command:
-# pihole --white-regex "(\.|^)twimg\.com$"
-
-## Banking Services (Australian)
-# Banking regex patterns would need to be added via pihole command:
-# pihole --white-regex "(\.|^)banking\.westpac\.com\.au$"
-# pihole --white-regex "(\.|^)westpac\.com\.au$"
-# pihole --white-regex "(\.|^)westpac\.com$"
-
-# Unity regex patterns would need to be added via pihole command:
-# pihole --white-regex "(\.|^)unity3d\.com$"
+# Exact domains only. Subscribed on pi-0 as the "My Whitelist" allow list
+# alongside the GoodnessJSON lists, so don't repeat their entries here:
+# https://github.com/GoodnessJSON/PiHole-Whitelist/tree/master/lists
+# Regex allows (Reddit, Twitter images, Unity, Westpac) live in pihole_domains
+# in infrastructure/inventory/host_vars/pi-0.yaml.
 
 ### From https://discourse.pi-hole.net/t/commonly-whitelisted-domains/212
 
@@ -51,8 +30,6 @@ mtalk.google.com
 ## Microsoft (Windows, Office, Skype, etc)
 # Microsoft Web Pages (Outlook, Office365, Live, Microsoft.com)
 # Windows 10 Update
-sls.update.microsoft.com.akadns.net
-fe3.delivery.dsp.mp.microsoft.com.nsatc.net
 tlu.dl.delivery.mp.microsoft.com
 # Microsoft Edge Browser Update
 msedge.api.cdp.microsoft.com
@@ -61,15 +38,9 @@ arc.msn.com
 # EA Play on Xbox
 activity.windows.com
 # Skype
-apps.skype.com
 m.hotmail.com
 s1.symcb.com
 s2.symcb.com
-s3.symcb.com
-s4.symcb.com
-s5.symcb.com
-# Bing Maps Platform
-ecn.dev.virtualearth.net
 # Windows store / updates
 slscr.update.microsoft.com
 sls.update.microsoft.com
@@ -85,7 +56,6 @@ insideruser.microsoft.com
 # Spotify TV API
 api-tv.spotify.com
 # Additional Spotify domains
-weblb-wg.dual-gslb.spotify.com
 wl.spotify.com
 
 ## Facebook / Meta
@@ -106,8 +76,6 @@ scontent-atl3-1.xx.fbcdn.net
 static.xx.fbcdn.net
 edge-chat.messenger.com
 video.xx.fbcdn.net
-external-ort2-1.xx.fbcdn.net
-scontent-ort2-1.xx.fbcdn.net
 scontent-mia3-1.xx.fbcdn.net
 web.facebook.com
 rupload.facebook.com
@@ -116,18 +84,11 @@ l.messenger.com
 ## Plex Domains
 # Plex services specific to this list
 tvthemes.plexapp.com.cdn.cloudflare.net
-106c06cd218b007d-b1e8a1331f68446599e96a4b46a050f5.ams.plex.services
-metrics.plex.tv
 www.plex.tv
 app.plex.tv
+# Plex app casting to Chromecast / Google TV
+config.claspws.tv
 ## End plex
-
-## Unity3D Game Engine
-# NOTE: If using the unity3d.com regex, these specific entries can be removed
-cdp.cloud.unity3d.com
-perf-events.cloud.unity3d.com
-config.uca.cloud.unity3d.com
-collect.analytics.unity3d.com
 
 ## Sony Services
 api.erabu.sony.tv
@@ -156,8 +117,6 @@ www.g2a.com
 rover.ebay.com
 # Etsy
 ablink.email.etsy.com
-# Newegg
-www.anrdoezrs.net
 
 ## Australian Post Services
 click.collectandreturn.auspost.com.au
@@ -182,8 +141,6 @@ beacons.gvt2.com
 beacons2.gvt2.com
 
 ## SnapChat
-app-analytics.snapchat.com
-sc-analytics.appspot.com
 cf-st.sc-cdn.net
 
 ### From https://wally3k.github.io/
@@ -193,6 +150,8 @@ j.mp
 
 ## EA / Origin Gaming
 ea.com
+# EA app library and downloads
+sdk.split.io
 
 ## CDN and Cloud Services
 # Shopify CDN
@@ -200,15 +159,12 @@ cdn.shopify.com
 s.shopify.com
 # Fastly CDN
 global.imgix.map.fastly.net
-prod.imgur.map.fastlylb.net
 
 ### Additional domains from custom sources
 
 ## News and Media Sites
 # Netflix
 netflix.com
-# Gizmodo sites
-alluremedia.com.au
 # Tech sites
 tomshardware.com
 serverfault.com
@@ -230,14 +186,13 @@ a-0001.a-msedge.net
 # Live.com
 a-0010.a-msedge.net
 
-## Social Media Assets
-# Twitter/X images
-pbs.twimg.com
-# NOTE: If using the twimg.com regex, pbs.twimg.com can be removed
-
 ## Email Services
 # Patreon and other services using Mandrill
 mandrillapp.com
+# Mailchimp campaign links
+mailchi.mp
+# Constant Contact email links
+r20.rs6.net
 
 ## Other Services
 # Honey browser extension
@@ -246,8 +201,6 @@ d.joinhoney.com
 s.joinhoney.com
 # Brandon Sanderson's website
 hb.wpmucdn.com
-# Steam achievements
-vortex.data.microsoft.com
 # UniFi Live Support chat widget (Ada)
 static.ada.support
 
@@ -261,8 +214,11 @@ tracking.epicgames.com
 ## Origin (Savegame-Sync)
 cloudsync-prod.s3.amazonaws.com
 
-## Mozilla Firefox Tracking Protection
+## Mozilla Firefox
+# Tracking Protection lists
 tracking-protection.cdn.mozilla.net
+# Web push notifications
+push.services.mozilla.com
 
 ## PlayStation 5
 # Recently Played Games and Trophies
@@ -274,28 +230,22 @@ www.redditstatic.com
 reddit.map.fastly.net
 www.redditmedia.com
 reddit-uploaded-media.s3-accelerate.amazonaws.com
+# Links in Reddit emails
+click.redditmail.com
 
 ## WhatsApp
 wa.me
-www.wa.me
 
 ## Signal
-ud-chat.signal.org
 chat.signal.org
 storage.signal.org
 signal.org
 www.signal.org
 updates2.signal.org
-textsecure-service-whispersystems.org
-giphy-proxy-production.whispersystems.org
 cdn.signal.org
 whispersystems-textsecure-attachments.s3-accelerate.amazonaws.com
 d83eunklitikj.cloudfront.net
-souqcdn.com
-cms.souqcdn.com
-api.directory.signal.org
 contentproxy.signal.org
-turn1.whispersystems.org
 
 ## Twitter
 twitter.com
@@ -304,39 +254,5 @@ api.twitter.com
 mobile.twitter.com
 
 ## Banking Services
-# TSB Mobile
+# ThreatMetrix device check used by banking apps
 h-sdk.online-metrix.net
-check2.tsb.co.uk
-# Citizen's Bank
-p11.techlab-cdn.com
-# OLA Money
-logs.juspay.in
-
-# Westpac Banking (Australian)
-westpac.com.au
-www.westpac.com.au
-banking.westpac.com.au
-westpac.com
-banking.online.prod.mte.westpac.com.au
-
-## Restaurant Rewards Programs
-# Burger King
-appboy-images.com
-rest.iad-03.braze.com
-# Punchh (Farmer Boys, El Pollo Loco, Capriotti's, etc.)
-mobileandroidapi.punchh.com
-
-## Rumble
-# Video thumbnails and live streams
-# Needs wildcard whitelist for *.rmbl.ws
-
-## Regional Sites
-# Dutch - nu.nl videos
-cds.s5x3j6q5.hwcdn.net
-# Swedish - svtplay
-analytics.svt.se
-
-## Hulu
-# Required for streaming
-ads-a-darwin.hulustream.com
-ads-fa-darwin.hulustream.com
