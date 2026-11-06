@@ -23,9 +23,10 @@ pihole_ftl_config:
       - "true,192.168.1.0/24,192.168.1.1,internal"
       - "true,192.168.10.0/24,192.168.1.1,internal"
       - "true,192.168.20.0/24,192.168.1.1,internal"
+    # Local dnscrypt only (home NextDNS profile). Not the cluster VIP .10.2: it
+    # uses the kubernetes profile, and dnsmasq would send it most queries.
     upstreams:
       - "127.0.0.1#5053"
-      - "192.168.10.2#53"
   ntp:
     sync:
       server: au.pool.ntp.org
