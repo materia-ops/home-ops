@@ -248,6 +248,8 @@ s.joinhoney.com
 hb.wpmucdn.com
 # Steam achievements
 vortex.data.microsoft.com
+# UniFi Live Support chat widget (Ada)
+static.ada.support
 
 ## Plex Podcast / iHeart Radio
 chtbl.com

@@ -95,7 +95,6 @@ pihole_local_cnames:
 pihole_domains:
   - { type: allow, kind: exact, comment: 'Added from Query Log', domain: 'cdn.tailwindcss.com' }
   - { type: allow, kind: exact, comment: 'WotLK Project Reforged', domain: 'pub-0f05631d243e4046993fc02ca7be9542.r2.dev' }
-  - { type: allow, kind: exact, comment: 'UniFi support chat (Ada)', domain: 'static.ada.support' }
   - { type: allow, kind: regex, comment: 'Westpac', domain: '(\.|^)banking\.westpac\.com\.au$' }
   - { type: allow, kind: regex, comment: 'Reddit', domain: '(\.|^)redd\.it$' }
   - { type: allow, kind: regex, comment: 'Reddit', domain: '(\.|^)reddit\.com$' }
