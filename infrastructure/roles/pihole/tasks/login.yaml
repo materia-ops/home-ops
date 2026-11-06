@@ -1,0 +1,42 @@
+---
+# Sessions survive FTL restarts: close ours before opening another.
+- name: Close the previous API session
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/auth
+    method: DELETE
+    headers: "{{ _pihole_sid_header }}"
+    status_code: [204, 401, 404]
+  when: _pihole_sid_header | default({}) | length > 0
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  no_log: true
+
+- name: Open an API session
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/auth
+    method: POST
+    body_format: json
+    body: { password: "{{ _pihole_app_password }}" }
+  register: _pihole_auth
+  until: _pihole_auth.status != -1   # FTL restarting
+  retries: 10
+  delay: 3
+  failed_when: false
+  check_mode: false   # a session, not a change
+  no_log: true
+
+- name: Require the app password to be accepted
+  ansible.builtin.assert:
+    that: _pihole_auth.status == 200
+    fail_msg: >-
+      Pi-hole refused the app password (HTTP {{ _pihole_auth.status }}): the Pi's
+      webserver.api.app_pwhash doesn't match 1Password
+      {{ pihole_op_vault }}/{{ pihole_op_item }} APP_PASSWORD.
+    quiet: true
+
+- name: Keep the session ID
+  ansible.builtin.set_fact:
+    # sid is null until a main password is set
+    _pihole_sid_header: "{{ {'X-FTL-SID': _pihole_auth.json.session.sid} if _pihole_auth.json.session.sid else {} }}"
+  no_log: true

@@ -29,7 +29,7 @@ on:
     paths:
       - "infrastructure/**"
       - "!infrastructure/**/*.md"
-      - "talos/nodes/**" # node IPs feed the pihole role (ACL, node DNS records)
+      - "talos/nodes/**" # node IPs feed the pihole role
 
 permissions: {}
 

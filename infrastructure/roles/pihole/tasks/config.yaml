@@ -3,13 +3,22 @@
 - name: Read current FTL config
   ansible.builtin.uri:
     url: http://127.0.0.1/api/config
+    headers: "{{ _pihole_sid_header }}"
   register: _pihole_config
   check_mode: false   # read-only probe
   no_log: true
 
+- name: Read the FTL process ID
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/info/ftl
+    headers: "{{ _pihole_sid_header }}"
+  register: _pihole_ftl_before
+  check_mode: false
+
 - name: Apply FTL settings
   ansible.builtin.uri:
     url: http://127.0.0.1/api/config
+    headers: "{{ _pihole_sid_header }}"
     method: PATCH
     body_format: json
     body: { config: "{{ pihole_ftl_config }}" }
@@ -19,12 +28,32 @@
   register: _pihole_config_set
   changed_when: true
 
-# Some keys (dns.interface, dns.listeningMode) make FTL restart itself.
+# FTL restarts just after answering a restart-flagged PATCH: wait for a new PID or a 401.
+- name: Wait for FTL to restart after a settings change
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/info/ftl
+    headers: "{{ _pihole_sid_header }}"
+    status_code: [200, 401]
+  register: _pihole_ftl_after
+  until: >-
+    _pihole_ftl_after.status == 401 or
+    (_pihole_ftl_after.status == 200 and _pihole_ftl_after.json.ftl.pid != _pihole_ftl_before.json.ftl.pid)
+  retries: 5
+  delay: 3
+  failed_when: false
+  when: _pihole_config_set is changed
+
 - name: Wait for the FTL API after a settings change
   ansible.builtin.uri:
     url: http://127.0.0.1/api/info/version
+    headers: "{{ _pihole_sid_header }}"
+    status_code: [200, 401]
   register: _pihole_api
-  until: _pihole_api.status == 200
+  until: _pihole_api.status in [200, 401]
   retries: 20
   delay: 3
+  when: _pihole_config_set is changed
+
+- name: Log in again after a settings change
+  ansible.builtin.include_tasks: login.yaml
   when: _pihole_config_set is changed

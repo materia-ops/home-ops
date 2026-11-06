@@ -1,14 +1,11 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/cilium.io/ciliumclusterwidenetworkpolicy_v2.json
-# The Pi-holes have no web password: their webserver.acl admits the node IPs (pod
-# egress is masqueraded to them), and this policy keeps every pod except the API
-# consumers off the web UI/API. DNS (53) is untouched. See docs/operations.md.
+# Only the Pi-hole API consumers may reach the Pis' web UI/API (DNS untouched).
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: pihole-api
-# Two rules because one selector can't say "not (network AND a consumer)"; the
-# namespace label is set by Cilium, so a pod can't fake it.
+# Two rules: one selector can't say "not (network AND consumer)". Pods can't fake the namespace label.
 specs:
   - description: Deny the Pi-hole web UI/API to pods outside network
     endpointSelector:

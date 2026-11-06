@@ -1,0 +1,51 @@
+---
+# CI logs are public: no_log on anything holding the password, hash or a session ID.
+- name: Read the Pi-hole app password and hash from 1Password
+  ansible.builtin.command:
+    cmd: op read "op://{{ pihole_op_vault }}/{{ pihole_op_item }}/{{ item }}"
+  environment:
+    OP_SERVICE_ACCOUNT_TOKEN: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
+  loop: [APP_PASSWORD, APP_PWHASH]
+  delegate_to: localhost   # the controller holds the op CLI + service-account token
+  become: false
+  run_once: true
+  no_log: true
+  changed_when: false
+  check_mode: false
+  register: _pihole_op
+
+- name: Keep the app password and hash
+  ansible.builtin.set_fact:
+    _pihole_app_password: "{{ _pihole_op.results[0].stdout }}"
+    _pihole_app_pwhash: "{{ _pihole_op.results[1].stdout }}"
+  no_log: true
+
+- name: Log in to the API
+  ansible.builtin.include_tasks: login.yaml
+
+- name: Read the API auth settings
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/config/webserver/api
+    headers: "{{ _pihole_sid_header }}"
+  register: _pihole_api_cfg
+  check_mode: false
+  no_log: true
+
+# app_sudo lets app sessions write config. Setting either key logs every session out.
+- name: Set the app password hash and app_sudo
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/config
+    method: PATCH
+    headers: "{{ _pihole_sid_header }}"
+    body_format: json
+    body: { config: { webserver: { api: { app_pwhash: "{{ _pihole_app_pwhash }}", app_sudo: true } } } }
+  when: _api.app_pwhash != _pihole_app_pwhash or not _api.app_sudo
+  vars:
+    _api: "{{ _pihole_api_cfg.json.config.webserver.api }}"
+  register: _pihole_api_set
+  changed_when: true
+  no_log: true
+
+- name: Log in again after the auth settings changed
+  ansible.builtin.include_tasks: login.yaml
+  when: _pihole_api_set is changed

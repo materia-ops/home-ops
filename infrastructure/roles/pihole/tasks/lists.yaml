@@ -9,6 +9,7 @@
     - name: Read current adlists
       ansible.builtin.uri:
         url: http://127.0.0.1/api/lists
+        headers: "{{ _pihole_sid_header }}"
       register: _pihole_lists
       check_mode: false   # read-only probe
 
@@ -22,6 +23,7 @@
     - name: Add missing adlists
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/lists?type={{ item.type }}"
+        headers: "{{ _pihole_sid_header }}"
         method: POST
         body_format: json
         body: { address: "{{ item.address }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
@@ -35,6 +37,7 @@
     - name: Fix adlist comment or enabled drift
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/lists/{{ item.address | urlencode | replace('/', '%2F') }}?type={{ item.type }}"
+        headers: "{{ _pihole_sid_header }}"
         method: PUT
         body_format: json
         body: { comment: "{{ item.comment }}", groups: [0], enabled: true }
@@ -51,6 +54,7 @@
     - name: Remove adlists not in the inventory
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/lists/{{ item.value.address | urlencode | replace('/', '%2F') }}?type={{ item.value.type }}"
+        headers: "{{ _pihole_sid_header }}"
         method: DELETE
         status_code: [204]
       loop: "{{ _adlists_have | dict2items }}"
@@ -66,6 +70,7 @@
     - name: Rebuild gravity after adlist changes
       ansible.builtin.uri:
         url: http://127.0.0.1/api/action/gravity
+        headers: "{{ _pihole_sid_header }}"
         method: POST
         timeout: 900
       when: _adlists_changed | bool
@@ -73,20 +78,18 @@
 
     # nebula-sync copies the list set every 10 minutes but never runs gravity there.
     - name: Wait for nebula-sync to carry the adlists to the replica
-      ansible.builtin.uri:
-        url: http://127.0.0.1/api/lists
+      ansible.builtin.command:
+        argv: [pihole-FTL, sqlite3, /etc/pihole/gravity.db, "SELECT address FROM adlist;"]
       register: _replica_lists
-      until: (_replica_lists.json.lists | map(attribute='address') | sort) == (pihole_adlists | map(attribute='address') | sort)
+      until: (_replica_lists.stdout_lines | sort) == (pihole_adlists | map(attribute='address') | sort)
       retries: 40   # nebula-sync runs every 10 minutes
       delay: 30
+      changed_when: false
       delegate_to: "{{ pihole_replica }}"
       when: _adlists_changed | bool
 
     - name: Rebuild gravity on the replica
-      ansible.builtin.uri:
-        url: http://127.0.0.1/api/action/gravity
-        method: POST
-        timeout: 900
+      ansible.builtin.command: pihole -g
       delegate_to: "{{ pihole_replica }}"
       when: _adlists_changed | bool
       changed_when: true
@@ -94,6 +97,7 @@
     - name: Re-read adlists after gravity
       ansible.builtin.uri:
         url: http://127.0.0.1/api/lists
+        headers: "{{ _pihole_sid_header }}"
       register: _pihole_lists_after
       check_mode: false
 
@@ -111,6 +115,7 @@
     - name: Read current domain entries
       ansible.builtin.uri:
         url: http://127.0.0.1/api/domains
+        headers: "{{ _pihole_sid_header }}"
       register: _pihole_domains
       check_mode: false   # read-only probe
 
@@ -124,6 +129,7 @@
     - name: Add missing domain entries
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/domains/{{ item.type }}/{{ item.kind }}"
+        headers: "{{ _pihole_sid_header }}"
         method: POST
         body_format: json
         body: { domain: "{{ item.domain }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
@@ -136,6 +142,7 @@
     - name: Fix domain entry comment or enabled drift
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/domains/{{ item.type }}/{{ item.kind }}/{{ item.domain | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
         method: PUT
         body_format: json
         body: { type: "{{ item.type }}", kind: "{{ item.kind }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
@@ -151,6 +158,7 @@
     - name: Remove domain entries not in the inventory
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/domains/{{ item.value.type }}/{{ item.value.kind }}/{{ item.value.domain | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
         method: DELETE
         status_code: [204]
       loop: "{{ _domains_have | dict2items }}"
@@ -173,12 +181,14 @@
     - name: Read current local DNS records
       ansible.builtin.uri:
         url: http://127.0.0.1/api/config/dns
+        headers: "{{ _pihole_sid_header }}"
       register: _pihole_dns
       check_mode: false   # read-only probe
 
     - name: Add missing host records
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/config/dns/hosts/{{ item | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
         method: PUT
         status_code: [200, 201]
       loop: "{{ _hosts_want }}"
@@ -188,6 +198,7 @@
     - name: Add missing CNAME records
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/config/dns/cnameRecords/{{ item | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
         method: PUT
         status_code: [200, 201]
       loop: "{{ pihole_local_cnames }}"
