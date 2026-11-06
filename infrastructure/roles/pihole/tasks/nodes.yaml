@@ -1,0 +1,28 @@
+---
+# Controller-side reads of the repo checkout (schematic files have no node-ip header).
+- name: Find the Talos node files
+  ansible.builtin.find:
+    paths: "{{ pihole_talos_nodes_dir }}"
+    patterns: "*.yaml.j2"
+    contains: '^# talos:node-ip='
+    recurse: true
+  delegate_to: localhost
+  become: false
+  run_once: true
+  check_mode: false   # read-only; the ACL must render in --check too
+  register: _pihole_talos_files
+
+- name: Read k8s node IPs from the Talos node files
+  ansible.builtin.set_fact:
+    _pihole_k8s_nodes: "{{ _pihole_k8s_nodes | default({}) | combine({item | basename | regex_replace('\\.yaml\\.j2$', ''): _ip}) }}"
+  loop: "{{ _pihole_talos_files.files | map(attribute='path') | sort }}"
+  loop_control: { label: "{{ item | basename }}" }
+  vars:
+    _ip: "{{ lookup('file', item) | regex_search('^# talos:node-ip=(\\S+)$', '\\1', multiline=True) | first }}"
+
+# An empty list would make the ACL lock every cluster consumer out of the Pi.
+- name: Require at least one k8s node
+  ansible.builtin.assert:
+    that: (_pihole_k8s_nodes | default({})) | length > 0
+    fail_msg: "No '# talos:node-ip=' headers under {{ pihole_talos_nodes_dir }}"
+    quiet: true

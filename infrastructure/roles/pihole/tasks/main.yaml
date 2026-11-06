@@ -1,4 +1,7 @@
 ---
+- name: Kubernetes nodes
+  ansible.builtin.import_tasks: nodes.yaml
+
 - name: FTL settings
   ansible.builtin.import_tasks: config.yaml
 

@@ -41,11 +41,11 @@ spec:
     # Runner <-> job pods within the namespace.
     - toEndpoints:
         - {}
-    # talosctl image pull (image-pull.yaml) to the node apid endpoints.
-    - toCIDRSet:
-        - cidr: 192.168.20.10/32
-        - cidr: 192.168.20.11/32
-        - cidr: 192.168.20.12/32
+    # talosctl image pull (image-pull.yaml) to the node apid endpoints. Node
+    # entities follow the cluster's nodes, so no node IPs are listed here.
+    - toEntities:
+        - host
+        - remote-node
       toPorts:
         - ports:
             - port: "50000"

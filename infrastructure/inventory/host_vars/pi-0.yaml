@@ -55,18 +55,14 @@ pihole_adlists:
   - { type: allow, comment: "My Whitelist", address: "https://raw.githubusercontent.com/materia-ops/home-ops/refs/heads/main/kubernetes/apps/network/pihole-nebula-sync/resources/whitelist.txt" }
 
 # Hand-made local DNS (FTL dns.hosts / dns.cnameRecords). Ensured present only:
-# external-dns owns the *.materia.wtf entries in the same arrays.
+# external-dns owns the *.materia.wtf entries in the same arrays. The matalos-cN
+# records come from the Talos node files (pihole_node_records).
+pihole_node_records: true
 pihole_local_hosts:
   - '192.168.20.30 garage.internal'
   - '192.168.1.14 jumpbox'
   - '192.168.1.14 jumpbox.internal'
   - '192.168.1.41 kiterium.internal'
-  - '192.168.20.10 matalos-c1'
-  - '192.168.20.10 matalos-c1.internal'
-  - '192.168.20.11 matalos-c2'
-  - '192.168.20.11 matalos-c2.internal'
-  - '192.168.20.12 matalos-c3'
-  - '192.168.20.12 matalos-c3.internal'
   - '192.168.10.20 matalos.internal'
   - '192.168.10.20 matalos.materia.k8s'
   - '192.168.1.16 materitv'
