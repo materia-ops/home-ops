@@ -118,7 +118,7 @@ Cilium replaces kube-proxy and announces LoadBalancer VIPs from the
 
 | VIP | Service |
 | :--- | :--- |
-| `192.168.10.2` | dnscrypt-proxy (encrypted upstream for the Pi-holes) |
+| `192.168.10.2` | dnscrypt-proxy (cluster DNS upstream, NextDNS "kubernetes" profile) |
 | `192.168.10.5` | `envoy-internal` gateway |
 | `192.168.10.6` | `envoy-external` gateway |
 | `192.168.10.7` | `envoy-internal-tls` gateway (TLS passthrough) |
@@ -160,10 +160,12 @@ flowchart TD
   gateway, which admits only `media` routes, so the tunnel-only apps on
   `envoy-external` are not reachable from the WAN IP. Plex advertises
   `https://plex.materia.wtf:32400` to clients via plex.tv.
-- **Home DNS chain:** clients → Pi-hole (blocklists) → dnscrypt/NextDNS upstream
-  (security heuristics). The in-cluster dnscrypt-proxy at `.2` is the Pi-holes'
-  encrypted upstream. A GitHub-webhooks **Skip rule** in the Cloudflare WAF sits above
-  the "Block Non AU" geo-block so US-origin webhook deliveries reach the tunnel.
+- **Home DNS chain:** clients → Pi-hole (blocklists) → the Pi's own local
+  dnscrypt-proxy → the NextDNS home profile (threat intel, native trackers). The
+  in-cluster dnscrypt-proxy at `.2` serves only CoreDNS, via the separate
+  NextDNS "kubernetes" profile, and is not a Pi-hole upstream. A
+  GitHub-webhooks **Skip rule** in the Cloudflare WAF sits above the "Block
+  Non AU" geo-block so US-origin webhook deliveries reach the tunnel.
 
 ## Kubernetes platform
 
