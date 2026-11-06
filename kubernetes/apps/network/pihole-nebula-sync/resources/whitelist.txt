@@ -5,8 +5,8 @@
 # Exact domains only. Subscribed on pi-0 as the "My Whitelist" allow list
 # alongside the GoodnessJSON lists, so don't repeat their entries here:
 # https://github.com/GoodnessJSON/PiHole-Whitelist/tree/master/lists
-# Regex allows (Reddit, Twitter images, Unity, Westpac) live in pihole_domains
-# in infrastructure/inventory/host_vars/pi-0.yaml.
+# Regex allows (Reddit, Twitter images, Unity, Westpac, WhatsApp) live in
+# pihole_domains in infrastructure/inventory/host_vars/pi-0.yaml.
 
 ### From https://discourse.pi-hole.net/t/commonly-whitelisted-domains/212
 
