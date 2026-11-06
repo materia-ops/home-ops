@@ -1,0 +1,31 @@
+---
+# With no main password set, FTL answers sid: null and every call is open. Retries
+# ride out an FTL restart that starts just after a settings change was answered.
+- name: Open an API session
+  ansible.builtin.uri:
+    url: http://127.0.0.1/api/auth
+    method: POST
+    body_format: json
+    body: { password: "{{ _pihole_app_password }}" }
+  register: _pihole_auth
+  until: _pihole_auth.status != -1
+  retries: 10
+  delay: 3
+  failed_when: false
+  check_mode: false   # a session, not a change; later reads need it in --check too
+  no_log: true
+
+# Outside no_log so a rejected password says why (only the status is shown).
+- name: Require the app password to be accepted
+  ansible.builtin.assert:
+    that: _pihole_auth.status == 200
+    fail_msg: >-
+      Pi-hole refused the app password (HTTP {{ _pihole_auth.status }}): the Pi's
+      webserver.api.app_pwhash doesn't match 1Password
+      {{ pihole_op_vault }}/{{ pihole_op_item }} APP_PASSWORD.
+    quiet: true
+
+- name: Keep the session ID
+  ansible.builtin.set_fact:
+    _pihole_sid_header: "{{ {'X-FTL-SID': _pihole_auth.json.session.sid} if _pihole_auth.json.session.sid else {} }}"
+  no_log: true

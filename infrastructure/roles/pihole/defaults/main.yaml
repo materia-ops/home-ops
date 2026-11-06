@@ -42,6 +42,16 @@ pihole_ftl_config:
       - "X-XSS-Protection: 0"
       - "X-Content-Type-Options: nosniff"
       - "Referrer-Policy: strict-origin-when-cross-origin"
+    # Sliding; nebula-sync and this role log out, so long human sessions stay
+    # well under webserver.api.max_sessions (16).
+    session:
+      timeout: 43200
+
+# 1Password item in the vault shared by CI's service account and the cluster's
+# Connect token: APP_PASSWORD (the API app password both Pis share; the cluster's API
+# consumers read it too) and APP_PWHASH, enforced as webserver.api.app_pwhash.
+pihole_op_vault: pihole
+pihole_op_item: pihole
 
 # Set on the primary only (host_vars/pi-0.yaml); nebula-sync copies them to pi-1.
 # Empty = leave that part alone.
