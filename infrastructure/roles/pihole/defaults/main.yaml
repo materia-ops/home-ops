@@ -30,9 +30,9 @@ pihole_ftl_config:
     sync:
       server: au.pool.ntp.org
   webserver:
-    # Web UI + API (not DNS) only from localhost (this role) and the k8s nodes, which
-    # pod egress is masqueraded to; the Cilium pihole-api policy narrows pods further.
-    # Break-glass: docs/operations.md (Pi-hole API access).
+    # Web UI + API (not DNS) only from localhost (this role) and the k8s node IPs
+    # (pod egress is masqueraded to them; keep in step with the node list). Cilium's
+    # pihole-api policy narrows pods further. Break-glass: docs/operations.md.
     acl: "+127.0.0.1,+[::1],+192.168.20.10,+192.168.20.11,+192.168.20.12"
     headers:
       - "X-DNS-Prefetch-Control: off"

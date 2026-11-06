@@ -154,6 +154,12 @@ endpoints:
   - <<: *pihole-api-guard
     name: pihole-1-api-guard
     url: tcp://192.168.20.2:80
+  - <<: *pihole-api-guard
+    name: pihole-0-api-tls-guard
+    url: tcp://192.168.1.2:443
+  - <<: *pihole-api-guard
+    name: pihole-1-api-tls-guard
+    url: tcp://192.168.20.2:443
   # A failed Authentik blueprint stays `error` and is never retried until its
   # file changes or Authentik restarts (games proxy sat broken 2026-08-31..10-15).
   - name: authentik-blueprints

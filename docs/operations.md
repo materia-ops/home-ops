@@ -58,8 +58,8 @@ Defence in depth, roughly outermost-in:
   80/443 to both Pis from every pod except `external-dns-pihole`, `pihole-nebula-sync`
   and the `envoy-internal` proxies. People reach the UI only through
   `pi-0`/`pi-1.materia.wtf`, behind Authentik. Host-network pods and node processes
-  are not covered by the Cilium layer. The Gatus `pihole-*-api-guard` checks alert if
-  an ordinary pod can connect.
+  are not covered by the Cilium layer. The Gatus `pihole-*-api-*guard` checks (ports
+  80 and 443, run from `o11y`) alert if an ordinary pod can connect.
 - **Node-level** — hardware watchdog (5 min) reboots a hung node; the descheduler
   rebalances after disruptions; scheduler topology-spread defaults keep replicas off a
   single node.
