@@ -1,7 +1,5 @@
 ---
-# With no main password set, FTL answers sid: null and every call is open. Retries
-# ride out an FTL restart that starts just after a settings change was answered.
-# FTL can restore sessions across a restart: close ours before opening another.
+# Sessions survive FTL restarts: close ours before opening another.
 - name: Close the previous API session
   ansible.builtin.uri:
     url: http://127.0.0.1/api/auth
@@ -21,14 +19,13 @@
     body_format: json
     body: { password: "{{ _pihole_app_password }}" }
   register: _pihole_auth
-  until: _pihole_auth.status != -1
+  until: _pihole_auth.status != -1   # FTL restarting
   retries: 10
   delay: 3
   failed_when: false
-  check_mode: false   # a session, not a change; later reads need it in --check too
+  check_mode: false   # a session, not a change
   no_log: true
 
-# Outside no_log so a rejected password says why (only the status is shown).
 - name: Require the app password to be accepted
   ansible.builtin.assert:
     that: _pihole_auth.status == 200
@@ -40,5 +37,6 @@
 
 - name: Keep the session ID
   ansible.builtin.set_fact:
+    # sid is null until a main password is set
     _pihole_sid_header: "{{ {'X-FTL-SID': _pihole_auth.json.session.sid} if _pihole_auth.json.session.sid else {} }}"
   no_log: true

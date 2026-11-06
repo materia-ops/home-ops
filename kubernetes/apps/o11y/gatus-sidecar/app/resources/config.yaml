@@ -140,8 +140,7 @@ endpoints:
       ignore-redirect: true
     conditions:
       - "[STATUS] == 302"
-  # The Pi-hole API has no password; the Cilium pihole-api policy must keep this
-  # pod (like every non-consumer) off it. A connect means the policy is gone.
+  # A connect means the Cilium pihole-api policy no longer blocks ordinary pods.
   - &pihole-api-guard
     name: pihole-0-api-guard
     group: security

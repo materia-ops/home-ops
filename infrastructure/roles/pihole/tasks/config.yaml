@@ -28,9 +28,7 @@
   register: _pihole_config_set
   changed_when: true
 
-# Some keys (dns.interface, dns.listeningMode) make FTL restart itself, but only
-# after it has answered the PATCH. A new PID (or a 401: our session went with the
-# old process) means it restarted; ~15s with neither means no restart was due.
+# FTL restarts just after answering a restart-flagged PATCH: wait for a new PID or a 401.
 - name: Wait for FTL to restart after a settings change
   ansible.builtin.uri:
     url: http://127.0.0.1/api/info/ftl

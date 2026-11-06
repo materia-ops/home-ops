@@ -1,7 +1,5 @@
 ---
-# The app password (shared by both Pis, it skips TOTP) and its hash come from
-# 1Password. This repo is public and CI logs are public: no_log on every task
-# that holds either value or a session ID.
+# CI logs are public: no_log on anything holding the password, hash or a session ID.
 - name: Read the Pi-hole app password and hash from 1Password
   ansible.builtin.command:
     cmd: op read "op://{{ pihole_op_vault }}/{{ pihole_op_item }}/{{ item }}"
@@ -25,7 +23,6 @@
 - name: Log in to the API
   ansible.builtin.include_tasks: login.yaml
 
-# A session from a wrong password fails the login above, before anything changes.
 - name: Read the API auth settings
   ansible.builtin.uri:
     url: http://127.0.0.1/api/config/webserver/api
@@ -34,8 +31,7 @@
   check_mode: false
   no_log: true
 
-# app_sudo: app-password sessions (nebula-sync, external-dns, this role) write
-# config. Setting either key logs every session out, so log back in after.
+# app_sudo lets app sessions write config. Setting either key logs every session out.
 - name: Set the app password hash and app_sudo
   ansible.builtin.uri:
     url: http://127.0.0.1/api/config

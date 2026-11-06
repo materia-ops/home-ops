@@ -31,9 +31,7 @@ pihole_ftl_config:
     sync:
       server: au.pool.ntp.org
   webserver:
-    # Web UI + API (not DNS) only from localhost (this role) and the k8s nodes, which
-    # pod egress is masqueraded to; Cilium's pihole-api policy narrows pods further.
-    # Break-glass: docs/operations.md.
+    # Localhost + k8s node IPs (pod egress is masqueraded to them). Break-glass: docs/operations.md.
     acl: "{{ (['+127.0.0.1', '+[::1]'] + (_pihole_k8s_nodes.values() | sort | map('regex_replace', '^', '+') | list)) | join(',') }}"
     headers:
       - "X-DNS-Prefetch-Control: off"
@@ -42,14 +40,11 @@ pihole_ftl_config:
       - "X-XSS-Protection: 0"
       - "X-Content-Type-Options: nosniff"
       - "Referrer-Policy: strict-origin-when-cross-origin"
-    # Sliding; nebula-sync and this role log out, so long human sessions stay
-    # well under webserver.api.max_sessions (16).
+    # Sliding. Automation logs out, so 12h human sessions stay under max_sessions (16).
     session:
       timeout: 43200
 
-# 1Password item in the vault shared by CI's service account and the cluster's
-# Connect token: APP_PASSWORD (the API app password both Pis share; the cluster's API
-# consumers read it too) and APP_PWHASH, enforced as webserver.api.app_pwhash.
+# APP_PASSWORD + APP_PWHASH (both Pis share it); vault readable only by CI and the cluster.
 pihole_op_vault: pihole
 pihole_op_item: pihole
 
@@ -59,10 +54,9 @@ pihole_adlists: []        # {type, comment, address}; authoritative
 pihole_domains: []        # {type, kind, comment, domain}; authoritative
 pihole_local_hosts: []    # "ip name" entries ensured in dns.hosts
 pihole_local_cnames: []   # "alias,target" entries ensured in dns.cnameRecords
-pihole_node_records: false  # also ensure "<ip> <node>" + "<ip> <node>.<dns.domain>" per k8s node
+pihole_node_records: false  # also ensure "<ip> <node>[.<dns.domain>]" per k8s node
 
-# k8s node name -> IP comes from the Talos node files' `# talos:node-ip=` header
-# (talos/mod.just reads the same line), so node IPs are defined in one place.
+# Node IPs come only from the Talos node files' `# talos:node-ip=` header.
 pihole_talos_nodes_dir: "{{ playbook_dir }}/../talos/nodes"
 
 # Inventory host that mirrors the primary via nebula-sync; its gravity is rebuilt

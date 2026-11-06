@@ -77,7 +77,6 @@
       changed_when: true
 
     # nebula-sync copies the list set every 10 minutes but never runs gravity there.
-    # Local commands on the replica, so these need no API session of their own.
     - name: Wait for nebula-sync to carry the adlists to the replica
       ansible.builtin.command:
         argv: [pihole-FTL, sqlite3, /etc/pihole/gravity.db, "SELECT address FROM adlist;"]

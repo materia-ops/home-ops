@@ -55,7 +55,6 @@
 - name: Flush handlers so FTL regenerates the certificate before validation
   ansible.builtin.meta: flush_handlers
 
-# A domain change or handler restart may have dropped the session.
 - name: Log in again after an FTL restart
   ansible.builtin.include_tasks: login.yaml
   when: not ansible_check_mode
@@ -89,7 +88,6 @@
 - name: Adlists, domains and local DNS records
   ansible.builtin.import_tasks: lists.yaml
 
-# Sessions live 12h (webserver.session.timeout); don't leave ours open.
 - name: Close the API session
   ansible.builtin.uri:
     url: http://127.0.0.1/api/auth
