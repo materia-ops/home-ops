@@ -45,3 +45,20 @@ spec:
           kind: Backend
           name: pi-1
           port: 80
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/gateway.envoyproxy.io/backendtrafficpolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: external-pi-1
+  namespace: network
+spec:
+  mergeType: StrategicMerge
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: external-pi-1
+  # FTL stalls ~40ms (delayed ACK) on every reused keep-alive connection;
+  # a fresh connection per request avoids it.
+  circuitBreaker:
+    maxRequestsPerConnection: 1
