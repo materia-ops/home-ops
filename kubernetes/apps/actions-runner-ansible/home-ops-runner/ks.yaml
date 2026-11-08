@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: home-ops-runner
+spec:
+  dependsOn:
+    - name: actions-runner-controller
+      namespace: actions-runner-system
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  interval: 1h
+  path: ./kubernetes/apps/actions-runner-ansible/home-ops-runner/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: actions-runner-ansible
+  wait: false

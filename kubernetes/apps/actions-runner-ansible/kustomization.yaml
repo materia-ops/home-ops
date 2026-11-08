@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: actions-runner-ansible
+
+components:
+  - ../../components/namespace
+
+# Not the whole alerts component: its github-status half puts the github-bot
+# private key in a Secret, and the runner's service account can list Secrets.
+resources:
+  - ../../components/alerts/alertmanager
+  - ./home-ops-runner/ks.yaml

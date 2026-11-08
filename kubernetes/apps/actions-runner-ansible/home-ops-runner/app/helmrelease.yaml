@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &name home-ops-runner
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: gha-runner-scale-set
+  interval: 1h
+  values:
+    githubConfigUrl: https://github.com/materia-ops/home-ops
+    githubConfigSecret: home-ops-runner-secret
+    minRunners: 0
+    maxRunners: 3
+    containerMode:
+      type: kubernetes
+      kubernetesModeWorkVolumeClaim:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: openebs-hostpath
+        resources:
+          requests:
+            storage: 25Gi
+    controllerServiceAccount:
+      name: actions-runner-controller
+      namespace: actions-runner-system
+    template:
+      spec:
+        containers:
+          - name: runner
+            image: ghcr.io/home-operations/actions-runner:2.338.2@sha256:2dd7caa094a425c041539447cb0e6ae63cda10b5242773764683b695b8fa5613
+            command:
+              - /home/runner/run.sh
+            env:
+              # Workflow steps must run in a job pod (default SA, no RBAC), never in
+              # this pod, whose service account can list Secrets.
+              - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+                value: "true"
+        serviceAccountName: *name
