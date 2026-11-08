@@ -26,7 +26,13 @@ spec:
         containers:
           - name: runner
             image: ghcr.io/actions/actions-runner:2.338.2@sha256:759a1d94a15b05941aba5196974ff43fe15b4cbba29b694b35cbc32a1166b232
-            command: ["/home/runner/run.sh"]
+            # Don't take a job until buildkitd is listening, for up to 120s.
+            command:
+              [
+                "bash",
+                "-c",
+                "for _ in {1..120}; do (exec 3<>/dev/tcp/127.0.0.1/1234) 2>/dev/null && break; sleep 1; done; exec /home/runner/run.sh",
+              ]
             resources:
               requests:
                 cpu: 250m
