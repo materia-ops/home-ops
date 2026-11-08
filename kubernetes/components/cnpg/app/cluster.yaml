@@ -33,6 +33,7 @@ spec:
       shared_buffers: 256MB
       max_wal_size: 4GB
       checkpoint_timeout: 10min
+      wal_compression: lz4
       autovacuum_max_workers: "3"
       autovacuum_vacuum_cost_limit: "2000"
       log_min_duration_statement: "500"
@@ -52,6 +53,8 @@ spec:
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
+      # serverName defaults to the cluster name and is also the sync prefix in
+      # components/cnpg/b2-sync/helmrelease.yaml: change both together
       parameters:
         barmanObjectName: postgres-${APP}-backup
 

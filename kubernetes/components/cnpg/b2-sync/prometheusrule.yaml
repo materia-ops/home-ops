@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: postgres-${APP}-b2-sync
+spec:
+  groups:
+    - name: postgres-${APP}-b2-sync.rules
+      rules:
+        # KubeJobFailed covers failed runs; this covers no success at all.
+        # A new CronJob gets 6h for its first seed before alerting.
+        - alert: CNPGB2SyncStale
+          expr: |-
+            time() - kube_cronjob_status_last_successful_time{cronjob="postgres-${APP}-b2-sync"} > 21600
+              or (time() - kube_cronjob_created{cronjob="postgres-${APP}-b2-sync"} > 21600
+                unless on(namespace, cronjob) kube_cronjob_status_last_successful_time{cronjob="postgres-${APP}-b2-sync"})
+              or absent(kube_cronjob_created{cronjob="postgres-${APP}-b2-sync"})
+              or kube_cronjob_spec_suspend{cronjob="postgres-${APP}-b2-sync"} == 1
+          annotations:
+            summary: >-
+              No successful Garage → B2 sync for postgres-${APP} in 6h
+          for: 1h
+          labels:
+            depends_on: internet
+            severity: warning
