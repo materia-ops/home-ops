@@ -18,9 +18,7 @@
   // The org ruleset does not require up-to-date branches, and `auto` would
   // still rebase every automerge PR each time main moves
   rebaseWhen: "conflicted",
-  // infrastructure/requirements.txt is a uv hash lock of requirements.in;
-  // this manager bumps the .in pin and regenerates the lock. Monthly refresh
-  // picks up transitive fixes (each image change runs a full Apply).
+  // Monthly: each image change runs a full Apply.
   "pip-compile": {
     managerFilePatterns: ["/^infrastructure/requirements\\.txt$/"],
     lockFileMaintenance: {
@@ -188,9 +186,6 @@
       allowedVersions: "/^18\\./",
       automerge: false,
     },
-    // The next two holds are coupled: both lift in ONE PR, once a
-    // prometheus.prometheus release's meta/runtime.yml requires_ansible
-    // admits 2.22 (the note below flags every prometheus.prometheus bump).
     {
       description: "Hold the ansible job image's Python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed). Coupled hold: lifts together with the ansible-core hold, when a prometheus.prometheus release's meta/runtime.yml requires_ansible admits 2.22 (then also bump --python-version in the requirements.txt uv header)",
       matchManagers: ["dockerfile"],
@@ -326,9 +321,9 @@
       separateMinorPatch: true,
       // Clear the mise rule's 3-day age for the mise member: with it, the
       // tuppr pin is held alone below minimumGroupSize until the mise pin
-      // ages in (#1761 stranded it the other way round). An age gate on the
-      // whole group is not an option — custom.talos-factory has no release
-      // timestamps, so it would hold the tuppr pin forever.
+      // ages in. An age gate on the whole group is not an option —
+      // custom.talos-factory has no release timestamps, so it would hold the
+      // tuppr pin forever.
       minimumReleaseAge: null,
     },
     // Labeling rules
@@ -349,9 +344,6 @@
       addLabels: ["type/digest"],
     },
   ],
-  // Track the CI version pins that no standard manager covers: flate in
-  // image-pull.yaml (pinned to .mise/config.toml) and the renovate runner's
-  // own version.
   customManagers: [
     {
       customType: "regex",
@@ -364,7 +356,6 @@
     {
       customType: "regex",
       managerFilePatterns: [".github/workflows/renovate.yaml"],
-      // Either quote style: oxfmt (#2420) rewrote the pin to double quotes.
       matchStrings: ["RUNNER_VERSION: [\"'](?<currentValue>[0-9.]+)[\"']"],
       // github-releases, not docker: ghcr.io returns no release timestamps, so
       // minimumReleaseAge on the docker datasource would hold the pin forever.

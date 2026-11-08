@@ -13,9 +13,7 @@ on:
   # full dry run through the same assertion (lookup mode sets no per-repo
   # result); the pin's automerge waits on it (platformAutomerge: false, so
   # Renovate itself checks the result instead of GitHub auto-merge).
-  # pull_request_target: main's copy of this file runs, so a branch never
-  # holds the github-bot key; the PR contributes only the candidate
-  # RUNNER_VERSION, read as data (see "Resolve the runner version").
+  # main's copy of this file runs, so a branch never holds the github-bot key.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     branches:
       - main
@@ -59,10 +57,7 @@ jobs:
   main:
     name: Renovate
     runs-on: ubuntu-latest
-    # The 1Password token lives only in this Environment, which admits main;
-    # canary runs qualify because pull_request_target runs on the base ref.
     environment: ci-main
-    # Same-repo canaries only.
     if: >-
       ${{
         github.event_name != 'pull_request_target' ||
@@ -71,7 +66,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-      statuses: write # canary verdict on the PR head (see "Report the canary")
+      statuses: write
     env:
       # Job-level so the assertion step can read them. The filter is a
       # literal list: the assertion walks it, so a glob here breaks the gate.
@@ -83,8 +78,7 @@ jobs:
       RUNNER_VERSION: "44.221.6"
     steps:
       # A pull_request_target run's own check lands on main's commit, which
-      # Renovate's merge gate never reads; the verdict goes on the PR head as
-      # a commit status instead, pending from the first step.
+      # Renovate's merge gate never reads, so the verdict is a PR-head status.
       - name: Mark the canary pending
         if: github.event_name == 'pull_request_target'
         env:
@@ -112,9 +106,8 @@ jobs:
         with:
           client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
           private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
-          # A canary (pull_request_target) is a dry run: read-only scopes, and no
-          # workflows permission (write-only; an empty input is skipped), so a
-          # PR that edits this file cannot spend a write token before review.
+          # A canary is a dry run: read-only scopes, and no workflows permission
+          # (write-only; an empty input is skipped).
           permission-checks: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
           permission-contents: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
           permission-issues: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}

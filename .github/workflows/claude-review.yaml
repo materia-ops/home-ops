@@ -3,11 +3,8 @@
 name: Claude Review
 
 on:
-  # pull_request_target runs main's copy of this file, so a branch cannot edit
-  # the steps that hold the 1Password token (it lives only in the main-only
-  # ci-main Environment). The PR's code is checked out into _pr/ as data for
-  # Claude to read; nothing from it is executed, and the workspace root
-  # (CLAUDE.md, .claude/) stays main's.
+  # Runs main's copy of this file, so a branch cannot edit the steps holding the
+  # token. PR code is only checked out into _pr/ as data; the root stays main's.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     branches:
       - main
@@ -33,7 +30,7 @@ jobs:
     environment: ci-main
     permissions:
       contents: read
-      pull-requests: write # the review comment and inline comments
+      pull-requests: write
     # Same-repo, non-draft PRs only: forks never see the 1Password token.
     if: >-
       ${{
@@ -41,8 +38,7 @@ jobs:
         !github.event.pull_request.draft
       }}
     steps:
-      # Only the Claude token: the github-bot key never enters a job that
-      # handles PR content.
+      # The github-bot key must never enter a job that handles PR content.
       - name: Load Secrets
         id: load-secrets
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
@@ -52,8 +48,6 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_CI_SERVICE_ACCOUNT_TOKEN }}
           CLAUDE_CODE_OAUTH_TOKEN: op://ci/claude/CLAUDE_CODE_OAUTH_TOKEN
 
-      # main's tree at the root: CLAUDE.md, .claude/ settings and the evidence
-      # script all come from the base branch, never from the PR.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
