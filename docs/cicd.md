@@ -223,16 +223,18 @@ Environments:
 
 - **`infrastructure`** — deployment branches: `main` only, no reviewers. Push-to-main
   Check + Apply runs unattended.
-- **`infrastructure-preview`** — any branch, required reviewer. A `check_only` dispatch
-  from a branch (to dry-run a workflow or role change against the live hosts before
-  merge) waits for approval. Read the branch diff before approving: the branch's own
-  workflow file runs with the token, so the approval is the control, not the
-  `ref == main` guard on Apply. A run left waiting still sits in the `ansible-hosts`
-  concurrency group, so main's Check + Apply queues behind it: approve it, or reject or
-  cancel it, rather than leaving it pending.
+- **`infrastructure-preview`** — **locked: no branch is admitted**, and it has a
+  required reviewer. A `check_only` dispatch from a branch is refused at this gate, so
+  there are no live dry runs of unmerged changes. Dispatch from `main` for a live
+  `check_only`; PRs get the credential-free syntax check.
+
+The lock is deliberate. A branch's own workflow file runs with the token, so it could
+drop or rewrite any guard, and a single approval that looks like a routine preview
+would hand over the token. Reopening branch previews safely means dispatching from
+`main` with a pinned commit SHA, so `main`'s workflow file holds the gate.
 
 The job picks the Environment from `github.ref`. A workflow on any other branch or PR
-that names the secret gets nothing without passing one of these gates.
+that names the secret gets nothing, because no gate admits it.
 
 Host keys are pinned in [`infrastructure/known_hosts`](../infrastructure/known_hosts)
 with `StrictHostKeyChecking=yes`, keyed by inventory name through `HostKeyAlias`, so a

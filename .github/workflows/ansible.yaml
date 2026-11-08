@@ -235,7 +235,8 @@ jobs:
       group: ansible-hosts
       cancel-in-progress: false
     # The token lives only in these Environments: `infrastructure` admits main
-    # alone, `infrastructure-preview` (any branch) waits for a reviewer.
+    # alone, `infrastructure-preview` is locked (admits no branch), so a
+    # dispatch from a branch is refused here.
     environment: ${{ github.ref == 'refs/heads/main' && 'infrastructure' || 'infrastructure-preview' }}
     permissions:
       actions: read

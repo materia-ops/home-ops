@@ -120,7 +120,8 @@ Some machine-config changes only take effect with an upgrade, not just an apply.
 Edit under `infrastructure/`, open a PR — CI syntax-checks the playbook (PRs never
 reach the self-hosted runners); on merge, check mode runs against the live Pis and
 then the apply, one Pi at a time. For an ad-hoc scoped run use the workflow's manual
-dispatch (`tags`, `limit`, `check_only`).
+dispatch from `main` (`tags`, `limit`, `check_only`); a dispatch from any other branch is
+refused.
 
 ### Companion-repo changes (azerothcore-image, wow-panel, raidscope)
 
