@@ -1,7 +1,5 @@
 ---
-# Default-deny egress for the ARC controller and listeners: the apiserver,
-# DNS and public 443 to GitHub. No runners live here; each scale set has its
-# own namespace and policy.
+# No runners live here; each scale set has its own namespace and policy.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
