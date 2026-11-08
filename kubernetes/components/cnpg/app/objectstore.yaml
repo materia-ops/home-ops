@@ -2,8 +2,8 @@
 # yaml-language-server: $schema=https://schemas.materia.wtf/barmancloud.cnpg.io/objectstore_v1.json
 # Before first deploy, create the Garage bucket:
 #   garage bucket create postgres-${APP}-backup
-#   garage bucket allow --read --write --owner postgres-${APP}-backup --key <cnpg-key-name>
-#   garage bucket allow --read postgres-${APP}-backup --key cnpg-b2-ro
+#   garage bucket allow --read --write --owner postgres-${APP}-backup --key matalos-cnpg-rw
+#   garage bucket allow --read postgres-${APP}-backup --key matalos-cnpg-ro
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:

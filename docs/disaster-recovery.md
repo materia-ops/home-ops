@@ -153,7 +153,7 @@ archive back on the LAN first:
    `kubectl patch cronjob postgres-<app>-offsite -n <ns> -p '{"spec":{"suspend":true}}'`.
 2. Rebuild Garage, create `postgres-<app>-backup` with an owner key for barman (update the
    `cnpg` 1Password item's `s3-key-id` / `s3-secret-key` if it is a new key) and the
-   read-only `cnpg-b2-ro` grant (see the comment in
+   read-only `matalos-cnpg-ro` grant (see the comment in
    [`components/cnpg/app/objectstore.yaml`](../kubernetes/components/cnpg/app/objectstore.yaml)).
 3. Copy the archive back with rclone. The remotes are defined by environment variables, the
    same ones the CronJob uses, with keys resolved just-in-time by `op run` from an env file:
