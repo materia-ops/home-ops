@@ -116,11 +116,26 @@ PRs run a credential-less **Validate** on a GitHub-hosted runner: build the imag
 2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
    `roles/pihole/` or `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
    `inventory/group_vars/` → `observability`, structural
-   files → everything).
+   files → everything). On push, the diff runs from the commit of the **last successful
+   push run on `main`**, not from the push's own `before`, so a cancelled or failed run's
+   changes fold into the next one; with no usable diff (no earlier success, an
+   unexpected compare result, the 300-file API cap, an API error) it runs everything.
+   A dispatch takes its `tags` input verbatim.
 3. **Check + Apply** — one job on the self-hosted runner (LAN access to the Pis),
    running in the job image, so a run pays for one runner cold start and no installs:
    `ansible-playbook --check --diff` against the live Pis, then Apply if Check passed,
    on push to `main` (or manual dispatch with `check_only=false`).
+
+Only one run touches the hosts at a time: the Check + Apply job sits in a single
+`ansible-hosts` concurrency group shared by every event and branch, check-only
+dispatches included. GitHub keeps one running and one pending job per group, and a
+third arrival cancels the pending one. That cancellation loses nothing, because the
+next push run diffs from the last successful Apply; to apply a cancelled push sooner,
+**Re-run all jobs** on it. Before Check, an Apply-capable run (push, or a `main`
+dispatch with `check_only=false`) fails if its commit is behind the last successful
+push run, so rerunning an old run, or a run that reached the group after a newer one,
+cannot roll the hosts back. [`.github/scripts/ansible_last_applied.py`](../.github/scripts/ansible_last_applied.py)
+does that lookup for both Plan and this guard.
 
 The dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a verification
 between hosts (a DNS resolve; the web UI answering on its ingress hostname), so a bad

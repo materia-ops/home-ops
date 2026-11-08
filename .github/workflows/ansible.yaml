@@ -163,23 +163,30 @@ jobs:
   # Only roles/dnscrypt_proxy changed -> dnscrypt; roles/pihole or talos/nodes -> pihole;
   # roles/unattended_upgrades -> unattended_upgrades; only group_vars -> observability;
   # structural files (playbook/inventory/requirements/cfg/Dockerfile) or a manual blank -> all.
+  # The diff runs from the last successful push run on main, not event.before,
+  # so changes from cancelled or failed runs since then are applied here.
   plan:
     name: Plan (decide tags)
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
     outputs:
       tags: ${{ steps.decide.outputs.tags }}
     steps:
+      - name: Checkout
+        if: github.event_name == 'push'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
       - name: Decide ansible --tags from changed paths
         id: decide
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
           DISPATCH_TAGS: ${{ inputs.tags }}
-          REPO: ${{ github.repository }}
-          BEFORE: ${{ github.event.before }}
           SHA: ${{ github.sha }}
         run: |
           set -uo pipefail
@@ -188,12 +195,18 @@ jobs:
             echo "dispatch -> tags='${DISPATCH_TAGS}' (blank = all)"
             exit 0
           fi
-          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            echo "tags=" >> "$GITHUB_OUTPUT"; echo "no before sha -> all"; exit 0
+          LIST="$RUNNER_TEMP/changed-files"
+          if ! INFO="$(python3 .github/scripts/ansible_last_applied.py --files "$LIST")"; then
+            echo "tags=" >> "$GITHUB_OUTPUT"; echo "::warning::last applied commit unknown -> all"; exit 0
           fi
-          FILES="$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$REPO/compare/$BEFORE...$SHA" \
-            | python3 -c 'import sys,json; d=json.load(sys.stdin); print("\n".join(f["filename"] for f in d.get("files",[])))')"
+          BASE="$(sed -n 's/^base=//p' <<<"$INFO")"
+          STATUS="$(sed -n 's/^status=//p' <<<"$INFO")"
+          COMPLETE="$(sed -n 's/^complete=//p' <<<"$INFO")"
+          echo "last applied: ${BASE:-none} (this commit is $STATUS of it)"
+          if [ "$STATUS" != "ahead" ] || [ "$COMPLETE" != "true" ]; then
+            echo "tags=" >> "$GITHUB_OUTPUT"; echo "no usable diff from the last applied commit -> all"; exit 0
+          fi
+          FILES="$(cat "$LIST")"
           echo "Changed files:"; printf '%s\n' "$FILES"
           if printf '%s\n' "$FILES" | grep -qE '^infrastructure/(playbook\.yaml|requirements\.(in|txt|ya?ml)|ansible\.cfg|Dockerfile|inventory/hosts\.yaml)$'; then
             echo "tags=" >> "$GITHUB_OUTPUT"; echo "structural change -> all"; exit 0
@@ -216,7 +229,13 @@ jobs:
     needs: [image, plan]
     if: github.event_name != 'pull_request'
     runs-on: home-ops-runner
+    # One run on the hosts at a time, whatever its event or ref. A third
+    # arrival cancels the pending one; plan's diff base makes that lossless.
+    concurrency:
+      group: ansible-hosts
+      cancel-in-progress: false
     permissions:
+      actions: read
       contents: read
       packages: read
     container:
@@ -239,6 +258,21 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # Same condition as Apply. A rerun of an old run, or one that reached the
+      # group after a newer run, would otherwise roll the hosts back.
+      - name: Refuse to apply a commit older than the last Apply
+        if: (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.check_only)) && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          INFO="$(python3 ../.github/scripts/ansible_last_applied.py)"
+          BASE="$(sed -n 's/^base=//p' <<<"$INFO")"
+          if [ "$(sed -n 's/^status=//p' <<<"$INFO")" = "behind" ]; then
+            echo "::error::$SHA is behind $BASE, which a push run already applied; refusing to roll the hosts back"
+            exit 1
+          fi
+          echo "last applied: ${BASE:-none}; $SHA is not behind it"
       - name: Setup SSH Key
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
