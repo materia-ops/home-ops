@@ -205,6 +205,12 @@
       matchDepNames: [ "aqua:kubernetes-sigs/kustomize" ],
       extractVersion: "^kustomize/v(?<version>\\d+\\.\\d+\\.\\d+)$",
     },
+    {
+      description: "oxfmt tags are oxfmt_vX.Y.Z (the oxc monorepo tags each tool)",
+      matchManagers: [ "mise" ],
+      matchDepNames: [ "aqua:oxc-project/oxc/oxfmt" ],
+      extractVersion: "^oxfmt_v(?<version>\\d+\\.\\d+\\.\\d+)$",
+    },
     // Grouping rules
     {
       description: "Actions Runner Controller Group",

@@ -5,6 +5,9 @@ KUBECONFIG = "{{config_root}}/kubeconfig"
 MINIJINJA_CONFIG_FILE = "{{config_root}}/.minijinja.toml"
 JUST_UNSTABLE = "1"
 
+[hooks]
+postinstall = "lefthook install"
+
 [tools]
 "aqua:cilium/cilium-cli" = "0.20.2"
 "aqua:cli/cli" = "2.103.3"
@@ -13,9 +16,11 @@ JUST_UNSTABLE = "1"
 "aqua:helm/helm" = "4.3.1"
 "aqua:helmfile/helmfile" = "1.8.2"
 "aqua:jqlang/jq" = "1.8.2"
+"aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:kubernetes-sigs/kustomize" = "5.8.3"
 "aqua:kubernetes/kubectl" = "1.37.2"
 "aqua:mikefarah/yq" = "4.54.1"
+"aqua:oxc-project/oxc/oxfmt" = "0.77.0"
 "aqua:siderolabs/talos" = "1.14.5"
 "aqua:helmfile/vals" = "0.50.0"
 "aqua:mitsuhiko/minijinja" = "3.0.5"
