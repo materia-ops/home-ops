@@ -31,6 +31,10 @@ specs:
       matchExpressions:
         - { key: app.kubernetes.io/instance, operator: NotIn, values: ["external-dns-pihole"] }
         - { key: app.kubernetes.io/name, operator: NotIn, values: ["pihole-nebula-sync"] }
-        - { key: gateway.envoyproxy.io/owning-gateway-name, operator: NotIn, values: ["envoy-internal"] }
+        - {
+            key: gateway.envoyproxy.io/owning-gateway-name,
+            operator: NotIn,
+            values: ["envoy-internal"],
+          }
     enableDefaultDeny: *noDefaultDeny
     egressDeny: *piholeApi

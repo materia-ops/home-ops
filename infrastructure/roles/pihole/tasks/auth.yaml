@@ -6,7 +6,7 @@
   environment:
     OP_SERVICE_ACCOUNT_TOKEN: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
   loop: [APP_PASSWORD, APP_PWHASH]
-  delegate_to: localhost   # the controller holds the op CLI + service-account token
+  delegate_to: localhost # the controller holds the op CLI + service-account token
   become: false
   run_once: true
   no_log: true
@@ -48,7 +48,8 @@
     method: PATCH
     headers: "{{ _pihole_sid_header }}"
     body_format: json
-    body: { config: { webserver: { api: { app_pwhash: "{{ _pihole_app_pwhash }}", app_sudo: true } } } }
+    body:
+      { config: { webserver: { api: { app_pwhash: "{{ _pihole_app_pwhash }}", app_sudo: true } } } }
   when: _api.app_pwhash != _pihole_app_pwhash or not _api.app_sudo
   vars:
     _api: "{{ _pihole_api_cfg.json.config.webserver.api }}"

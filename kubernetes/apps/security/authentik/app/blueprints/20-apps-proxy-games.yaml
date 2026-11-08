@@ -14,7 +14,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://wow.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]

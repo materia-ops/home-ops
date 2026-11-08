@@ -12,14 +12,14 @@
   ansible.builtin.command: pihole-FTL --config webserver.domain
   register: _pihole_webserver_domain
   changed_when: false
-  check_mode: false   # read-only probe; must run even in --check so dry-runs are accurate
+  check_mode: false # read-only probe; must run even in --check so dry-runs are accurate
 
 - name: Read TLS certificate issuer and names
   ansible.builtin.command: openssl x509 -in {{ pihole_tls_cert }} -noout -issuer -ext subjectAltName
   register: _pihole_tls_cert
   changed_when: false
   failed_when: false
-  check_mode: false   # read-only probe
+  check_mode: false # read-only probe
 
 # openssl spaces RDNs differently across versions (O=Pi-hole vs O = Pi-hole);
 # the SAN match is anchored so pi.hole doesn't match pi.hole.example
@@ -67,12 +67,12 @@
     headers:
       Host: "{{ pihole_webserver_domain }}"
     follow_redirects: none
-    status_code: [200, 302]   # 302 = login redirect once a password is set; 403 = Host refused
+    status_code: [200, 302] # 302 = login redirect once a password is set; 403 = Host refused
   register: _pihole_validate
   until: _pihole_validate.status in [200, 302]
-  retries: 10   # covers the FTL restart
+  retries: 10 # covers the FTL restart
   delay: 3
-  when: not ansible_check_mode   # the new setting isn't really applied in --check
+  when: not ansible_check_mode # the new setting isn't really applied in --check
 
 - name: Validate the TLS certificate covers the domain
   ansible.builtin.command: openssl x509 -in {{ pihole_tls_cert }} -noout -ext subjectAltName
@@ -83,7 +83,7 @@
   changed_when: false
   when:
     - not ansible_check_mode
-    - _pihole_tls_ours | bool   # a custom cert is the admin's to manage
+    - _pihole_tls_ours | bool # a custom cert is the admin's to manage
 
 - name: Adlists, domains and local DNS records
   ansible.builtin.import_tasks: lists.yaml

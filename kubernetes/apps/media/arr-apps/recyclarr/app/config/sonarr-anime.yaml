@@ -32,24 +32,24 @@ sonarr:
       type: anime
 
     quality_profiles:
-      - trash_id: 20e0fc959f1f1704bed501f23bdae76f  # [Anime] Remux-1080p
+      - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
         reset_unmatched_scores:
           enabled: true
 
     # select lists only non-default CFs: required and default CFs always sync
     custom_format_groups:
       add:
-        - trash_id: f4a0410a1df109a66d6e47dcadcce014  # [Optional] Miscellaneous
+        - trash_id: f4a0410a1df109a66d6e47dcadcce014 # [Optional] Miscellaneous
           select:
-            - ef4963043b0987f8485bc9106f16db38  # DV (Disk)
-            - 1bd69272e23c5e6c5b1d6c8a36fce95e  # HFR
-            - 7470a681e6205243983c4410ee4c920f  # VC-1
-            - 90501962793d580d011511155c97e4e5  # VP9
-            - cddfb4e32db826151d97352b8e37c648  # x264
-            - c9eafd50846d299b862ca9bb6ea91950  # x265
-            - 041d90b435ebd773271cea047a457a6a  # x266
-        - trash_id: f54985e5e96747cef58731f1cf4c9181  # [Streaming Services] Anime
-        - trash_id: 35fb4585dcd9e2a5ac732e4309f5a45a  # [Streaming Services] Asian
-        - trash_id: f60f4401ce880aad62e9d21c8bb6b91a  # [Streaming Services] Dutch
-        - trash_id: 848fd356c200568fc5a6248150e7e7ea  # [Streaming Services] French
-        - trash_id: ddab3095a5d2f436f369263840af34f9  # [Streaming Services] UK
+            - ef4963043b0987f8485bc9106f16db38 # DV (Disk)
+            - 1bd69272e23c5e6c5b1d6c8a36fce95e # HFR
+            - 7470a681e6205243983c4410ee4c920f # VC-1
+            - 90501962793d580d011511155c97e4e5 # VP9
+            - cddfb4e32db826151d97352b8e37c648 # x264
+            - c9eafd50846d299b862ca9bb6ea91950 # x265
+            - 041d90b435ebd773271cea047a457a6a # x266
+        - trash_id: f54985e5e96747cef58731f1cf4c9181 # [Streaming Services] Anime
+        - trash_id: 35fb4585dcd9e2a5ac732e4309f5a45a # [Streaming Services] Asian
+        - trash_id: f60f4401ce880aad62e9d21c8bb6b91a # [Streaming Services] Dutch
+        - trash_id: 848fd356c200568fc5a6248150e7e7ea # [Streaming Services] French
+        - trash_id: ddab3095a5d2f436f369263840af34f9 # [Streaming Services] UK

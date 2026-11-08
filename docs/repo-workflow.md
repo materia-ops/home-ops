@@ -43,14 +43,14 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
 1. **Branch and edit.** Keep the YAML schema header comments intact — they're how the
    editor validates against the cluster's actual CRD versions.
 2. **Open the PR.** Watch for:
-   - **konflate** comments the rendered Flux diff — *read it*; it's the ground truth of
-     what will change in the cluster, including effects of shared components you may
-     not have touched directly.
-   - **Image Pull** pre-warms any changed images onto the nodes. A failure here usually
-     means a typo'd image reference — fix it before merge, not after.
-   - **Validate (Syntax Check)** (only when `infrastructure/**` changed) checks the
-     playbook without credentials; the live `--check` dry-run runs post-merge, gating
-     the apply.
+    - **konflate** comments the rendered Flux diff — _read it_; it's the ground truth of
+      what will change in the cluster, including effects of shared components you may
+      not have touched directly.
+    - **Image Pull** pre-warms any changed images onto the nodes. A failure here usually
+      means a typo'd image reference — fix it before merge, not after.
+    - **Validate (Syntax Check)** (only when `infrastructure/**` changed) checks the
+      playbook without credentials; the live `--check` dry-run runs post-merge, gating
+      the apply.
 3. **Merge.** The GitHub webhook triggers Flux within seconds. If you're impatient or
    the webhook misfires: `just kube reconcile`.
 4. **Verify.** `flux get ks -A --status-selector ready=false` and

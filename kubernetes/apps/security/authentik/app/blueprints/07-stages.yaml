@@ -26,10 +26,10 @@ entries:
         - !Find [authentik_sources_oauth.oauthsource, [slug, "google"]]
         - !Find [authentik_sources_oauth.oauthsource, [slug, "github"]]
         - !Find [authentik_sources_plex.plexsource, [slug, "plex"]]
-      show_source_labels: true         # show "Log in with Discord" text next to buttons
-      case_insensitive_matching: true  # Username and username both match
-      pretend_user_exists: true        # show password step even for unknown users (anti-enumeration)
-      show_matched_user: true          # show matched user's name/avatar on the password step
+      show_source_labels: true # show "Log in with Discord" text next to buttons
+      case_insensitive_matching: true # Username and username both match
+      pretend_user_exists: true # show password step even for unknown users (anti-enumeration)
+      show_matched_user: true # show matched user's name/avatar on the password step
       enrollment_flow: !Find [authentik_flows.flow, [slug, "materia-enrollment-invitation"]]
       recovery_flow: !Find [authentik_flows.flow, [slug, "materia-password-recovery"]]
       passwordless_flow: !Find [authentik_flows.flow, [slug, "materia-passwordless-authentication"]]
@@ -248,8 +248,8 @@ entries:
     identifiers:
       name: materia-password-strength
     attrs:
-      check_have_i_been_pwned: true  # rejects passwords in known breach databases
-      check_zxcvbn: true             # rejects weak passwords (score < 2 by default)
+      check_have_i_been_pwned: true # rejects passwords in known breach databases
+      check_zxcvbn: true # rejects weak passwords (score < 2 by default)
 
   - id: stage_enrollment_prompt
     model: authentik_stages_prompt.promptstage

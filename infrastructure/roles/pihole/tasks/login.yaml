@@ -19,11 +19,11 @@
     body_format: json
     body: { password: "{{ _pihole_app_password }}" }
   register: _pihole_auth
-  until: _pihole_auth.status != -1   # FTL restarting
+  until: _pihole_auth.status != -1 # FTL restarting
   retries: 10
   delay: 3
   failed_when: false
-  check_mode: false   # a session, not a change
+  check_mode: false # a session, not a change
   no_log: true
 
 - name: Require the app password to be accepted

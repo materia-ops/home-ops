@@ -62,7 +62,7 @@ hardware, boot the ISO from Stage 0 instead (PiKVM for the P330s, Proxmox consol
 > **Decide what happens to Ceph before you bootstrap.** `reset-node` does **not** wipe
 > the Ceph OSDs (the Micron 7450s). Either zap them separately for a genuine
 > from-scratch rebuild, or leave them intact and let Rook re-adopt the existing Ceph
-> cluster — but decide *before* running Stage 2. App data is recoverable either way via
+> cluster — but decide _before_ running Stage 2. App data is recoverable either way via
 > kopiur/Kopia from the NAS.
 
 > [!NOTE]
@@ -75,14 +75,14 @@ One confirmed command runs the whole day-0 pipeline
 ([`bootstrap/mod.just`](../bootstrap/mod.just)); it is idempotent, so a failed run can
 simply be re-run:
 
-| Stage | What it does |
-| :--- | :--- |
-| `nodes` | Renders and applies each node's Talos machine config (`--insecure`, skips already-configured nodes) |
-| `k8s` | `talosctl bootstrap` etcd on the first controller, retried until `AlreadyExists` |
-| `kubeconfig` (direct) | Fetches a kubeconfig pinned to a node IP (the API VIP doesn't exist until Cilium is up) |
-| `base` | Waits for nodes to register, applies namespaces + the three seed Secrets (via vals/1Password) + CRDs |
-| `apps` | `helmfile sync` of the core chain: cilium → coredns → spegel → cert-manager → external-secrets → onepassword-connect → flux-operator → flux-instance |
-| `kubeconfig` (final) | Re-fetches the kubeconfig against the real API endpoint, now announced by Cilium |
+| Stage                 | What it does                                                                                                                                         |
+| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nodes`               | Renders and applies each node's Talos machine config (`--insecure`, skips already-configured nodes)                                                  |
+| `k8s`                 | `talosctl bootstrap` etcd on the first controller, retried until `AlreadyExists`                                                                     |
+| `kubeconfig` (direct) | Fetches a kubeconfig pinned to a node IP (the API VIP doesn't exist until Cilium is up)                                                              |
+| `base`                | Waits for nodes to register, applies namespaces + the three seed Secrets (via vals/1Password) + CRDs                                                 |
+| `apps`                | `helmfile sync` of the core chain: cilium → coredns → spegel → cert-manager → external-secrets → onepassword-connect → flux-operator → flux-instance |
+| `kubeconfig` (final)  | Re-fetches the kubeconfig against the real API endpoint, now announced by Cilium                                                                     |
 
 Full detail per stage in [bootstrap.md](./bootstrap.md#stage-1--just-bootstrap-cluster).
 
@@ -105,7 +105,7 @@ just kube reconcile        # flux reconcile kustomization flux-system --with-sou
 repository (`nas.internal:/mnt/apps/kopiur`) as the PVC is provisioned, so application data
 restores as part of Stage 3 — no per-app action needed.
 
-For an app that needs a *manual* restore afterwards (bad restore, or rolling a single
+For an app that needs a _manual_ restore afterwards (bad restore, or rolling a single
 app back to an older snapshot):
 
 ```sh
@@ -162,32 +162,33 @@ archive back on the LAN first:
 3. Copy the archive back with rclone. The remotes are defined by environment variables, the
    same ones the CronJob uses, with keys resolved just-in-time by `op run` from an env file:
 
-   ```sh
-   RCLONE_CONFIG_B2CRYPT_TYPE=crypt
-   RCLONE_CONFIG_B2CRYPT_REMOTE=b2:materia-cnpg
-   RCLONE_CONFIG_B2CRYPT_FILENAME_ENCRYPTION=off
-   RCLONE_CONFIG_B2CRYPT_DIRECTORY_NAME_ENCRYPTION=false
-   RCLONE_CONFIG_B2CRYPT_PASSWORD=op://kubernetes/cnpg/b2-crypt-password
-   RCLONE_CONFIG_B2CRYPT_PASSWORD2=op://kubernetes/cnpg/b2-crypt-salt
-   RCLONE_CONFIG_B2_TYPE=s3
-   RCLONE_CONFIG_B2_PROVIDER=Other
-   RCLONE_CONFIG_B2_ENDPOINT=https://s3.us-west-002.backblazeb2.com
-   RCLONE_CONFIG_B2_REGION=us-west-002
-   RCLONE_CONFIG_B2_ACCESS_KEY_ID=op://kubernetes/cnpg/b2-key-id
-   RCLONE_CONFIG_B2_SECRET_ACCESS_KEY=op://kubernetes/cnpg/b2-secret-key
-   RCLONE_CONFIG_GARAGE_TYPE=s3
-   RCLONE_CONFIG_GARAGE_PROVIDER=Other
-   RCLONE_CONFIG_GARAGE_ENDPOINT=http://garage.internal:3900
-   RCLONE_CONFIG_GARAGE_REGION=garage
-   RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE=true
-   RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID=op://kubernetes/cnpg/s3-key-id
-   RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY=op://kubernetes/cnpg/s3-secret-key
-   ```
+    ```sh
+    RCLONE_CONFIG_B2CRYPT_TYPE=crypt
+    RCLONE_CONFIG_B2CRYPT_REMOTE=b2:materia-cnpg
+    RCLONE_CONFIG_B2CRYPT_FILENAME_ENCRYPTION=off
+    RCLONE_CONFIG_B2CRYPT_DIRECTORY_NAME_ENCRYPTION=false
+    RCLONE_CONFIG_B2CRYPT_PASSWORD=op://kubernetes/cnpg/b2-crypt-password
+    RCLONE_CONFIG_B2CRYPT_PASSWORD2=op://kubernetes/cnpg/b2-crypt-salt
+    RCLONE_CONFIG_B2_TYPE=s3
+    RCLONE_CONFIG_B2_PROVIDER=Other
+    RCLONE_CONFIG_B2_ENDPOINT=https://s3.us-west-002.backblazeb2.com
+    RCLONE_CONFIG_B2_REGION=us-west-002
+    RCLONE_CONFIG_B2_ACCESS_KEY_ID=op://kubernetes/cnpg/b2-key-id
+    RCLONE_CONFIG_B2_SECRET_ACCESS_KEY=op://kubernetes/cnpg/b2-secret-key
+    RCLONE_CONFIG_GARAGE_TYPE=s3
+    RCLONE_CONFIG_GARAGE_PROVIDER=Other
+    RCLONE_CONFIG_GARAGE_ENDPOINT=http://garage.internal:3900
+    RCLONE_CONFIG_GARAGE_REGION=garage
+    RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE=true
+    RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID=op://kubernetes/cnpg/s3-key-id
+    RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY=op://kubernetes/cnpg/s3-secret-key
+    ```
 
-   `op run --env-file=<that file> -- rclone copy b2crypt:postgres-<app>-backup garage:postgres-<app>-backup`.
-   Reading through `b2crypt:` decrypts on the fly and strips the `.bin` suffix, so Garage gets
-   the original barman objects.
-   To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
+    `op run --env-file=<that file> -- rclone copy b2crypt:postgres-<app>-backup garage:postgres-<app>-backup`.
+    Reading through `b2crypt:` decrypts on the fly and strips the `.bin` suffix, so Garage gets
+    the original barman objects.
+    To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
+
 4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
    postgres-<app>-b2-sync -n <ns>` and patch `suspend` back to `false`.
 
@@ -202,7 +203,7 @@ The test is applied by hand with `kubectl` and nothing in it is committed. Last 
 > [!CAUTION]
 > Do **not** reuse `components/cnpg/restore` for a drill. It is built for in-place
 > recovery, so it keeps `components/cnpg/app`'s WAL archiver pointed at the production
-> bucket. A drill cluster must only ever *read* the archive.
+> bucket. A drill cluster must only ever _read_ the archive.
 
 The drill's own manifests hold the safety rails:
 
@@ -217,51 +218,51 @@ The drill's own manifests hold the safety rails:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: restore-test
+    name: restore-test
 ---
 # plus an ExternalSecret postgres-backup-secret: copy components/cnpg/app/externalsecret-backup.yaml
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: postgres-<app>-backup
-  namespace: restore-test
+    name: postgres-<app>-backup
+    namespace: restore-test
 spec:
-  configuration:            # copy components/cnpg/app/objectstore.yaml's configuration;
-    destinationPath: s3://postgres-<app>-backup   # drop data.encryption
-    endpointURL: http://garage.internal:3900
-    # s3Credentials, wal, data: as in the component
-  instanceSidecarConfiguration:
-    env:
-      - name: AWS_DEFAULT_REGION
-        value: garage
-  # NO retentionPolicy
+    configuration: # copy components/cnpg/app/objectstore.yaml's configuration;
+        destinationPath: s3://postgres-<app>-backup # drop data.encryption
+        endpointURL: http://garage.internal:3900
+        # s3Credentials, wal, data: as in the component
+    instanceSidecarConfiguration:
+        env:
+            - name: AWS_DEFAULT_REGION
+              value: garage
+    # NO retentionPolicy
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: restore-<app>
-  namespace: restore-test
+    name: restore-<app>
+    namespace: restore-test
 spec:
-  instances: 1
-  imageName: <the app's current imageName>   # TimescaleDB apps: also its preload + parameters
-  storage:
-    size: 10Gi
-    storageClass: openebs-hostpath
-  bootstrap:
-    recovery:
-      source: origin
-      database: <app>
-      owner: <app>
-      # recoveryTarget:
-      #   targetTime: "2026-11-08T15:09:00+11:00"   # optional PITR; omit for latest
-  externalClusters:
-    - name: origin
-      plugin:
-        name: barman-cloud.cloudnative-pg.io
-        parameters:
-          barmanObjectName: postgres-<app>-backup
-          serverName: postgres-<app>
-  # NO plugins: block
+    instances: 1
+    imageName: <the app's current imageName> # TimescaleDB apps: also its preload + parameters
+    storage:
+        size: 10Gi
+        storageClass: openebs-hostpath
+    bootstrap:
+        recovery:
+            source: origin
+            database: <app>
+            owner: <app>
+            # recoveryTarget:
+            #   targetTime: "2026-11-08T15:09:00+11:00"   # optional PITR; omit for latest
+    externalClusters:
+        - name: origin
+          plugin:
+              name: barman-cloud.cloudnative-pg.io
+              parameters:
+                  barmanObjectName: postgres-<app>-backup
+                  serverName: postgres-<app>
+    # NO plugins: block
 ```
 
 Wait with `kubectl wait -n restore-test cluster/restore-<app> --for=condition=Ready`, then run
@@ -286,14 +287,15 @@ above does, with a scratch endpoint standing in for a rebuilt Garage:
    `kubectl get backup -o custom-columns=ID:.status.backupId,BEGIN:.status.beginWal`), and the
    timeline history files:
 
-   ```sh
-   kubectl exec -n restore-test b2-s3 -c loader -- rclone copy \
-     b2crypt:postgres-<app>-backup/postgres-<app> /data/postgres-<app>-backup/postgres-<app> \
-     --include 'base/<backupId>/**' --include 'wals/<dir>/**' --include 'wals/*.history.gz'
-   ```
+    ```sh
+    kubectl exec -n restore-test b2-s3 -c loader -- rclone copy \
+      b2crypt:postgres-<app>-backup/postgres-<app> /data/postgres-<app>-backup/postgres-<app> \
+      --include 'base/<backupId>/**' --include 'wals/<dir>/**' --include 'wals/*.history.gz'
+    ```
 
-   History files are `.history.gz`, not `.history`. A cluster that has failed over (authentik
-   is on timeline 0x2B) will not recover without them.
+    History files are `.history.gz`, not `.history`. A cluster that has failed over (authentik
+    is on timeline 0x2B) will not recover without them.
+
 3. Apply the ObjectStore and Cluster above with `endpointURL:
    http://b2-s3.restore-test.svc:8080`. The bucket is the directory name under `/data`.
 
@@ -312,17 +314,17 @@ unchanged.
 At each stage, from [bootstrap.md](./bootstrap.md#verification) and the
 [operations checklist](./operations.md#production-deployment-checklist):
 
-| After | Check |
-| :--- | :--- |
-| Stage 2 (bootstrap) | `cilium status` — CNI + BGP healthy; `kubectl get nodes` — all `Ready` |
-| Stage 3 (Flux) | `flux check` and `flux get ks -A` / `flux get hr -A` — everything `Ready` (the `--status-selector ready=false` variants should come back empty) |
-| Storage converged | `kubectl -n rook-ceph get cephcluster` — `HEALTH_OK` |
-| DNS | `dig @192.168.1.2 <app>.materia.wtf` — Pi-hole serving the external-dns records |
-| Workloads | Pods running, no CrashLoopBackOff; routes reachable and gatus green; no new alerts after ~15 minutes (Pushover quiet, vmalert clean) |
-| Stage 4 (restore) | The restore recipe itself waits for the app pod to be `Ready`; confirm app data in the UI or via `just kube browse-pvc` |
+| After               | Check                                                                                                                                           |
+| :------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stage 2 (bootstrap) | `cilium status` — CNI + BGP healthy; `kubectl get nodes` — all `Ready`                                                                          |
+| Stage 3 (Flux)      | `flux check` and `flux get ks -A` / `flux get hr -A` — everything `Ready` (the `--status-selector ready=false` variants should come back empty) |
+| Storage converged   | `kubectl -n rook-ceph get cephcluster` — `HEALTH_OK`                                                                                            |
+| DNS                 | `dig @192.168.1.2 <app>.materia.wtf` — Pi-hole serving the external-dns records                                                                 |
+| Workloads           | Pods running, no CrashLoopBackOff; routes reachable and gatus green; no new alerts after ~15 minutes (Pushover quiet, vmalert clean)            |
+| Stage 4 (restore)   | The restore recipe itself waits for the app pod to be `Ready`; confirm app data in the UI or via `just kube browse-pvc`                         |
 
 > [!IMPORTANT]
-> If an app boots on what *looks* like an empty volume after node disruption, don't
+> If an app boots on what _looks_ like an empty volume after node disruption, don't
 > reach for a restore straight away — it is usually a stale ceph-csi staging path, and
 > the data is intact. See the
 > [known failure modes](./operations.md#known-failure-modes-and-their-runbooks).

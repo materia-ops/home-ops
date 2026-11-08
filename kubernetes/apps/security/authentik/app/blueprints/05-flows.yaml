@@ -13,9 +13,9 @@ entries:
       title: "Welcome to materia.wtf"
       designation: authentication
       authentication: none
-      compatibility_mode: true   # improves compatibility with older browsers/clients
-      denied_action: continue    # already-authenticated users are passed through, not errored
-      policy_engine_mode: all   # all([]) = True → flow accessible when no flow-level policies
+      compatibility_mode: true # improves compatibility with older browsers/clients
+      denied_action: continue # already-authenticated users are passed through, not errored
+      policy_engine_mode: all # all([]) = True → flow accessible when no flow-level policies
 
   - id: flow_enrollment
     model: authentik_flows.flow

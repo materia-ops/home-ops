@@ -5,7 +5,7 @@
     url: http://127.0.0.1/api/config
     headers: "{{ _pihole_sid_header }}"
   register: _pihole_config
-  check_mode: false   # read-only probe
+  check_mode: false # read-only probe
   no_log: true
 
 - name: Read the FTL process ID

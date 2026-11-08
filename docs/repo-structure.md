@@ -6,18 +6,18 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 
 ## Top level
 
-| Path | Purpose |
-| :--- | :--- |
-| [`kubernetes/apps/`](../kubernetes/apps) | Everything Flux deploys, one directory per namespace |
-| [`kubernetes/components/`](../kubernetes/components) | Reusable Kustomize components apps opt into |
-| [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization) |
-| [`talos/`](../talos) | Talos machine configuration (minijinja templates + per-node overrides) |
-| [`bootstrap/`](../bootstrap) | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources |
-| [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability, pihole; unattended upgrades on the Pis and `pve-0`) |
-| [`.github/workflows/`](../.github/workflows) | CI — see [cicd.md](./cicd.md) |
-| [`.mise/`](../.mise/config.toml) | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment |
-| [`.justfile`](../.justfile) | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules |
-| `docs/` | This documentation (committed); work notes live in the private materia-vault |
+| Path                                                     | Purpose                                                                                                                      |
+| :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| [`kubernetes/apps/`](../kubernetes/apps)                 | Everything Flux deploys, one directory per namespace                                                                         |
+| [`kubernetes/components/`](../kubernetes/components)     | Reusable Kustomize components apps opt into                                                                                  |
+| [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization)                                                                    |
+| [`talos/`](../talos)                                     | Talos machine configuration (minijinja templates + per-node overrides)                                                       |
+| [`bootstrap/`](../bootstrap)                             | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources                                                      |
+| [`infrastructure/`](../infrastructure)                   | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability, pihole; unattended upgrades on the Pis and `pve-0`) |
+| [`.github/workflows/`](../.github/workflows)             | CI — see [cicd.md](./cicd.md)                                                                                                |
+| [`.mise/`](../.mise/config.toml)                         | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment                        |
+| [`.justfile`](../.justfile)                              | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules                                    |
+| `docs/`                                                  | This documentation (committed); work notes live in the private materia-vault                                                 |
 
 ## Anatomy of an app
 
@@ -41,20 +41,20 @@ The `ks.yaml` is where the interesting wiring happens:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app qbittorrent
+    name: &app qbittorrent
 spec:
-  components:                        # opt into shared behavior
-    - ../../../../components/kopiur/backup
-    - ../../../../components/zeroscaler
-  dependsOn:                         # ordering across namespaces
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
-  path: ./kubernetes/apps/torrents/qbittorrent/app
-  postBuild:
-    substitute:                      # parameterise the components
-      APP: *app
-      KOPIUR_CAPACITY: 5Gi
-  targetNamespace: torrents
+    components: # opt into shared behavior
+        - ../../../../components/kopiur/backup
+        - ../../../../components/zeroscaler
+    dependsOn: # ordering across namespaces
+        - name: rook-ceph-cluster
+          namespace: rook-ceph
+    path: ./kubernetes/apps/torrents/qbittorrent/app
+    postBuild:
+        substitute: # parameterise the components
+            APP: *app
+            KOPIUR_CAPACITY: 5Gi
+    targetNamespace: torrents
 ```
 
 Namespace directories carry only a `kustomization.yaml`: its `namespace:` field names the
@@ -73,20 +73,20 @@ namespace kustomization lists the group directory itself.
 Shared behavior lives in [`kubernetes/components/`](../kubernetes/components) and is
 mixed into apps via `spec.components`:
 
-| Component | What opting in gives you |
-| :--- | :--- |
-| `alerts` | Flux `Alert`/`Provider` routing reconciliation errors to Alertmanager (plus a GitHub commit-status variant) |
-| `kopiur/backup` | The standard backup opt-in: everything in `kopiur/snapshot` **plus** the app PVC (`KOPIUR_CAPACITY`, `KOPIUR_STORAGECLASS`, owned here) and a bootstrap `Restore` that populates it from the latest snapshot. The component owns the PVC, so capacity changes happen here; a bound PVC cannot be re-pointed at the `Restore` afterwards (`dataSourceRef` is immutable) |
-| `kopiur/snapshot` | Scheduled kopiur backups of an **existing** PVC the component does not own (`SnapshotPolicy` + `SnapshotSchedule`) into the `materia` repository. Parameterised by `APP`, `KOPIUR_SCHEDULE`, `KOPIUR_CACHE_CAPACITY`, `KOPIUR_PUID`/`KOPIUR_PGID` |
-| `namespace` | The Namespace object itself (`name: _`, renamed by the kustomization's `namespace:` field) with `prune: disabled`, so no namespace directory carries its own `namespace.yaml`. Mixed into namespace-level kustomizations, not apps |
-| `kopiur/secret` | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps |
-| `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC |
-| `cnpg` | A CloudNativePG Postgres cluster for the app (`cnpg/app`), with barman-cloud backups and a pgbouncer pooler. The app user's password is pushed to the 1Password item `postgres-<app>-app`; each app templates its own connection settings from that item. `cnpg/restore` overlays a recovery bootstrap |
-| `cnpg/single-instance` | Layer after `cnpg/app` for databases that don't warrant HA: one instance, no synchronous replication (CNPG rejects `number` >= instances) and no PDB (the primary's `minAvailable: 1` would block node drains). The database is down while its node reboots |
-| `cnpg/timescaledb` | Layer after `cnpg/app` for apps that need TimescaleDB's community edition: swaps in a CNPG-compatible TimescaleDB image and adds its preload library, licence and extensions |
-| `gpu` | Intel iGPU resource claims for transcoding workloads |
-| `theme-park` | theme.park styling injection |
-| `zeroscaler` | An HPA that scales the workload to zero when idle (uses the `HPAScaleToZero` feature gate) |
+| Component                | What opting in gives you                                                                                                                                                                                                                                                                                                                                               |
+| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alerts`                 | Flux `Alert`/`Provider` routing reconciliation errors to Alertmanager (plus a GitHub commit-status variant)                                                                                                                                                                                                                                                            |
+| `kopiur/backup`          | The standard backup opt-in: everything in `kopiur/snapshot` **plus** the app PVC (`KOPIUR_CAPACITY`, `KOPIUR_STORAGECLASS`, owned here) and a bootstrap `Restore` that populates it from the latest snapshot. The component owns the PVC, so capacity changes happen here; a bound PVC cannot be re-pointed at the `Restore` afterwards (`dataSourceRef` is immutable) |
+| `kopiur/snapshot`        | Scheduled kopiur backups of an **existing** PVC the component does not own (`SnapshotPolicy` + `SnapshotSchedule`) into the `materia` repository. Parameterised by `APP`, `KOPIUR_SCHEDULE`, `KOPIUR_CACHE_CAPACITY`, `KOPIUR_PUID`/`KOPIUR_PGID`                                                                                                                      |
+| `namespace`              | The Namespace object itself (`name: _`, renamed by the kustomization's `namespace:` field) with `prune: disabled`, so no namespace directory carries its own `namespace.yaml`. Mixed into namespace-level kustomizations, not apps                                                                                                                                     |
+| `kopiur/secret`          | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps                                                                                                                                                                       |
+| `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC                                                                                                                                                                                                                                                                                         |
+| `cnpg`                   | A CloudNativePG Postgres cluster for the app (`cnpg/app`), with barman-cloud backups and a pgbouncer pooler. The app user's password is pushed to the 1Password item `postgres-<app>-app`; each app templates its own connection settings from that item. `cnpg/restore` overlays a recovery bootstrap                                                                 |
+| `cnpg/single-instance`   | Layer after `cnpg/app` for databases that don't warrant HA: one instance, no synchronous replication (CNPG rejects `number` >= instances) and no PDB (the primary's `minAvailable: 1` would block node drains). The database is down while its node reboots                                                                                                            |
+| `cnpg/timescaledb`       | Layer after `cnpg/app` for apps that need TimescaleDB's community edition: swaps in a CNPG-compatible TimescaleDB image and adds its preload library, licence and extensions                                                                                                                                                                                           |
+| `gpu`                    | Intel iGPU resource claims for transcoding workloads                                                                                                                                                                                                                                                                                                                   |
+| `theme-park`             | theme.park styling injection                                                                                                                                                                                                                                                                                                                                           |
+| `zeroscaler`             | An HPA that scales the workload to zero when idle (uses the `HPAScaleToZero` feature gate)                                                                                                                                                                                                                                                                             |
 
 ## Flux entrypoint
 

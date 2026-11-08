@@ -4,4 +4,4 @@
     name: dnscrypt-proxy
     state: restarted
     daemon_reload: true
-  when: not ansible_check_mode   # unit may not exist yet on a fresh host during --check
+  when: not ansible_check_mode # unit may not exist yet on a fresh host during --check

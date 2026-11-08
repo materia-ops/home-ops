@@ -32,21 +32,21 @@ radarr:
       type: anime
 
     quality_profiles:
-      - trash_id: 722b624f9af1e492284c4bc842153a38  # [Anime] Remux-1080p
+      - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
         reset_unmatched_scores:
           enabled: true
 
     # select lists only non-default CFs: required and default CFs always sync
     custom_format_groups:
       add:
-        - trash_id: 9337080378236ce4c0b183e35790d2a7  # [Optional] Miscellaneous
+        - trash_id: 9337080378236ce4c0b183e35790d2a7 # [Optional] Miscellaneous
           select:
-            - f700d29429c023a5734505e77daeaea7  # DV (Disk)
-            - 73613461ac2cea99d52c4cd6e177ab82  # HFR
-            - 11cd1db7165d6a7ad9a83bc97b8b1060  # VC-1
-            - ae4cfaa9283a4f2150ac3da08e388723  # VP9
-            - 2899d84dc9372de3408e6d8cc18e9666  # x264
-            - 9170d55c319f4fe40da8711ba9d8050d  # x265
-            - 390455c22a9cac81a738f6cbad705c3c  # x266
-        - trash_id: b22449f789b16a4163b59f1b70cbc580  # [Streaming Services] Asian
-        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c  # [Streaming Services] UK
+            - f700d29429c023a5734505e77daeaea7 # DV (Disk)
+            - 73613461ac2cea99d52c4cd6e177ab82 # HFR
+            - 11cd1db7165d6a7ad9a83bc97b8b1060 # VC-1
+            - ae4cfaa9283a4f2150ac3da08e388723 # VP9
+            - 2899d84dc9372de3408e6d8cc18e9666 # x264
+            - 9170d55c319f4fe40da8711ba9d8050d # x265
+            - 390455c22a9cac81a738f6cbad705c3c # x266
+        - trash_id: b22449f789b16a4163b59f1b70cbc580 # [Streaming Services] Asian
+        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c # [Streaming Services] UK

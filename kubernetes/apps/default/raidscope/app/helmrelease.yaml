@@ -37,7 +37,7 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               # All caps dropped: the app binds unprivileged 8080 (see Dockerfile).
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             probes:
               # Liveness stays on the static /healthz: a storage blip must not
               # restart-loop the pod. Readiness write-probes the reports PVC

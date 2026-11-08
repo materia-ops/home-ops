@@ -33,11 +33,11 @@ flowchart LR
 
 ### Compute
 
-| Node | Type | Hardware | CPU | Memory | IP |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `matalos-c1` | VM on `pve-0` (Proxmox VE) | 8 vCPU / 32 GB, disks passed through | — | 32 GB | `192.168.20.10` |
-| `matalos-c2` | Bare metal | Lenovo ThinkStation P330 Tiny | Intel i7-8700 (6C/12T, UHD 630) | 32 GB | `192.168.20.11` |
-| `matalos-c3` | Bare metal | Lenovo ThinkStation P330 Tiny | Intel i7-8700 (6C/12T, UHD 630) | 32 GB | `192.168.20.12` |
+| Node         | Type                       | Hardware                             | CPU                             | Memory | IP              |
+| :----------- | :------------------------- | :----------------------------------- | :------------------------------ | :----- | :-------------- |
+| `matalos-c1` | VM on `pve-0` (Proxmox VE) | 8 vCPU / 32 GB, disks passed through | —                               | 32 GB  | `192.168.20.10` |
+| `matalos-c2` | Bare metal                 | Lenovo ThinkStation P330 Tiny        | Intel i7-8700 (6C/12T, UHD 630) | 32 GB  | `192.168.20.11` |
+| `matalos-c3` | Bare metal                 | Lenovo ThinkStation P330 Tiny        | Intel i7-8700 (6C/12T, UHD 630) | 32 GB  | `192.168.20.12` |
 
 All three nodes are control-plane nodes with workload scheduling enabled (the
 `KubeNodeConfig` document in `talos/controlplane.yaml.j2` sets no control-plane taint),
@@ -56,14 +56,14 @@ by the `i915` driver only — the newer `xe` driver does not support Gen 9.5.
 Disk roles are declared in the Talos configs ([`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2)
 selects by disk model, [`talos/nodes/controlplane/`](../talos/nodes/controlplane) selects the install disk):
 
-| Node | Disk | Role |
-| :--- | :--- | :--- |
-| `matalos-c1` | Intel Optane 900P 280 GB (`SSDPE21D280GA`) | Talos system disk |
-| `matalos-c1` | Corsair MP600 Mini 1 TB | `local-hostpath` user volume (OpenEBS) |
-| `matalos-c1` | Micron 7450 960 GB | Ceph OSD |
-| `matalos-c2`/`c3` | Samsung 980 1 TB | Talos system disk |
-| `matalos-c2`/`c3` | Corsair MP600 Mini 1 TB | `local-hostpath` user volume (OpenEBS) |
-| `matalos-c2`/`c3` | Micron 7450 960 GB | Ceph OSD |
+| Node              | Disk                                       | Role                                   |
+| :---------------- | :----------------------------------------- | :------------------------------------- |
+| `matalos-c1`      | Intel Optane 900P 280 GB (`SSDPE21D280GA`) | Talos system disk                      |
+| `matalos-c1`      | Corsair MP600 Mini 1 TB                    | `local-hostpath` user volume (OpenEBS) |
+| `matalos-c1`      | Micron 7450 960 GB                         | Ceph OSD                               |
+| `matalos-c2`/`c3` | Samsung 980 1 TB                           | Talos system disk                      |
+| `matalos-c2`/`c3` | Corsair MP600 Mini 1 TB                    | `local-hostpath` user volume (OpenEBS) |
+| `matalos-c2`/`c3` | Micron 7450 960 GB                         | Ceph OSD                               |
 
 **NAS (TrueNAS SCALE VM on `pve-0`)** — passed-through disks: 2 × Intel DC S3700 400 GB
 SATA SSD and 6 × Seagate Exos 28 TB (`ST28000NM000C`), plus an LVM virtual root disk.
@@ -72,20 +72,20 @@ backup repository.
 
 ### Supporting devices
 
-| Device | Hardware | Role |
-| :--- | :--- | :--- |
-| `pi-0` | Raspberry Pi 5 16 GB, Argon ONE V3 + NVMe board, Kingston KC3000 512 GB | Pi-hole + dnscrypt (primary home DNS) |
-| `pi-1` | Raspberry Pi 4 8 GB, Argon ONE | Pi-hole + dnscrypt (secondary home DNS) |
-| `pikvm` | PiKVM | Out-of-band console access |
+| Device  | Hardware                                                                | Role                                    |
+| :------ | :---------------------------------------------------------------------- | :-------------------------------------- |
+| `pi-0`  | Raspberry Pi 5 16 GB, Argon ONE V3 + NVMe board, Kingston KC3000 512 GB | Pi-hole + dnscrypt (primary home DNS)   |
+| `pi-1`  | Raspberry Pi 4 8 GB, Argon ONE                                          | Pi-hole + dnscrypt (secondary home DNS) |
+| `pikvm` | PiKVM                                                                   | Out-of-band console access              |
 
 ### Network gear
 
-| Device | Role | Uplink |
-| :--- | :--- | :--- |
-| UniFi UDM Pro | Gateway / router, BGP peer, WAN (Aussie Broadband) | 10 GbE DAC to aggregation switch |
-| UniFi USW Aggregation | 10 GbE SFP+ core | — |
-| UniFi USW Pro Max 24 PoE | Access switch (nodes, Pis, PoE) | 2 × 10 GbE DAC LACP to aggregation |
-| UniFi U7 Pro Max + U6 Mesh | Wi-Fi (U6 meshed off the U7) | 2.5 GbE |
+| Device                     | Role                                               | Uplink                             |
+| :------------------------- | :------------------------------------------------- | :--------------------------------- |
+| UniFi UDM Pro              | Gateway / router, BGP peer, WAN (Aussie Broadband) | 10 GbE DAC to aggregation switch   |
+| UniFi USW Aggregation      | 10 GbE SFP+ core                                   | —                                  |
+| UniFi USW Pro Max 24 PoE   | Access switch (nodes, Pis, PoE)                    | 2 × 10 GbE DAC LACP to aggregation |
+| UniFi U7 Pro Max + U6 Mesh | Wi-Fi (U6 meshed off the U7)                       | 2.5 GbE                            |
 
 The NAS/`pve-0` connects to the aggregation switch with 2 × 10 GbE LACP
 (SFP+ → RJ45 modules). `matalos-c1` and the NAS VM ride those links; `matalos-c2`/`c3`
@@ -96,15 +96,15 @@ MTU 9000).
 
 ### VLANs and addressing
 
-| Network | Purpose |
-| :--- | :--- |
-| `192.168.1.0/24` | Management (UDM Pro `.1`, UniFi gear, Pi-holes) |
-| `192.168.10.0/24` | Cilium LoadBalancer IP pool — VIPs advertised via BGP (the VLAN 10 L2 segment itself is vestigial) |
-| `192.168.20.0/24` (VLAN 20) | Cluster nodes — native VLAN on node switch ports |
-| VLAN 70 | IoT — tagged on node ports, reaches pods via Multus (`bond0.70`) |
-| VLAN 90 | VPN-isolated — tagged on node ports, reaches pods via Multus (`bond0.90`, e.g. qBittorrent) |
-| `10.42.0.0/16` | Pod network |
-| `10.43.0.0/16` | Service network |
+| Network                     | Purpose                                                                                            |
+| :-------------------------- | :------------------------------------------------------------------------------------------------- |
+| `192.168.1.0/24`            | Management (UDM Pro `.1`, UniFi gear, Pi-holes)                                                    |
+| `192.168.10.0/24`           | Cilium LoadBalancer IP pool — VIPs advertised via BGP (the VLAN 10 L2 segment itself is vestigial) |
+| `192.168.20.0/24` (VLAN 20) | Cluster nodes — native VLAN on node switch ports                                                   |
+| VLAN 70                     | IoT — tagged on node ports, reaches pods via Multus (`bond0.70`)                                   |
+| VLAN 90                     | VPN-isolated — tagged on node ports, reaches pods via Multus (`bond0.90`, e.g. qBittorrent)        |
+| `10.42.0.0/16`              | Pod network                                                                                        |
+| `10.43.0.0/16`              | Service network                                                                                    |
 
 > [!IMPORTANT]
 > Bare-metal node switch ports must stay **trunk** (native VLAN 20, tagged 70 + 90).
@@ -116,16 +116,16 @@ Cilium replaces kube-proxy and announces LoadBalancer VIPs from the
 `192.168.10.0/24` pool over BGP: cluster ASN **64514** peering with the UDM Pro
 (`192.168.1.1`, ASN **64513**). Notable VIPs:
 
-| VIP | Service |
-| :--- | :--- |
-| `192.168.10.2` | dnscrypt-proxy (cluster DNS upstream, NextDNS "kubernetes" profile) |
-| `192.168.10.5` | `envoy-internal` gateway |
-| `192.168.10.6` | `envoy-external` gateway |
-| `192.168.10.7` | `envoy-internal-tls` gateway (TLS passthrough) |
-| `192.168.10.8` | `envoy-plex` gateway (target of the WAN:443/32400 forwards) |
-| `192.168.10.20` | Kubernetes API (`matalos.materia.wtf`) |
-| `192.168.10.110` / `.111` / `.113` | Emby / Plex / Notifiarr |
-| `192.168.10.120` | AzerothCore realm (`Materia`) |
+| VIP                                | Service                                                             |
+| :--------------------------------- | :------------------------------------------------------------------ |
+| `192.168.10.2`                     | dnscrypt-proxy (cluster DNS upstream, NextDNS "kubernetes" profile) |
+| `192.168.10.5`                     | `envoy-internal` gateway                                            |
+| `192.168.10.6`                     | `envoy-external` gateway                                            |
+| `192.168.10.7`                     | `envoy-internal-tls` gateway (TLS passthrough)                      |
+| `192.168.10.8`                     | `envoy-plex` gateway (target of the WAN:443/32400 forwards)         |
+| `192.168.10.20`                    | Kubernetes API (`matalos.materia.wtf`)                              |
+| `192.168.10.110` / `.111` / `.113` | Emby / Plex / Notifiarr                                             |
+| `192.168.10.120`                   | AzerothCore realm (`Materia`)                                       |
 
 ### Ingress and DNS data flow
 
@@ -169,14 +169,14 @@ flowchart TD
 
 ## Kubernetes platform
 
-| Layer | Choice | Notes |
-| :--- | :--- | :--- |
-| OS | Talos Linux `v1.13.8` | Immutable, API-managed, no SSH; config templated with minijinja + vals |
-| Kubernetes | `v1.36.3` | `HPAScaleToZero` feature gate, topology-spread defaults in the scheduler |
-| CNI | Cilium | kube-proxy replacement, BGP control plane, L2 announcements available |
-| Runtime tuning | | BBR congestion control, jumbo frames end-to-end, `nvme_tcp`/`vfio` modules, 5-minute hardware watchdog |
-| Registry mirror | Spegel | Node-to-node P2P image caching — pulls survive registry outages |
-| Upgrades | tuppr | Automated Talos and Kubernetes upgrades from `system-upgrade/` |
+| Layer           | Choice                | Notes                                                                                                  |
+| :-------------- | :-------------------- | :----------------------------------------------------------------------------------------------------- |
+| OS              | Talos Linux `v1.13.8` | Immutable, API-managed, no SSH; config templated with minijinja + vals                                 |
+| Kubernetes      | `v1.36.3`             | `HPAScaleToZero` feature gate, topology-spread defaults in the scheduler                               |
+| CNI             | Cilium                | kube-proxy replacement, BGP control plane, L2 announcements available                                  |
+| Runtime tuning  |                       | BBR congestion control, jumbo frames end-to-end, `nvme_tcp`/`vfio` modules, 5-minute hardware watchdog |
+| Registry mirror | Spegel                | Node-to-node P2P image caching — pulls survive registry outages                                        |
+| Upgrades        | tuppr                 | Automated Talos and Kubernetes upgrades from `system-upgrade/`                                         |
 
 Talos API access from inside the cluster is restricted to the `actions-runner-system`
 and `system-upgrade` namespaces (for CI image pre-pull and tuppr respectively).
@@ -211,11 +211,11 @@ resources are reverted on the next reconcile — Git is the only durable interfa
 
 ## Storage architecture
 
-| Class | Backend | Use |
-| :--- | :--- | :--- |
-| `ceph-block` (default) | Rook-Ceph, 3 × Micron 7450 NVMe OSDs (`devicePathFilter`, host networking, msgr2) | App state (PVCs) |
-| `openebs-hostpath` | OpenEBS LocalPV on the 1 TB Corsair `local-hostpath` user volume | Scratch, kopiur mover cache |
-| NFS | TrueNAS SCALE (`nas.internal`), NFS v4.2 | Bulk media, Kopia backup repository |
+| Class                  | Backend                                                                           | Use                                 |
+| :--------------------- | :-------------------------------------------------------------------------------- | :---------------------------------- |
+| `ceph-block` (default) | Rook-Ceph, 3 × Micron 7450 NVMe OSDs (`devicePathFilter`, host networking, msgr2) | App state (PVCs)                    |
+| `openebs-hostpath`     | OpenEBS LocalPV on the 1 TB Corsair `local-hostpath` user volume                  | Scratch, kopiur mover cache         |
+| NFS                    | TrueNAS SCALE (`nas.internal`), NFS v4.2                                          | Bulk media, Kopia backup repository |
 
 **Backups:** [kopiur](https://github.com/home-operations/kopiur) runs in `kopiur-system`
 and owns one `ClusterRepository` (`materia`, a Kopia repository on
