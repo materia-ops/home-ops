@@ -26,7 +26,7 @@ dnscrypt_server_names:
 
 # 1Password Connect source for the upstream sdns:// stamps.
 dnscrypt_op_item: "dnscrypt"
-dnscrypt_op_vault: "ci"
+dnscrypt_op_vault: "infrastructure"
 dnscrypt_stamp_fields:
   nextdns: "nextdns_stamp"
 

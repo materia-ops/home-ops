@@ -7,6 +7,13 @@ all:
       vars: &remote_vars
         # Per-group, not in all: implicit localhost would inherit it.
         ansible_python_interpreter: /usr/bin/python3
+        # Host keys pinned in ../known_hosts by inventory name, so a DNS or IP
+        # change (the network role owns both) fails closed, never TOFU.
+        ansible_ssh_common_args: >-
+          -o HostKeyAlias={{ inventory_hostname }}
+          -o UserKnownHostsFile={{ playbook_dir }}/known_hosts
+          -o GlobalKnownHostsFile=/dev/null
+          -o StrictHostKeyChecking=yes
       hosts:
         pve-0:
           ansible_host: pve-0.internal

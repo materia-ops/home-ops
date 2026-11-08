@@ -41,7 +41,8 @@ Two runner types:
   `talosctl` against the nodes and Ansible against the Pis.
 
 CI secrets follow the same 1Password-first model as the cluster: workflows load
-credentials via `OP_SERVICE_ACCOUNT_TOKEN` (a read-only service account), and anything
+credentials via `OP_SERVICE_ACCOUNT_TOKEN` (a read-only service account; the Ansible
+job uses its own, [Environment-scoped](#credentials-and-host-keys) one), and anything
 needing to write to GitHub uses a short-lived **github-bot App token** (which must carry
 `workflows: write` for release automation in the companion repos).
 
@@ -125,6 +126,39 @@ PRs run a credential-less **Validate** on a GitHub-hosted runner: build the imag
 The dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a verification
 between hosts (a DNS resolve; the web UI answering on its ingress hostname), so a bad
 change can only take out one Pi-hole before the rollout stops.
+
+#### Credentials and host keys
+
+Check + Apply holds root-equivalent SSH to every host, so it does not use the org-wide
+`OP_SERVICE_ACCOUNT_TOKEN`. Its token, `OP_INFRA_SERVICE_ACCOUNT_TOKEN`, belongs to a
+dedicated service account that reads only the `infrastructure` vault (the `ansible` SSH
+key, the `dnscrypt` stamps) and `pihole`, and it exists only as a secret on two GitHub
+Environments:
+
+- **`infrastructure`** — deployment branches: `main` only, no reviewers. Push-to-main
+  Check + Apply runs unattended.
+- **`infrastructure-preview`** — any branch, required reviewer. A `check_only` dispatch
+  from a branch (to dry-run a workflow or role change against the live hosts before
+  merge) waits for approval. Read the branch diff before approving: the branch's own
+  workflow file runs with the token, so the approval is the control, not the
+  `ref == main` guard on Apply.
+
+The job picks the Environment from `github.ref`. A workflow on any other branch or PR
+that names the secret gets nothing without passing one of these gates.
+
+Host keys are pinned in [`infrastructure/known_hosts`](../infrastructure/known_hosts)
+with `StrictHostKeyChecking=yes`, keyed by inventory name through `HostKeyAlias`, so a
+DNS answer or IP change never alters which key is trusted. A rebuilt or reflashed host
+generates new keys and its plays fail with "Host key verification failed" until the
+file is updated:
+
+1. On the host's console (not over the network), read the new key:
+   `cat /etc/ssh/ssh_host_ed25519_key.pub` and `ssh-keygen -lf` it for the fingerprint.
+2. Replace that host's line in `infrastructure/known_hosts` (`<inventory-name> ssh-ed25519 <key>`)
+   and open a PR. Merging it re-runs every play.
+
+A key mismatch on a host that was *not* rebuilt is an incident, not a chore. Don't
+update the file to make CI green until the cause is understood.
 
 ### `tag.yaml` — monthly repo tag
 

@@ -195,7 +195,7 @@ jobs:
             "https://api.github.com/repos/$REPO/compare/$BEFORE...$SHA" \
             | python3 -c 'import sys,json; d=json.load(sys.stdin); print("\n".join(f["filename"] for f in d.get("files",[])))')"
           echo "Changed files:"; printf '%s\n' "$FILES"
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/(playbook\.yaml|requirements\.(in|txt|ya?ml)|ansible\.cfg|Dockerfile|inventory/hosts\.yaml)$'; then
+          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/(playbook\.yaml|requirements\.(in|txt|ya?ml)|ansible\.cfg|Dockerfile|inventory/hosts\.yaml|known_hosts)$'; then
             echo "tags=" >> "$GITHUB_OUTPUT"; echo "structural change -> all"; exit 0
           fi
           SEL=""
@@ -216,6 +216,9 @@ jobs:
     needs: [image, plan]
     if: github.event_name != 'pull_request'
     runs-on: home-ops-runner
+    # The token lives only in these Environments: `infrastructure` admits main
+    # alone, `infrastructure-preview` (any branch) waits for a reviewer.
+    environment: ${{ github.ref == 'refs/heads/main' && 'infrastructure' || 'infrastructure-preview' }}
     permissions:
       contents: read
       packages: read
@@ -241,16 +244,16 @@ jobs:
           persist-credentials: false
       - name: Setup SSH Key
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_INFRA_SERVICE_ACCOUNT_TOKEN }}
         # ssh resolves ~ from passwd (/root), not the job container's $HOME, so
-        # hand Ansible the key path; host_key_checking=False is in ansible.cfg.
+        # hand Ansible the key path. Host keys are pinned in infrastructure/known_hosts.
         run: |
           KEY="$RUNNER_TEMP/ansible_id_ed25519"
-          (umask 077 && op read "op://ci/ansible/ANSIBLE_PRIVATE_KEY" > "$KEY")
+          (umask 077 && op read "op://infrastructure/ansible/ANSIBLE_PRIVATE_KEY" > "$KEY")
           echo "ANSIBLE_PRIVATE_KEY_FILE=$KEY" >> "$GITHUB_ENV"
       - name: Run Ansible Playbook (Check Mode)
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_INFRA_SERVICE_ACCOUNT_TOKEN }}
           TAGS: ${{ needs.plan.outputs.tags }}
           LIMIT: ${{ inputs.limit }}
         run: |
@@ -265,7 +268,7 @@ jobs:
       - name: Run Ansible Playbook (Apply)
         if: (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.check_only)) && github.ref == 'refs/heads/main'
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_INFRA_SERVICE_ACCOUNT_TOKEN }}
           TAGS: ${{ needs.plan.outputs.tags }}
           LIMIT: ${{ inputs.limit }}
         run: |
