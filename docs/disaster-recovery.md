@@ -155,9 +155,26 @@ archive back on the LAN first:
    `cnpg` 1Password item's `s3-key-id` / `s3-secret-key` if it is a new key) and the
    read-only `cnpg-offsite-ro` grant (see the comment in
    [`components/cnpg/app/objectstore.yaml`](../kubernetes/components/cnpg/app/objectstore.yaml)).
-3. Copy the archive back with rclone, loading the `cnpg` item's `b2-key-id` / `b2-secret-key`
-   just-in-time (`op run`), e.g.
-   `rclone copy b2:materia-cnpg/postgres-<app>-backup garage:postgres-<app>-backup --checksum`.
+3. Copy the archive back with rclone. The remotes are defined by environment variables, the
+   same ones the CronJob uses, with keys resolved just-in-time by `op run` from an env file:
+
+   ```sh
+   RCLONE_CONFIG_B2_TYPE=s3
+   RCLONE_CONFIG_B2_PROVIDER=Other
+   RCLONE_CONFIG_B2_ENDPOINT=https://s3.us-west-002.backblazeb2.com
+   RCLONE_CONFIG_B2_REGION=us-west-002
+   RCLONE_CONFIG_B2_ACCESS_KEY_ID=op://kubernetes/cnpg/b2-key-id
+   RCLONE_CONFIG_B2_SECRET_ACCESS_KEY=op://kubernetes/cnpg/b2-secret-key
+   RCLONE_CONFIG_GARAGE_TYPE=s3
+   RCLONE_CONFIG_GARAGE_PROVIDER=Other
+   RCLONE_CONFIG_GARAGE_ENDPOINT=http://garage.internal:3900
+   RCLONE_CONFIG_GARAGE_REGION=garage
+   RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE=true
+   RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID=op://kubernetes/cnpg/s3-key-id
+   RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY=op://kubernetes/cnpg/s3-secret-key
+   ```
+
+   `op run --env-file=<that file> -- rclone copy b2:materia-cnpg/postgres-<app>-backup garage:postgres-<app>-backup --checksum`.
    To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
 4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
    postgres-<app>-offsite -n <ns>` and patch `suspend` back to `false`.
