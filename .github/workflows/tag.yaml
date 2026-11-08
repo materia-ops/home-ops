@@ -14,6 +14,8 @@ jobs:
   main:
     name: Tag
     runs-on: ubuntu-latest
+    # The 1Password token lives only in this Environment, which admits main.
+    environment: ci-main
     steps:
       - name: Load Secrets
         id: load-secrets
@@ -21,7 +23,7 @@ jobs:
         with:
           version: 2.42.0
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_CI_SERVICE_ACCOUNT_TOKEN }}
           GITHUB_BOT_APP_CLIENT_ID: op://ci/github-bot/GITHUB_BOT_APP_CLIENT_ID
           GITHUB_BOT_APP_PRIVATE_KEY: op://ci/github-bot/GITHUB_BOT_APP_PRIVATE_KEY
 

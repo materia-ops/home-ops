@@ -22,18 +22,18 @@
   // this manager bumps the .in pin and regenerates the lock. Monthly refresh
   // picks up transitive fixes (each image change runs a full Apply).
   "pip-compile": {
-    managerFilePatterns: [ "/^infrastructure/requirements\\.txt$/" ],
+    managerFilePatterns: ["/^infrastructure/requirements\\.txt$/"],
     lockFileMaintenance: {
       enabled: true,
-      schedule: [ "before 6am on the first day of the month" ],
+      schedule: ["before 6am on the first day of the month"],
     },
   },
   packageRules: [
     // Auto-merge rules
     {
       description: "Auto-merge mise tools",
-      matchManagers: [ "mise" ],
-      matchUpdateTypes: [ "minor", "patch" ],
+      matchManagers: ["mise"],
+      matchUpdateTypes: ["minor", "patch"],
       automerge: true,
       automergeType: "pr",
       minimumReleaseAge: "3 days",
@@ -41,41 +41,41 @@
     },
     {
       description: "Auto-merge trusted OCI digests",
-      matchDatasources: [ "docker" ],
-      matchUpdateTypes: [ "digest" ],
-      matchPackageNames: [ "/home-operations/" ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["digest"],
+      matchPackageNames: ["/home-operations/"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
     },
     {
       description: "Auto-merge raidscope image (own semver releases via release-please)",
-      matchDatasources: [ "docker" ],
-      matchUpdateTypes: [ "digest", "minor", "patch" ],
-      matchPackageNames: [ "/raidscope/" ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["digest", "minor", "patch"],
+      matchPackageNames: ["/raidscope/"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
     },
     {
       description: "Auto-merge wow-panel image (own semver releases via release-please)",
-      matchDatasources: [ "docker" ],
-      matchUpdateTypes: [ "digest", "minor", "patch" ],
-      matchPackageNames: [ "/wow-panel/" ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["digest", "minor", "patch"],
+      matchPackageNames: ["/wow-panel/"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
     },
     {
       description: "AzerothCore server image — never auto-merge; human PR merge is the realm promotion gate (materia-vault projects/wow-server/context: 01-architecture-and-decisions.md §2, 10-pin-manifest-spec.md §4)",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/azerothcore-wotlk-playerbots/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/azerothcore-wotlk-playerbots/"],
       automerge: false,
     },
     {
       description: "AzerothCore MySQL image — never auto-merge; rolling the DB statefulset drops the worldserver's connection and loses unsaved realm progress. Run realm maintenance first.",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/library\\/mysql/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/library\\/mysql/"],
       automerge: false,
       prBodyNotes: [
         "⚠️ **Realm maintenance required before merging.** This rolls the `azerothcore-db` statefulset under the live worldserver. First run `saveall` (or a full `server shutdown`) via the wow-panel admin page or SOAP, then merge; the worldserver reconnects/restarts on its own once MySQL is back.",
@@ -83,8 +83,8 @@
     },
     {
       description: "kopiur chart — never auto-merge; alpha project that ships breaking changes in minor releases, and the kubectl-kopiur plugin must move in lockstep with the operator",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/charts\\/kopiur/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/charts\\/kopiur/"],
       automerge: false,
       prBodyNotes: [
         "⚠️ **Read the kopiur release notes before merging** (breaking changes land in minor releases), then bump kubectl-kopiur in WSL to the same version.",
@@ -92,18 +92,18 @@
     },
     {
       description: "Auto-merge high-cadence OCI packages weekly",
-      matchDatasources: [ "docker" ],
-      matchUpdateTypes: [ "minor", "patch" ],
-      matchPackageNames: [ "/kube-prometheus-stack/" ],
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["minor", "patch"],
+      matchPackageNames: ["/kube-prometheus-stack/"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
-      schedule: [ "before 6am on Monday" ],
+      schedule: ["before 6am on Monday"],
     },
     {
       description: "Auto-merge GitHub Actions",
-      matchManagers: [ "github-actions" ],
-      matchUpdateTypes: [ "minor", "patch", "digest" ],
+      matchManagers: ["github-actions"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
       automerge: true,
       automergeType: "pr",
       minimumReleaseAge: "3 days",
@@ -111,9 +111,9 @@
     },
     {
       description: "Auto-merge trusted GitHub Actions",
-      matchManagers: [ "github-actions" ],
-      matchPackageNames: [ "/^actions\\//", "/^renovatebot\\//" ],
-      matchUpdateTypes: [ "minor", "patch", "digest" ],
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["/^actions\\//", "/^renovatebot\\//"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
       automerge: true,
       automergeType: "pr",
       minimumReleaseAge: "1 minute",
@@ -124,8 +124,8 @@
       // lint image: those rules match it too (the trusted-actions rule by its
       // overridden name, renovatebot/renovate, on the later passes).
       description: "Auto-merge the Renovate runner pin — workflow version and lint image in one grouped PR — daily after a 1-day soak, canaried on its PR (#1715) and merged only by Renovate once the canary is green: a broken runner cannot open the PR that fixes itself (#1681)",
-      matchPackageNames: [ "ghcr.io/renovatebot/renovate", "renovatebot/renovate" ],
-      matchUpdateTypes: [ "minor", "patch" ],
+      matchPackageNames: ["ghcr.io/renovatebot/renovate", "renovatebot/renovate"],
+      matchUpdateTypes: ["minor", "patch"],
       groupName: "Renovate runner",
       automerge: true,
       automergeType: "pr",
@@ -135,27 +135,27 @@
       // platformAutomerge the PR merged 8 s after creation (#1730) while the
       // canary was still running; Renovate must gate the merge itself.
       platformAutomerge: false,
-      schedule: [ "before 4am" ],
+      schedule: ["before 4am"],
     },
     {
       description: "Look the renovate-lint container image up as the runner's GitHub release: a GHCR tag carries no release timestamp, so the soak above would hold it forever",
-      matchManagers: [ "github-actions" ],
-      matchPackageNames: [ "ghcr.io/renovatebot/renovate" ],
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["ghcr.io/renovatebot/renovate"],
       overrideDatasource: "github-releases",
       overridePackageName: "renovatebot/renovate",
     },
     {
       description: "Auto-merge Grafana dashboards",
-      matchDatasources: [ "custom.grafana-dashboards" ],
-      matchUpdateTypes: [ "major" ],
+      matchDatasources: ["custom.grafana-dashboards"],
+      matchUpdateTypes: ["major"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: true,
     },
     {
       description: "Auto-merge Renovate Presents",
-      matchManagers: [ "renovate-config" ],
-      matchUpdateTypes: [ "minor", "patch" ],
+      matchManagers: ["renovate-config"],
+      matchUpdateTypes: ["minor", "patch"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: true,
@@ -163,27 +163,27 @@
     // Version constraint rules
     {
       description: "Proton Mail Bridge - only track v-prefixed release tags (repo mixes schemes)",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/videocurio\\/proton-mail-bridge/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/videocurio\\/proton-mail-bridge/"],
       allowedVersions: "/^v\\d/",
     },
     {
       description: "Hold MySQL at the 8.4 LTS line — AzerothCore does not support 9.x innovation releases",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/library\\/mysql/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/library\\/mysql/"],
       allowedVersions: "<9.0.0",
     },
     {
       description: "Hold CNPG Postgres at 18.x and never auto-merge — a major in imageName makes CNPG run an offline in-place pg_upgrade",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "ghcr.io/cloudnative-pg/postgresql" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
       allowedVersions: "<19",
       automerge: false,
     },
     {
       description: "TimescaleDB CNPG operand (components/cnpg/timescaledb): tags are <pg>-<postgis>-<build>-<flavour>; hold at 18.x, never auto-merge",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "ghcr.io/imusmanmalik/timescaledb-postgis" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/imusmanmalik/timescaledb-postgis"],
       versioning: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-\\d+\\.\\d+\\.\\d+-(?<patch>\\d+)-(?<compatibility>standard-bookworm)$",
       allowedVersions: "/^18\\./",
       automerge: false,
@@ -193,40 +193,40 @@
     // admits 2.22 (the note below flags every prometheus.prometheus bump).
     {
       description: "Hold the ansible job image's Python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed). Coupled hold: lifts together with the ansible-core hold, when a prometheus.prometheus release's meta/runtime.yml requires_ansible admits 2.22 (then also bump --python-version in the requirements.txt uv header)",
-      matchManagers: [ "dockerfile" ],
-      matchFileNames: [ "infrastructure/Dockerfile" ],
-      matchPackageNames: [ "/(^|/)python$/" ],
+      matchManagers: ["dockerfile"],
+      matchFileNames: ["infrastructure/Dockerfile"],
+      matchPackageNames: ["/(^|/)python$/"],
       allowedVersions: "<3.15",
     },
     {
       // pip-compile reports the dep against requirements.in, with the .txt
       // lock in lockFiles; matchFileNames checks both.
       description: "Hold ansible-core at 2.21 — prometheus.prometheus 0.30.x declares requires_ansible <=2.21.99 in meta/runtime.yml. Coupled hold: lifts together with the Python <3.15 hold, when a prometheus.prometheus release's requires_ansible admits 2.22",
-      matchManagers: [ "pip-compile" ],
-      matchFileNames: [ "infrastructure/requirements.in" ],
-      matchPackageNames: [ "ansible-core" ],
+      matchManagers: ["pip-compile"],
+      matchFileNames: ["infrastructure/requirements.in"],
+      matchPackageNames: ["ansible-core"],
       allowedVersions: "<2.22",
     },
     {
       description: "Flag every prometheus.prometheus bump: it is the unlock trigger for the coupled ansible-core <2.22 / Python <3.15 holds",
-      matchManagers: [ "ansible-galaxy" ],
-      matchFileNames: [ "infrastructure/requirements.yaml" ],
-      matchPackageNames: [ "prometheus.prometheus" ],
+      matchManagers: ["ansible-galaxy"],
+      matchFileNames: ["infrastructure/requirements.yaml"],
+      matchPackageNames: ["prometheus.prometheus"],
       prBodyNotes: [
         "🔓 **prometheus.prometheus gates the ansible-core and Python holds.** Check `requires_ansible` in this release's [`meta/runtime.yml`](https://github.com/prometheus-community/ansible/blob/{{{newVersion}}}/meta/runtime.yml). If it admits ansible-core 2.22, open a follow-up that lifts **both** coupled holds in `.renovaterc.json5` (ansible-core `<2.22` and the job image's Python `<3.15`) and bumps `--python-version` in the `infrastructure/requirements.txt` uv header. See [docs/cicd.md](https://github.com/materia-ops/home-ops/blob/main/docs/cicd.md#ansibleyaml--infrastructure-configuration).",
       ],
     },
     {
       description: "The lock is pip-compile's; pip_requirements would bump its transitive pins without regenerating hashes",
-      matchManagers: [ "pip_requirements" ],
-      matchFileNames: [ "infrastructure/requirements.txt" ],
+      matchManagers: ["pip_requirements"],
+      matchFileNames: ["infrastructure/requirements.txt"],
       enabled: false,
     },
     {
       description: "One PR (one image rebuild, one full Apply) per week for everything that feeds the ansible job image",
-      matchFileNames: [ "infrastructure/Dockerfile", "infrastructure/requirements.{in,txt,yaml}" ],
+      matchFileNames: ["infrastructure/Dockerfile", "infrastructure/requirements.{in,txt,yaml}"],
       groupName: "ansible job image",
-      schedule: [ "before 6am on Monday" ],
+      schedule: ["before 6am on Monday"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
@@ -236,34 +236,34 @@
     // so tools with prefixed tags never get an update. Strip the prefix here.
     {
       description: "jq tags are jq-X.Y.Z",
-      matchManagers: [ "mise" ],
-      matchDepNames: [ "aqua:jqlang/jq" ],
+      matchManagers: ["mise"],
+      matchDepNames: ["aqua:jqlang/jq"],
       extractVersion: "^jq-(?<version>\\d+\\.\\d+\\.\\d+)$",
     },
     {
       description: "kubectl tags are kubernetes-X.Y.Z (the vX tags are the Go module)",
-      matchManagers: [ "mise" ],
-      matchDepNames: [ "aqua:kubernetes/kubectl" ],
+      matchManagers: ["mise"],
+      matchDepNames: ["aqua:kubernetes/kubectl"],
       extractVersion: "^kubernetes-(?<version>\\d+\\.\\d+\\.\\d+)$",
     },
     {
       description: "kustomize tags are kustomize/vX.Y.Z (api/, kyaml/ tags are submodules)",
-      matchManagers: [ "mise" ],
-      matchDepNames: [ "aqua:kubernetes-sigs/kustomize" ],
+      matchManagers: ["mise"],
+      matchDepNames: ["aqua:kubernetes-sigs/kustomize"],
       extractVersion: "^kustomize/v(?<version>\\d+\\.\\d+\\.\\d+)$",
     },
     {
       description: "oxfmt tags are oxfmt_vX.Y.Z (the oxc monorepo tags each tool)",
-      matchManagers: [ "mise" ],
-      matchDepNames: [ "aqua:oxc-project/oxc/oxfmt" ],
+      matchManagers: ["mise"],
+      matchDepNames: ["aqua:oxc-project/oxc/oxfmt"],
       extractVersion: "^oxfmt_v(?<version>\\d+\\.\\d+\\.\\d+)$",
     },
     // Grouping rules
     {
       description: "Actions Runner Controller Group",
       groupName: "actions-runner-controller",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/gha-runner-scale-set-controller/", "/gha-runner-scale-set/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/gha-runner-scale-set-controller/", "/gha-runner-scale-set/"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
@@ -272,8 +272,8 @@
     {
       description: "Flux Operator Group",
       groupName: "flux-operator",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/flux-operator/", "/flux-instance/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/flux-operator/", "/flux-instance/"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
@@ -282,7 +282,7 @@
     {
       description: "Kubernetes Group",
       groupName: "kubernetes",
-      matchDatasources: [ "docker" ],
+      matchDatasources: ["docker"],
       matchPackageNames: [
         "/kube-apiserver/",
         "/kube-controller-manager/",
@@ -298,8 +298,8 @@
     {
       description: "Rook-Ceph Group",
       groupName: "rook-ceph",
-      matchDatasources: [ "docker" ],
-      matchPackageNames: [ "/rook-ceph/", "/rook-ceph-cluster/" ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/rook-ceph/", "/rook-ceph-cluster/"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
@@ -308,14 +308,14 @@
     {
       description: "Bump both flate pins (.mise/config.toml + image-pull.yaml) in one PR",
       groupName: "flate",
-      matchDepNames: [ "github:home-operations/flate", "home-operations/flate" ],
+      matchDepNames: ["github:home-operations/flate", "home-operations/flate"],
       minimumGroupSize: 2,
       minimumReleaseAge: "3 days",
     },
     {
       description: "Talos Group",
       groupName: "talos",
-      matchPackageNames: [ "siderolabs/talos" ],
+      matchPackageNames: ["siderolabs/talos"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
@@ -333,20 +333,20 @@
     },
     // Labeling rules
     {
-      matchUpdateTypes: [ "major" ],
-      addLabels: [ "type/major" ],
+      matchUpdateTypes: ["major"],
+      addLabels: ["type/major"],
     },
     {
-      matchUpdateTypes: [ "minor" ],
-      addLabels: [ "type/minor" ],
+      matchUpdateTypes: ["minor"],
+      addLabels: ["type/minor"],
     },
     {
-      matchUpdateTypes: [ "patch" ],
-      addLabels: [ "type/patch" ],
+      matchUpdateTypes: ["patch"],
+      addLabels: ["type/patch"],
     },
     {
-      matchUpdateTypes: [ "digest" ],
-      addLabels: [ "type/digest" ],
+      matchUpdateTypes: ["digest"],
+      addLabels: ["type/digest"],
     },
   ],
   // Track the CI version pins that no standard manager covers: flate and
@@ -355,24 +355,25 @@
   customManagers: [
     {
       customType: "regex",
-      managerFilePatterns: [ ".github/workflows/image-pull.yaml" ],
-      matchStrings: [ "github:home-operations/flate (?<currentValue>[0-9.]+)" ],
+      managerFilePatterns: [".github/workflows/image-pull.yaml"],
+      matchStrings: ["github:home-operations/flate (?<currentValue>[0-9.]+)"],
       datasourceTemplate: "github-releases",
       depNameTemplate: "home-operations/flate",
       extractVersionTemplate: "^v(?<version>.*)$",
     },
     {
       customType: "regex",
-      managerFilePatterns: [ ".github/workflows/image-pull.yaml" ],
-      matchStrings: [ "talosctl (?<currentValue>[0-9.]+)" ],
+      managerFilePatterns: [".github/workflows/image-pull.yaml"],
+      matchStrings: ["talosctl (?<currentValue>[0-9.]+)"],
       datasourceTemplate: "github-releases",
       depNameTemplate: "siderolabs/talos",
       extractVersionTemplate: "^v(?<version>.*)$",
     },
     {
       customType: "regex",
-      managerFilePatterns: [ ".github/workflows/renovate.yaml" ],
-      matchStrings: [ "RUNNER_VERSION: '(?<currentValue>[0-9.]+)'" ],
+      managerFilePatterns: [".github/workflows/renovate.yaml"],
+      // Either quote style: oxfmt (#2420) rewrote the pin to double quotes.
+      matchStrings: ["RUNNER_VERSION: [\"'](?<currentValue>[0-9.]+)[\"']"],
       // github-releases, not docker: ghcr.io returns no release timestamps, so
       // minimumReleaseAge on the docker datasource would hold the pin forever.
       datasourceTemplate: "github-releases",
