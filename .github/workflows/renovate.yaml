@@ -12,9 +12,13 @@ on:
   # Canary: a PR that moves the runner pin runs the candidate image as a
   # full dry run through the same assertion (lookup mode sets no per-repo
   # result); the pin's automerge waits on it (platformAutomerge: false, so
-  # Renovate itself checks the result instead of GitHub auto-merge). Any base
-  # branch, so a stacked PR is canaried.
-  pull_request:
+  # Renovate itself checks the result instead of GitHub auto-merge).
+  # pull_request_target: main's copy of this file runs, so a branch never
+  # holds the github-bot key; the PR contributes only the candidate
+  # RUNNER_VERSION, read as data (see "Resolve the runner version").
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    branches:
+      - main
     paths:
       - .github/workflows/renovate.yaml
   schedule:
@@ -55,8 +59,19 @@ jobs:
   main:
     name: Renovate
     runs-on: ubuntu-latest
+    # The 1Password token lives only in this Environment, which admits main;
+    # canary runs qualify because pull_request_target runs on the base ref.
+    environment: ci-main
+    # Same-repo canaries only.
+    if: >-
+      ${{
+        github.event_name != 'pull_request_target' ||
+        github.event.pull_request.head.repo.full_name == github.repository
+      }}
     permissions:
+      contents: read
       packages: read
+      statuses: write # canary verdict on the PR head (see "Report the canary")
     env:
       # Job-level so the assertion step can read them. The filter is a
       # literal list: the assertion walks it, so a glob here breaks the gate.
@@ -67,13 +82,26 @@ jobs:
       # The runner pin. Not RENOVATE_-prefixed: it must not reach the container.
       RUNNER_VERSION: "44.221.6"
     steps:
+      # A pull_request_target run's own check lands on main's commit, which
+      # Renovate's merge gate never reads; the verdict goes on the PR head as
+      # a commit status instead, pending from the first step.
+      - name: Mark the canary pending
+        if: github.event_name == 'pull_request_target'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -f state=pending -f context="Renovate canary" \
+            -f description="Dry run of the candidate runner" -f target_url="${RUN_URL}" --silent
+
       - name: Load Secrets
         id: load-secrets
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
           version: 2.42.0
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_CI_SERVICE_ACCOUNT_TOKEN }}
           GITHUB_BOT_APP_CLIENT_ID: op://ci/github-bot/GITHUB_BOT_APP_CLIENT_ID
           GITHUB_BOT_APP_PRIVATE_KEY: op://ci/github-bot/GITHUB_BOT_APP_PRIVATE_KEY
           RENOVATE_GHCR_TOKEN: op://ci/ghcr-pull/token
@@ -84,19 +112,19 @@ jobs:
         with:
           client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
           private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
-          # A canary (pull_request) is a dry run: read-only scopes, and no
+          # A canary (pull_request_target) is a dry run: read-only scopes, and no
           # workflows permission (write-only; an empty input is skipped), so a
           # PR that edits this file cannot spend a write token before review.
-          permission-checks: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
-          permission-contents: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
-          permission-issues: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
-          permission-pull-requests: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
-          permission-statuses: ${{ github.event_name == 'pull_request' && 'read' || 'write' }}
+          permission-checks: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
+          permission-contents: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
+          permission-issues: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
+          permission-pull-requests: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
+          permission-statuses: ${{ github.event_name == 'pull_request_target' && 'read' || 'write' }}
           permission-vulnerability-alerts: read
           # workflows:write is load-bearing: the github-actions manager bumps
           # SHA-pinned actions inside .github/workflows/** (audited 2026-07-18,
           # security review #8 - do not drop without disabling that manager).
-          permission-workflows: ${{ github.event_name != 'pull_request' && 'write' || '' }}
+          permission-workflows: ${{ github.event_name != 'pull_request_target' && 'write' || '' }}
           # Renovate also manages the azerothcore-image source pins
           # (versions.json git-refs manager), wow-panel's npm/actions/base
           # image, raidscope's pip/actions/base image, materia-core's
@@ -121,6 +149,28 @@ jobs:
           persist-credentials: false
           token: ${{ steps.app-token.outputs.token }}
 
+      # The canary's only input from the PR: the candidate pin, fetched as
+      # data and accepted only as a bare semver.
+      - name: Resolve the runner version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request_target" ]; then
+            v="$(gh api -H 'Accept: application/vnd.github.raw' "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/renovate.yaml?ref=${HEAD_SHA}" \
+              | sed -nE 's/^ +RUNNER_VERSION: .([0-9]+\.[0-9]+\.[0-9]+).$/\1/p' | head -n1)"
+            if [ -z "${v}" ]; then
+              echo "::error title=No candidate RUNNER_VERSION::the PR head has no RUNNER_VERSION: \"X.Y.Z\" line"
+              exit 1
+            fi
+          else
+            v="${INPUT_VERSION:-${RUNNER_VERSION}}"
+          fi
+          echo "version=${v}" >> "${GITHUB_OUTPUT}"
+          echo "runner version: ${v}"
+
       - name: Install cosign
         uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
 
@@ -129,7 +179,7 @@ jobs:
         # 3-day soak only delays new versions; a re-pushed tag is pulled
         # within the hour and runs with the fleet-wide App token.
         env:
-          IMAGE: ghcr.io/renovatebot/renovate:${{ inputs.version || env.RUNNER_VERSION }}
+          IMAGE: ghcr.io/renovatebot/renovate:${{ steps.version.outputs.version }}
         run: |
           cosign verify \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
@@ -146,7 +196,7 @@ jobs:
           # left this step green. strict raises it as an uncaught exception.
           NODE_OPTIONS: --unhandled-rejections=strict
           RENOVATE_AUTODISCOVER: true
-          RENOVATE_DRY_RUN: ${{ github.event_name == 'pull_request' && 'full' || inputs.dryRun }}
+          RENOVATE_DRY_RUN: ${{ github.event_name == 'pull_request_target' && 'full' || inputs.dryRun }}
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           # info is load-bearing: the assertion reads an info-level record.
           # LOG_LEVEL (the dispatch input) shapes stdout only.
@@ -156,7 +206,7 @@ jobs:
           RENOVATE_HOST_RULES: '[{"matchHost": "ghcr.io", "hostType": "docker", "username": "malpractis", "password": "${{ steps.load-secrets.outputs.RENOVATE_GHCR_TOKEN }}"}]'
         with:
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: ${{ inputs.version || env.RUNNER_VERSION }}
+          renovate-version: ${{ steps.version.outputs.version }}
 
       - name: Assert every repository finished
         # Renovate logs "Repository finished" for aborted repositories too,
@@ -203,20 +253,20 @@ jobs:
       # Loaded here, not up front, so a missing item only breaks the page,
       # never the run. A canary failure is already on its PR.
       - name: Load the Pushover secrets
-        if: failure() && github.event_name != 'pull_request'
+        if: failure() && github.event_name != 'pull_request_target'
         id: pushover
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
         with:
           version: 2.42.0
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_CI_SERVICE_ACCOUNT_TOKEN }}
           PUSHOVER_TOKEN: op://ci/pushover/token
           PUSHOVER_USER_KEY: op://ci/pushover/user-key
 
       - name: Page on failure
         # Seconds instead of the gatus dead-man's ~2.5h; gatus still owns the
         # case where the schedule never runs and nothing reaches this step.
-        if: failure() && github.event_name != 'pull_request'
+        if: failure() && github.event_name != 'pull_request_target'
         env:
           PUSHOVER_TOKEN: ${{ steps.pushover.outputs.PUSHOVER_TOKEN }}
           PUSHOVER_USER_KEY: ${{ steps.pushover.outputs.PUSHOVER_USER_KEY }}
@@ -224,3 +274,19 @@ jobs:
         run: |
           curl -fsS --retry 3 --retry-all-errors https://api.pushover.net/1/messages.json --form-string "token=${PUSHOVER_TOKEN}" --form-string "user=${PUSHOVER_USER_KEY}" --form-string "title=Renovate run failed (${GITHUB_EVENT_NAME})" --form-string "message=A step failed on ${GITHUB_REF_NAME}. Read the failing step: Run Renovate red at startup or 'wrote no log' = broken runner pin; repo=result names an aborted repository." --form-string "url=${RUN_URL}" --form-string "url_title=Open the run" --form-string "priority=1" > /dev/null
           echo "paged Pushover"
+
+      - name: Report the canary
+        if: always() && github.event_name == 'pull_request_target'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          case "${JOB_STATUS}" in
+            success) state=success ;;
+            failure) state=failure ;;
+            *) state=error ;;
+          esac
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -f state="${state}" -f context="Renovate canary" \
+            -f description="Dry run of the candidate runner: ${JOB_STATUS}" -f target_url="${RUN_URL}" --silent

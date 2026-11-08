@@ -18,15 +18,14 @@ flowchart TD
     subgraph homeops["home-ops"]
         disp --> ren[Renovate run] --> bump[Bump PR]
         pr[Manual PR] --> checks
-        bump --> checks{"PR checks:<br/>konflate diff + status<br/>Image Pull pre-warm"}
+        bump --> checks{"PR checks:<br/>konflate diff + status<br/>Image Pull verify"}
         checks -->|merge to main| main[main]
     end
     main -->|webhook / poll| flux[Flux reconcile]
     flux --> cluster[(matalos cluster)]
 ```
 
-Nothing deploys from CI directly — CI validates and pre-warms; **Flux is the only
-deployer**.
+Nothing deploys from CI directly — CI only validates; **Flux is the only deployer**.
 
 ## Runners
 
@@ -35,31 +34,52 @@ Two runner types:
 - **GitHub-hosted (`ubuntu-latest`)** for anything that doesn't need LAN access.
 - **Self-hosted (`home-ops-runner`)** — Actions Runner Controller (ARC) in the
   `actions-runner-system` namespace, min 0 / max 3, autoscaling per queued job (scale
-  from zero — no warm runner holds the Talos `os:admin` identity between jobs). These
-  runners are _inside_ the cluster and are granted Talos API access
-  (`kubernetesTalosAPIAccess` allows `actions-runner-system`), which is what lets CI run
-  `talosctl` against the nodes and Ansible against the Pis.
+  from zero). These runners are _inside_ the cluster, which is what lets CI run Ansible
+  against the Pis (egress allows only `:22` to the managed hosts). Only the Ansible job
+  (`ansible.yaml`) uses them, and they hold **no Talos credential**. Until 2026-11 a
+  Talos `os:admin` mount served the image pre-pull, and any same-repo branch could have
+  reached it.
 
-CI secrets follow the same 1Password-first model as the cluster: workflows load
-credentials via `OP_SERVICE_ACCOUNT_TOKEN` (a read-only service account; the Ansible
-job uses its own, [Environment-scoped](#credentials-and-host-keys) one), and anything
-needing to write to GitHub uses a short-lived **github-bot App token** (which must carry
-`workflows: write` for release automation in the companion repos).
+CI secrets follow the same 1Password-first model as the cluster. Workflows load
+credentials with `OP_CI_SERVICE_ACCOUNT_TOKEN`, which belongs to the 1Password service
+account `gh-actions-ci-ro` (read-only, `ci` vault). Anything that needs to write to
+GitHub mints a short-lived **github-bot App token** from the key in `ci`. That token must
+carry `workflows: write` for release automation in the companion repos. The Ansible job
+uses its own, [Environment-scoped](#credentials-and-host-keys) token.
+
+**No workflow that runs a branch's code can read 1Password.** `OP_CI_SERVICE_ACCOUNT_TOKEN`
+exists only as a secret on each repo's `ci-main` GitHub Environment, and its
+deployment rule admits `main` alone. In materia-core and wow-panel it also admits their
+release tags. Org and repo secrets reach any branch push or same-repo PR. Environment
+secrets reach only a job that names the Environment, and only when the run's ref matches
+its rule. Without this, a branch could add a workflow that reads the github-bot key and
+self-merge. A typical route would be a Renovate PR carrying a compromised upstream
+action. So:
+
+- Jobs that run from `main` (pushes, schedules, dispatches) declare
+  `environment: ci-main`.
+- PR-time jobs that need `ci` use `pull_request_target`. That runs **main's** copy of the
+  workflow, on the base ref, so `ci-main` admits it. The PR contributes only data, never
+  code to execute: claude-review and the Renovate canary below.
+- Everything else on `pull_request` uses `GITHUB_TOKEN` only, labeler for example.
 
 ## Workflows in this repo
 
-### `image-pull.yaml` — pre-warm images on PRs
+### `image-pull.yaml` — verify changed images on PRs
 
 On every PR touching `kubernetes/**`: [flate](https://github.com/home-operations/flate)
 diffs the rendered Flux state between the PR and main and extracts the _changed_ image
-references, then a matrix job on the self-hosted runners runs
-`talosctl image pull` on the nodes. By the time the PR merges and Flux rolls the
-workload, the image is already on disk — no pull latency, no rollout stuck on a slow
-registry.
+references. A matrix job on GitHub-hosted runners then checks that each one resolves
+(`docker manifest inspect`, anonymous, with retries). A typo'd tag or digest fails the
+PR instead of the rollout.
 
-Private `ghcr.io/materia-ops/*` images are filtered out: the node's containerd has no
-GHCR auth for anonymous pulls (they pull fine at pod start via `ghcr-pull-secret`), so
-including them would hang the runner. (The filter also covered `ghcr.io/malpractis/*`
+The job used to `talosctl image pull` each image onto the nodes from the self-hosted
+runner, to pre-warm them. That needed a Talos `os:admin` credential on a runner any
+same-repo branch could target, so it was retired in 2026-11. Spegel's P2P mirror covers
+most of the warm-up: only the first node to pull a new image waits on the registry.
+
+Private `ghcr.io/materia-ops/*` images are filtered out: the check runs anonymously
+(they pull fine at pod start via `ghcr-pull-secret`). (The filter also covered `ghcr.io/malpractis/*`
 during the [GHCR namespace migration](#ghcr-namespace-migration-malpractis--materia-ops);
 that prefix was dropped once nothing referenced it.)
 
@@ -84,9 +104,15 @@ auto-merge; everything else waits for review.
 The Renovate runner pin (`RUNNER_VERSION` in the workflow) is the one
 self-update Renovate cannot recover from on its own, so it auto-merges only after
 a 1-day soak (tracked as a GitHub release: GHCR carries no release timestamps),
-and a PR that moves it is **canaried**: the same workflow runs the candidate
-image as a full dry run on `pull_request` and the automerge waits for that
-check. Before every run the image's keyless signature is verified against
+and a PR that moves it is **canaried**, and the automerge waits for the canary.
+
+The canary runs on `pull_request_target`, so it is main's copy of the workflow
+under `ci-main`. It takes only the candidate version from the PR head, read through
+the API and accepted only as a bare `X.Y.Z`. It runs that image as a full dry run
+with a read-only App token. Such a run's own check lands on main's commit, which
+Renovate's merge gate never reads. The verdict therefore goes on the PR head as a
+**`Renovate canary`** commit status: pending from the job's first step, then
+success, failure or error. Before every run the image's keyless signature is verified against
 Renovate's own build workflow identity, since the soak does nothing against a
 re-pushed tag. Two guards make a bad runner loud instead of silent
 ([#1681](https://github.com/materia-ops/home-ops/pull/1681)): `NODE_OPTIONS`
@@ -189,8 +215,8 @@ admit 2.22, one PR removes both holds and bumps `--python-version` in the
 
 #### Credentials and host keys
 
-Check + Apply holds root-equivalent SSH to every host, so it does not use the org-wide
-`OP_SERVICE_ACCOUNT_TOKEN`. Its token, `OP_INFRA_SERVICE_ACCOUNT_TOKEN`, belongs to a
+Check + Apply holds root-equivalent SSH to every host, so it does not use the general
+CI token (`OP_CI_SERVICE_ACCOUNT_TOKEN`). Its token, `OP_INFRA_SERVICE_ACCOUNT_TOKEN`, belongs to a
 dedicated service account that reads only the `infrastructure` vault (the `ansible` SSH
 key, the `dnscrypt` stamps) and `pihole`, and it exists only as a secret on two GitHub
 Environments:
@@ -230,7 +256,8 @@ restore points for the whole cluster state.
 ### `label-sync.yaml` / `labeler.yaml` — housekeeping
 
 Sync the label set from `.github/labels.yaml` (daily) and auto-label PRs by touched
-area (`.github/labeler.yaml`).
+area (`.github/labeler.yaml`). The labeler runs on `pull_request` with `GITHUB_TOKEN`
+only, so it holds no 1Password token.
 
 ### `claude-review.yaml` — report-only PR review
 
@@ -241,10 +268,15 @@ concrete problems. For dependency bumps it walks every release between old and n
 and maps findings against what this repo actually configures; for everything else it
 checks manifests, Flux wiring and CLAUDE.md conventions. It is report-only (L1): it
 never approves, requests changes or merges, and its tool allowlist is read-only plus
-`gh pr view|diff|comment` and `gh release list|view`. Credentials come from 1Password
-(`op://ci/claude/CLAUDE_CODE_OAUTH_TOKEN` for Claude, the github-bot App for the
-comment), so forks never trigger it. The prompt treats PR bodies and changelogs as
-untrusted data.
+`gh pr view|diff|comment` and `gh release list|view`.
+
+It runs on `pull_request_target`, so main's copy of the workflow holds the credentials
+under `ci-main`. It loads only `op://ci/claude/CLAUDE_CODE_OAUTH_TOKEN` and comments
+with `GITHUB_TOKEN`; the github-bot key never enters it. The workspace root is main's
+tree, so CLAUDE.md, `.claude/` settings and the evidence script are never the PR's. The
+PR head is checked out under `_pr/` as data for the model to read. A same-repo guard
+keeps forks out. The prompt treats PR bodies and changelogs as untrusted data.
+Residual risk: a prompt injection in a PR could leak the Claude token.
 
 Before the model runs, an **upgrade-evidence** step collects the release notes
 deterministically instead of leaving the research to the model.
