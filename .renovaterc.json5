@@ -18,6 +18,16 @@
   // The org ruleset does not require up-to-date branches, and `auto` would
   // still rebase every automerge PR each time main moves
   rebaseWhen: "conflicted",
+  // infrastructure/requirements.txt is a uv hash lock of requirements.in;
+  // this manager bumps the .in pin and regenerates the lock. Monthly refresh
+  // picks up transitive fixes (each image change runs a full Apply).
+  "pip-compile": {
+    managerFilePatterns: [ "/^infrastructure/requirements\\.txt$/" ],
+    lockFileMaintenance: {
+      enabled: true,
+      schedule: [ "before 6am on the first day of the month" ],
+    },
+  },
   packageRules: [
     // Auto-merge rules
     {
@@ -179,10 +189,32 @@
       automerge: false,
     },
     {
-      description: "Hold the ansible workflow's setup-python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed); lift once ansible-core 2.22 (adds 3.15) is GA",
-      matchManagers: [ "github-actions" ],
-      matchDepNames: [ "python" ],
+      description: "Hold the ansible job image's Python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed); lift together with the ansible-core hold below",
+      matchManagers: [ "dockerfile" ],
+      matchFileNames: [ "infrastructure/Dockerfile" ],
+      matchPackageNames: [ "/(^|/)python$/" ],
       allowedVersions: "<3.15",
+    },
+    {
+      description: "Hold ansible-core at 2.21 — prometheus.prometheus 0.30.x declares requires_ansible <=2.21.99; lift once a release supports 2.22",
+      matchFileNames: [ "infrastructure/requirements.{in,txt}" ],
+      matchPackageNames: [ "ansible-core" ],
+      allowedVersions: "<2.22",
+    },
+    {
+      description: "The lock is pip-compile's; pip_requirements would bump its transitive pins without regenerating hashes",
+      matchManagers: [ "pip_requirements" ],
+      matchFileNames: [ "infrastructure/requirements.txt" ],
+      enabled: false,
+    },
+    {
+      description: "One PR (one image rebuild, one full Apply) per week for everything that feeds the ansible job image",
+      matchFileNames: [ "infrastructure/Dockerfile", "infrastructure/requirements.{in,txt,yaml}" ],
+      groupName: "ansible job image",
+      schedule: [ "before 6am on Monday" ],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
     },
     // The mise manager resolves aqua: tools via github-tags with a generic
     // ^v?(.+) extractor and does not read the aqua registry's version_prefix,

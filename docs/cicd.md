@@ -101,18 +101,26 @@ hand, dispatch the workflow with the `version` input; the runbook is in
 
 ### `ansible.yaml` — Pi-hole infrastructure
 
-PRs run a credential-less **Validate** (playbook syntax check) on a GitHub-hosted
-runner — the self-hosted jobs are gated off the `pull_request` path entirely. On push
-to `main` (and manual dispatch) the self-hosted runners (LAN access to the Pis) run
-three stages:
+The toolchain (Python, `ansible-core`, the Galaxy collections, `op`) is baked into a
+job image built from `infrastructure/Dockerfile` and published as
+`ghcr.io/materia-ops/home-ops-ansible:<hash>`, where the tag is a hash of the Dockerfile
+and the two requirements files. Renovate bumps those pins like any other dependency, and
+a changed hash builds a fresh image on the next run.
 
-1. **Plan** — derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
+PRs run a credential-less **Validate** on a GitHub-hosted runner: build the image
+(unpushed) and syntax-check the playbook in it. The self-hosted job is gated off the
+`pull_request` path entirely. On push to `main` (and manual dispatch):
+
+1. **Image** — on a GitHub-hosted runner, builds and pushes the job image only if its
+   tag is missing, and hands on the digest-pinned reference.
+2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
    `roles/pihole/` or `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
    `inventory/group_vars/` → `observability`, structural
    files → everything).
-2. **Check** — `ansible-playbook --check --diff` against the live Pis.
-3. **Apply** — gated on Check; runs on push to `main` (or manual dispatch with
-   `check_only=false`).
+3. **Check + Apply** — one job on the self-hosted runner (LAN access to the Pis),
+   running in the job image, so a run pays for one runner cold start and no installs:
+   `ansible-playbook --check --diff` against the live Pis, then Apply if Check passed,
+   on push to `main` (or manual dispatch with `check_only=false`).
 
 The dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a verification
 between hosts (a DNS resolve; the web UI answering on its ingress hostname), so a bad
