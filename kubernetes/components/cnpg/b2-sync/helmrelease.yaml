@@ -42,7 +42,8 @@ spec:
               # serverName prefix, not bucket root: an empty source errors instead
               # of hiding all of B2. Keep in step with cluster.yaml's serverName.
               - garage:postgres-${APP}-backup/postgres-${APP}
-              - b2:materia-cnpg/postgres-${APP}-backup/postgres-${APP}
+              # b2crypt wraps b2: encrypted client-side, B2 only sees ciphertext
+              - b2crypt:postgres-${APP}-backup/postgres-${APP}
               # not --checksum: B2 ETags aren't guaranteed MD5 under SSE-B2
               - --update
               - --use-server-modtime
@@ -56,6 +57,10 @@ spec:
               - --stats-log-level=NOTICE
             env:
               HOME: /tmp
+              RCLONE_CONFIG_B2CRYPT_DIRECTORY_NAME_ENCRYPTION: "false"
+              RCLONE_CONFIG_B2CRYPT_FILENAME_ENCRYPTION: "off"
+              RCLONE_CONFIG_B2CRYPT_REMOTE: b2:materia-cnpg
+              RCLONE_CONFIG_B2CRYPT_TYPE: crypt
               RCLONE_CONFIG_B2_ENDPOINT: https://s3.us-west-002.backblazeb2.com
               RCLONE_CONFIG_B2_NO_CHECK_BUCKET: "true"
               RCLONE_CONFIG_B2_PROVIDER: Other
