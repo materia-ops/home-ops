@@ -14,7 +14,6 @@ jobs:
   main:
     name: Tag
     runs-on: ubuntu-latest
-    # The 1Password token lives only in this Environment, which admits main.
     environment: ci-main
     steps:
       - name: Load Secrets

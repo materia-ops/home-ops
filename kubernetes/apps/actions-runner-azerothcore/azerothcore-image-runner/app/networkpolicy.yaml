@@ -1,6 +1,5 @@
 ---
-# The builder runs privileged dind, so it gets its own namespace and only what
-# a build needs: DNS and the public internet. No apiserver, node or LAN access.
+# Privileged dind: DNS and the public internet only, no apiserver, node or LAN.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

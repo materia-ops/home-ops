@@ -37,11 +37,8 @@ env:
   IMAGE_REPO: ghcr.io/materia-ops/home-ops-ansible
 
 jobs:
-  # PR path. The live-host dry run needs the SSH key and the 1Password token,
-  # so it cannot run for a pull_request; this pulls the published job image
-  # (or builds it, unpushed, when its inputs changed) and syntax-checks the
-  # playbook in it on a GitHub-hosted runner with no credentials. It catches Dockerfile, syntax, and role-resolution errors
-  # pre-merge, and Check still gates Apply once the change lands on main.
+  # PR path: the live dry run needs credentials a pull_request must not get, so
+  # this only syntax-checks the playbook in the job image on a hosted runner.
   validate:
     name: Validate (Image + Syntax Check)
     if: github.event_name == 'pull_request'
@@ -61,7 +58,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
-      # Unchanged image inputs -> reuse the published image; else build it.
       - name: Pull existing image
         id: pull
         env:
@@ -89,13 +85,9 @@ jobs:
             home-ops-ansible:pr \
             ansible-playbook -i inventory/hosts.yaml playbook.yaml --syntax-check
 
-  # The job image is tagged by a hash of its inputs, so it is only rebuilt
-  # when the Dockerfile or a requirements file changes. Main trusts an existing
-  # tag only if main's own workflow built and attested it: any ref with
-  # packages: write can overwrite a tag. Other refs use a separate dev- tag
-  # that main never reads. No concurrency group: a pending run in one is
-  # cancelled by a third arrival, and racing pushes of a hash tag are harmless
-  # because each run hands on its own digest.
+  # Main trusts an existing tag only if main's own workflow attested it: any
+  # ref with packages: write can overwrite a tag, so other refs get a dev- tag.
+  # No concurrency group: a pending run would be cancelled by a third arrival.
   image:
     name: Image (build if missing)
     if: github.event_name != 'pull_request'
@@ -159,12 +151,10 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-  # Decide which play tags to run from the changed paths.
   # Only roles/dnscrypt_proxy changed -> dnscrypt; roles/pihole or talos/nodes -> pihole;
   # roles/unattended_upgrades -> unattended_upgrades; only group_vars -> observability;
   # structural files (playbook/inventory/requirements/cfg/Dockerfile) or a manual blank -> all.
-  # The diff runs from the last successful push run on main, not event.before,
-  # so changes from cancelled or failed runs since then are applied here.
+  # Diff from the last successful push run: cancelled runs' changes must apply.
   plan:
     name: Plan (decide tags)
     if: github.event_name != 'pull_request'
@@ -219,23 +209,18 @@ jobs:
           echo "tags=$SEL" >> "$GITHUB_OUTPUT"
           echo "resolved tags='$SEL' (blank = all)"
 
-  # Check (dry run) then Apply against the live hosts, in one job so the run
-  # pays for one runner cold start. Push to main and workflow_dispatch only —
-  # it holds credentials and runs on the self-hosted runner, so it must stay
-  # off the pull_request path. The steps run in the baked job image, in a pod
-  # separate from the runner.
+  # Holds credentials and runs on the self-hosted runner, so it must stay off
+  # the pull_request path.
   ansible:
     name: Ansible Check + Apply
     needs: [image, plan]
     if: github.event_name != 'pull_request'
     runs-on: home-ops-runner
-    # One run on the hosts at a time, whatever its event or ref. A third
-    # arrival cancels the pending one; plan's diff base makes that lossless.
+    # A third arrival cancels the pending run; plan's diff base makes that lossless.
     concurrency:
       group: ansible-hosts
       cancel-in-progress: false
-    # The token lives only in these Environments: `infrastructure` admits main
-    # alone, `infrastructure-preview` (any branch) waits for a reviewer.
+    # `infrastructure` admits only main; `infrastructure-preview` needs a reviewer.
     environment: ${{ github.ref == 'refs/heads/main' && 'infrastructure' || 'infrastructure-preview' }}
     permissions:
       actions: read
@@ -261,8 +246,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # Same condition as Apply. A rerun of an old run, or one that reached the
-      # group after a newer run, would otherwise roll the hosts back.
+      # Same condition as Apply: a stale rerun would otherwise roll the hosts back.
       - name: Refuse to apply a commit older than the last Apply
         if: (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.check_only)) && github.ref == 'refs/heads/main'
         env:
@@ -280,7 +264,7 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_INFRA_SERVICE_ACCOUNT_TOKEN }}
         # ssh resolves ~ from passwd (/root), not the job container's $HOME, so
-        # hand Ansible the key path. Host keys are pinned in infrastructure/known_hosts.
+        # hand Ansible the key path.
         run: |
           KEY="$RUNNER_TEMP/ansible_id_ed25519"
           (umask 077 && op read "op://infrastructure/ansible/ANSIBLE_PRIVATE_KEY" > "$KEY")
@@ -295,10 +279,6 @@ jobs:
           if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
           if [ -n "$LIMIT" ]; then args+=(--limit "$LIMIT"); fi
           ansible-playbook -i inventory/hosts.yaml playbook.yaml --check --diff "${args[@]}"
-      # Auto-runs on push to main (after Check passes); can also be triggered
-      # manually via workflow_dispatch (check_only=false), optionally scoped with `limit`/`tags`.
-      # The dnscrypt play is serial:1 + any_errors_fatal + a resolve check, so the rollout
-      # is gated one Pi at a time (pi-1 then pi-0) regardless of how it's triggered.
       - name: Run Ansible Playbook (Apply)
         if: (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.check_only)) && github.ref == 'refs/heads/main'
         env:

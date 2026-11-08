@@ -8,7 +8,7 @@ components:
   - ../../components/namespace
 
 # Not the whole alerts component: its github-status half puts the github-bot
-# private key in a Secret, and the runner's service account can list Secrets.
+# private key in a Secret.
 resources:
   - ../../components/alerts/alertmanager
   - ./actions-runner-controller/ks.yaml

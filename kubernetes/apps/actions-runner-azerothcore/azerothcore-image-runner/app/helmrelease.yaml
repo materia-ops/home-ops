@@ -12,23 +12,17 @@ spec:
   values:
     githubConfigUrl: https://github.com/materia-ops/azerothcore-image
     githubConfigSecret: azerothcore-image-runner-secret
-    # Scale-to-zero: the ~2h image build runs a couple of times a week; the
-    # rest of the time this set costs the cluster nothing.
     minRunners: 0
     maxRunners: 1
     controllerServiceAccount:
       name: actions-runner-controller
       namespace: actions-runner-system
-    # Hand-written dind spec (containerMode.type: dind can't set the dind
-    # container's resources, and the CPU cap is the point): the AzerothCore
-    # compile runs INSIDE dockerd, so the caps live on the dind container.
-    # CPU limit 5 is a hard CFS ceiling — the build throttles, neighbors
-    # never notice; the workflow passes BUILD_JOBS=4 to match (nproc inside
-    # the container still reports host cores).
+    # Hand-written dind spec: containerMode.type: dind can't set the dind
+    # container's resources, and the compile runs INSIDE dockerd. The workflow's
+    # BUILD_JOBS=4 matches CPU limit 5 (nproc in the container reports host cores).
     template:
       spec:
-        # The pod runs privileged dind - it must
-        # not carry a Kubernetes API credential at all.
+        # Privileged dind: the pod must not carry a Kubernetes API credential.
         automountServiceAccountToken: false
         initContainers:
           - name: init-dind-externals
@@ -95,8 +89,6 @@ spec:
             emptyDir: {}
           - name: dind-externals
             emptyDir: {}
-          # Image layers + build scratch for the full AzerothCore compile —
-          # the GitHub-hosted runner needed ~45Gi after its cleanup step.
           - name: docker-graph
             emptyDir:
               sizeLimit: 80Gi

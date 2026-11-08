@@ -52,18 +52,13 @@ jobs:
 
       - name: Extract Images
         id: extract
-        # Private images are dropped: this check runs anonymously, and they pull
-        # fine in-cluster via the ghcr-pull-secret when the pod actually starts.
+        # Private images are dropped: this check runs anonymously.
         run: |
           echo 'images<<EOF' >> $GITHUB_OUTPUT
           flate diff images -p ./kubernetes/flux/cluster -o json \
             | jq -c 'map(select(startswith("ghcr.io/materia-ops/") | not))' >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
-  # Proves each changed image reference resolves in its registry, on a
-  # GitHub-hosted runner with no credentials. This replaced a talosctl
-  # pre-pull on the self-hosted runner, which needed a Talos credential that
-  # any branch could reach; Spegel covers most of the warm-up it bought.
   pull:
     if: ${{ needs.extract.outputs.images != '[]' }}
     needs: extract
