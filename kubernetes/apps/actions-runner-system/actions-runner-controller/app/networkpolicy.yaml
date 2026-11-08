@@ -1,18 +1,5 @@
 ---
-# Default-deny egress for the whole runner namespace (security review #4 /
-# infra-automation #3): the cluster's highest-value pods — the Ansible
-# runner (root SSH to the managed hosts) and the privileged dind builder —
-# get an explicit egress allowlist instead of unrestricted pod/node/LAN
-# reach. Ingress is left unenforced (nothing routes to runners; the
-# controller only polls out).
-#
-# Egress is CIDR-based (public 80/443 minus the private ranges), NOT a
-# per-host FQDN allowlist — see the toCIDRSet rule below for why. LAN
-# access is whatever the explicit :22 rule grants and nothing more.
-#
-# If a workflow fails on a blocked destination it will be a private-range
-# or metadata address (by design) — grant it narrowly like the SSH rule,
-# never by widening the public block.
+# No runners live here; each scale set has its own namespace and policy.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -23,7 +10,6 @@ spec:
     egress: true
     ingress: false
   egress:
-    # DNS via cluster CoreDNS — the DNS rule also feeds the toFQDNs proxy.
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: kube-system
@@ -32,35 +18,8 @@ spec:
         - ports:
             - port: "53"
               protocol: ANY
-          rules:
-            dns:
-              - matchPattern: "*"
-    # ARC kubernetes containerMode + the controller both drive the API server.
     - toEntities:
         - kube-apiserver
-    # Runner <-> job pods within the namespace.
-    - toEndpoints:
-        - {}
-    # Ansible over SSH to exactly the managed hosts — not the whole LAN.
-    # Update this list when the inventory changes.
-    - toCIDRSet:
-        - cidr: 192.168.1.2/32 # pi-0.internal
-        - cidr: 192.168.20.2/32 # pi-1.internal
-        - cidr: 192.168.20.9/32 # pve-0.internal
-      toPorts:
-        - ports:
-            - port: "22"
-              protocol: TCP
-    # Public internet on 80/443, EXCEPT the private ranges and the cloud
-    # metadata IP. This replaced a per-host toFQDNs allowlist (2026-07-18):
-    # CI pulls from the whole ecosystem — GitHub, GHCR, Docker Hub's two
-    # CDNs, PyPI→pythonhosted, Ansible Galaxy→pulp object storage, apt —
-    # and each redirects to signed/rotating CDN hosts that cannot be
-    # enumerated, producing recurring "Network unreachable" job failures.
-    # The security property that mattered is preserved by the excepts: a
-    # compromised runner still cannot reach the LAN or 169.254.169.254.
-    # LAN reach is granted narrowly and explicitly by the :22 rule above;
-    # nothing else on the private ranges is permitted.
     - toCIDRSet:
         - cidr: 0.0.0.0/0
           except:
@@ -71,6 +30,4 @@ spec:
       toPorts:
         - ports:
             - port: "443"
-              protocol: TCP
-            - port: "80"
               protocol: TCP
