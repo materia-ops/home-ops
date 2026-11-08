@@ -12,9 +12,14 @@ spec:
     name: postgres-${APP}-offsite
   interval: 1h
   values:
+    global:
+      # SA owned by serviceaccount-offsite.yaml
+      createDefaultServiceAccount: false
     controllers:
       *app :
         type: cronjob
+        serviceAccount:
+          name: *app
         cronjob:
           schedule: "20 * * * *"
           timeZone: Australia/Melbourne
@@ -40,9 +45,10 @@ spec:
               # an error. Follow any serverName change in cluster.yaml here.
               - garage:postgres-${APP}-backup/postgres-${APP}
               - b2:materia-cnpg/postgres-${APP}-backup/postgres-${APP}
-              # S3→S3 compare by MD5 ETag from the listing; multipart data.tar
-              # has no MD5 either side and falls back to size (immutable anyway)
-              - --checksum
+              # copy only when Garage's object is newer than its B2 upload (catches
+              # rewritten backup.info); no reliance on B2 ETags being MD5 under SSE-B2
+              - --update
+              - --use-server-modtime
               - --fast-list
               # caps a partial Garage wipe (rclone hides up to N, then fails the
               # Job); normal churn is barman's daily 30d-retention trim

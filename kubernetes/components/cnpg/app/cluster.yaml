@@ -52,6 +52,8 @@ spec:
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
+      # serverName defaults to the cluster name and is also the offsite sync
+      # prefix in helmrelease-offsite.yaml: change both together
       parameters:
         barmanObjectName: postgres-${APP}-backup
 

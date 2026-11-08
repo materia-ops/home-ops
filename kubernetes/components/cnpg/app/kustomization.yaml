@@ -13,3 +13,4 @@ resources:
   - ./prometheusrule.yaml
   - ./pushsecret.yaml
   - ./scheduledbackup.yaml
+  - ./serviceaccount-offsite.yaml
