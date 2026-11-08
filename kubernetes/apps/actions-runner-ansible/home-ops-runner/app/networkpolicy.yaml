@@ -1,5 +1,4 @@
 ---
-# Default-deny egress: the Ansible runner holds root SSH to the managed hosts.
 # LAN access is only the :22 rule below; public 80/443 stays open because CI
 # pulls redirect through CDN hosts that cannot be enumerated.
 apiVersion: cilium.io/v2
@@ -23,7 +22,6 @@ spec:
     # ARC kubernetes containerMode drives job pods through the API server.
     - toEntities:
         - kube-apiserver
-    # Runner <-> job pods within the namespace.
     - toEndpoints:
         - {}
     # Update this list when the inventory changes.

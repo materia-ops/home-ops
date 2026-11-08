@@ -4,10 +4,8 @@ kind: ServiceAccount
 metadata:
   name: home-ops-runner
 ---
-# ARC kubernetes containerMode: the runner spawns its job pods via the API.
-# This is the documented permission set for that mode, namespace-scoped —
-# the runner needs no other Kubernetes access (CD applies nothing to the
-# cluster; Flux pulls from git).
+# The documented permission set for ARC kubernetes containerMode; the runner
+# needs no other Kubernetes access.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
