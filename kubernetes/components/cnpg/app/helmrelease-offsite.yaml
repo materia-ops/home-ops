@@ -1,7 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
-# Hourly mirror of this cluster's barman archive from Garage (LAN primary, fast
-# restores) to B2 (offsite DR copy). Restore procedure: docs/disaster-recovery.md.
+# Garage → B2 DR mirror; restore steps in docs/disaster-recovery.md.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -40,18 +39,15 @@ spec:
               tag: 1.76.0@sha256:7cbeec24a44f206067597c0368be4de90ae19a64d5113c7d1938bd737a81e466
             args:
               - sync
-              # the serverName prefix, not the bucket root: a missing or empty
-              # source prefix is a listing error, and rclone never deletes after
-              # an error. Follow any serverName change in cluster.yaml here.
+              # serverName prefix, not bucket root: an empty source errors instead
+              # of hiding all of B2. Keep in step with cluster.yaml's serverName.
               - garage:postgres-${APP}-backup/postgres-${APP}
               - b2:materia-cnpg/postgres-${APP}-backup/postgres-${APP}
-              # copy only when Garage's object is newer than its B2 upload (catches
-              # rewritten backup.info); no reliance on B2 ETags being MD5 under SSE-B2
+              # not --checksum: B2 ETags aren't guaranteed MD5 under SSE-B2
               - --update
               - --use-server-modtime
               - --fast-list
-              # caps a partial Garage wipe (rclone hides up to N, then fails the
-              # Job); normal churn is barman's daily 30d-retention trim
+              # caps a partial Garage wipe; normal churn is barman's daily trim
               - --max-delete=2000
               - --checkers=16
               - --transfers=8

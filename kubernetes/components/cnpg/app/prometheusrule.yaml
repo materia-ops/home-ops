@@ -18,9 +18,8 @@ spec:
           for: 1h
           labels:
             severity: critical
-        # KubeJobFailed covers a failed run; this covers no successful run at
-        # all (missed schedule, suspended, Forbid-wedged, missing CronJob).
-        # "Never succeeded" waits 6h after creation so the first seed can finish.
+        # KubeJobFailed covers failed runs; this covers no success at all.
+        # A new CronJob gets 6h for its first seed before alerting.
         - alert: CNPGOffsiteSyncStale
           expr: |-
             time() - kube_cronjob_status_last_successful_time{cronjob="postgres-${APP}-offsite"} > 21600
