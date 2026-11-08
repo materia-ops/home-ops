@@ -4,15 +4,15 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app postgres-${APP}-offsite
+  name: &app postgres-${APP}-b2-sync
 spec:
   chartRef:
     kind: OCIRepository
-    name: postgres-${APP}-offsite
+    name: postgres-${APP}-b2-sync
   interval: 1h
   values:
     global:
-      # SA owned by serviceaccount-offsite.yaml
+      # SA owned by serviceaccount.yaml
       createDefaultServiceAccount: false
     controllers:
       *app :
@@ -70,7 +70,7 @@ spec:
               XDG_CACHE_HOME: /tmp/.cache
             envFrom:
               - secretRef:
-                  name: postgres-${APP}-offsite-secret
+                  name: postgres-${APP}-b2-sync-secret
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true

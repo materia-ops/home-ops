@@ -136,8 +136,10 @@ just kube browse-pvc <namespace> <claim>
 CNPG clusters do not use kopiur. barman-cloud archives WAL and takes a daily base backup into
 a per-app Garage bucket on the NAS (`garage.internal:3900`, `postgres-<app>-backup`), and the
 restore procedure lives in [`components/cnpg/restore`](../kubernetes/components/cnpg/restore/kustomization.yaml).
-Every cluster built from `components/cnpg/app` also runs an hourly `postgres-<app>-offsite`
-CronJob that `rclone sync`s its archive to Backblaze B2 (`materia-cnpg/postgres-<app>-backup/`).
+Every cluster built from `components/cnpg/app` also pulls in
+[`components/cnpg/b2-sync`](../kubernetes/components/cnpg/b2-sync/kustomization.yaml): an hourly
+`postgres-<app>-b2-sync` CronJob that `rclone sync`s its archive to Backblaze B2
+(`materia-cnpg/postgres-<app>-backup/`).
 B2 keeps hidden (deleted or superseded) objects for 30 days.
 
 **If Garage survived**, restore as normal: the B2 copy is not involved.
@@ -146,11 +148,11 @@ B2 keeps hidden (deleted or superseded) objects for 30 days.
 CNPG moved to Garage in the first place; it does not complete reliably. Instead, put the
 archive back on the LAN first:
 
-1. Suspend each `postgres-<app>-offsite` CronJob until step 3 is done. A missing or empty
+1. Suspend each `postgres-<app>-b2-sync` CronJob until step 3 is done. A missing or empty
    source prefix only fails the sync, but a partly-copied one would hide up to
    `--max-delete` B2 objects:
-   `flux suspend hr postgres-<app>-offsite -n <ns>`, then
-   `kubectl patch cronjob postgres-<app>-offsite -n <ns> -p '{"spec":{"suspend":true}}'`.
+   `flux suspend hr postgres-<app>-b2-sync -n <ns>`, then
+   `kubectl patch cronjob postgres-<app>-b2-sync -n <ns> -p '{"spec":{"suspend":true}}'`.
 2. Rebuild Garage, create `postgres-<app>-backup` with an owner key for barman (update the
    `cnpg` 1Password item's `s3-key-id` / `s3-secret-key` if it is a new key) and the
    read-only `matalos-cnpg-ro` grant (see the comment in
@@ -177,7 +179,7 @@ archive back on the LAN first:
    `op run --env-file=<that file> -- rclone copy b2:materia-cnpg/postgres-<app>-backup garage:postgres-<app>-backup --checksum`.
    To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
 4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
-   postgres-<app>-offsite -n <ns>` and patch `suspend` back to `false`.
+   postgres-<app>-b2-sync -n <ns>` and patch `suspend` back to `false`.
 
 ## Verification
 

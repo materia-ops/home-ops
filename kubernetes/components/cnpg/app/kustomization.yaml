@@ -2,15 +2,13 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
+components:
+  - ../b2-sync
 resources:
   - ./cluster.yaml
   - ./externalsecret-backup.yaml
-  - ./externalsecret-offsite.yaml
-  - ./helmrelease-offsite.yaml
   - ./objectstore.yaml
-  - ./ocirepository-offsite.yaml
   - ./pooler.yaml
   - ./prometheusrule.yaml
   - ./pushsecret.yaml
   - ./scheduledbackup.yaml
-  - ./serviceaccount-offsite.yaml
