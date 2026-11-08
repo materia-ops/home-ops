@@ -1,7 +1,4 @@
-# Job container for .github/workflows/ansible.yaml: the toolchain every run
-# used to reinstall (Python, Ansible, Galaxy collections, op) baked in once.
-# Tagged by a hash of this file + the requirements files, so any change here
-# (or a Renovate bump) builds a fresh image on the next run.
+# Tagged by a hash of this file and the requirements files.
 FROM docker.io/1password/op:2.42.0@sha256:b0d7eebcb09bdc9d5862af91533e1851c968d4f969270c906f5da8c574f87e93 AS op
 
 # Debian (glibc): the runner injects its node binary to run actions/checkout.
@@ -14,7 +11,6 @@ RUN apt-get update \
 COPY --from=op /usr/local/bin/op /usr/local/bin/op
 
 COPY requirements.txt requirements.yaml /tmp/ansible/
-# requirements.txt is a uv hash lock of requirements.in: pip enforces the hashes.
 RUN pip install --no-cache-dir --require-hashes -r /tmp/ansible/requirements.txt \
     && ansible-galaxy collection install -r /tmp/ansible/requirements.yaml -p /usr/share/ansible/collections \
     && rm -rf /tmp/ansible /root/.ansible
