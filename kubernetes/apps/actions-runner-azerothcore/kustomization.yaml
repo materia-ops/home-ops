@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: actions-runner-azerothcore
+
+components:
+  - ../../components/namespace
+
+# Not the whole alerts component: its github-status half puts the github-bot
+# private key in a Secret, which must not sit beside a privileged builder.
+resources:
+  - ../../components/alerts/alertmanager
+  - ./azerothcore-image-runner/ks.yaml
