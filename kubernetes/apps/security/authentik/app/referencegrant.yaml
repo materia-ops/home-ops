@@ -39,7 +39,7 @@ spec:
     - <<: *policy
       namespace: torrents
   to:
-    - group: ''
+    - group: ""
       kind: Service
       name: authentik-server
 ---
@@ -74,6 +74,6 @@ spec:
     - <<: *route
       namespace: torrents
   to:
-    - group: ''
+    - group: ""
       kind: Service
       name: authentik-server

@@ -4,8 +4,7 @@ all:
     ansible_become: true # Always use sudo
   children:
     proxmox:
-      vars: &remote_vars
-        # Per-group, not in all: implicit localhost would inherit it.
+      vars: &remote_vars # Per-group, not in all: implicit localhost would inherit it.
         ansible_python_interpreter: /usr/bin/python3
       hosts:
         pve-0:

@@ -1,7 +1,7 @@
 # CI/CD
 
 Everything that runs between "a change exists" and "the cluster runs it". The
-contributor-facing view (what *you* must do to keep this green) is in
+contributor-facing view (what _you_ must do to keep this green) is in
 [repo-workflow.md](./repo-workflow.md).
 
 ## The big picture
@@ -36,7 +36,7 @@ Two runner types:
 - **Self-hosted (`home-ops-runner`)** — Actions Runner Controller (ARC) in the
   `actions-runner-system` namespace, min 0 / max 3, autoscaling per queued job (scale
   from zero — no warm runner holds the Talos `os:admin` identity between jobs). These
-  runners are *inside* the cluster and are granted Talos API access
+  runners are _inside_ the cluster and are granted Talos API access
   (`kubernetesTalosAPIAccess` allows `actions-runner-system`), which is what lets CI run
   `talosctl` against the nodes and Ansible against the Pis.
 
@@ -50,7 +50,7 @@ needing to write to GitHub uses a short-lived **github-bot App token** (which mu
 ### `image-pull.yaml` — pre-warm images on PRs
 
 On every PR touching `kubernetes/**`: [flate](https://github.com/home-operations/flate)
-diffs the rendered Flux state between the PR and main and extracts the *changed* image
+diffs the rendered Flux state between the PR and main and extracts the _changed_ image
 references, then a matrix job on the self-hosted runners runs
 `talosctl image pull` on the nodes. By the time the PR merges and Flux rolls the
 workload, the image is already on disk — no pull latency, no rollout stuck on a slow
@@ -252,7 +252,7 @@ Per-repo notes:
 
 - **azerothcore-image** — ~1h50m builds, so PRs that change build inputs open as
   **draft** (zero builds), get marked ready for exactly **one trial build**, and merge
-  only when green (merge *promotes* the trial image by digest, ~3 min; merging mid-build
+  only when green (merge _promotes_ the trial image by digest, ~3 min; merging mid-build
   causes a full rebuild). Rebase build-input PRs after `main` moves. ccache seeding cuts
   warm builds; `versions.json` is the single realm gate.
 - **wow-panel / raidscope** — same release-please pattern; release builds check out the
@@ -268,14 +268,14 @@ nothing in `kubernetes/` references `ghcr.io/malpractis/*` anymore.
 
 How each old-namespace reference was resolved:
 
-| Reference | Where | Resolution |
-| :--- | :--- | :--- |
-| `ghcr.io/malpractis/azerothcore-wotlk-playerbots` | [`kubernetes/apps/games/azerothcore/app/helmrelease.yaml`](../kubernetes/apps/games/azerothcore/app/helmrelease.yaml) | Moved to `ghcr.io/materia-ops/azerothcore-wotlk-playerbots` (1.5.1, the first release published under the org) |
-| `ghcr.io/malpractis/*` comment | [`kubernetes/apps/games/azerothcore-db/app/pullsecret.yaml`](../kubernetes/apps/games/azerothcore-db/app/pullsecret.yaml) | Comment updated to `ghcr.io/materia-ops/*`; notes the pull PAT stays owned by the personal `malpractis` account |
-| `ghcr.io/malpractis/raidscope` / `wlogs-parser` comment | [`kubernetes/apps/default/raidscope/app/helmrelease.yaml`](../kubernetes/apps/default/raidscope/app/helmrelease.yaml) | Historical comment reworded to point here |
-| `instance: Malpractis` | `kubernetes/apps/torrents/qbitmanage/app/externalsecret.yaml` | Notifiarr instance label renamed to `Materia` (cosmetic); app has since been removed (replaced by qui) |
-| GHCR host-rule username `malpractis` | [`.github/workflows/renovate.yaml`](../.github/workflows/renovate.yaml) | **Stays as-is** — this is the PAT-owning personal account (which still exists), not the org; the token authenticates against `ghcr.io` regardless of image namespace |
-| Filter for **both** namespaces | [`.github/workflows/image-pull.yaml`](../.github/workflows/image-pull.yaml) | Narrowed to `ghcr.io/materia-ops/` only — see [image-pull](#image-pullyaml--pre-warm-images-on-prs) above |
+| Reference                                               | Where                                                                                                                     | Resolution                                                                                                                                                           |
+| :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ghcr.io/malpractis/azerothcore-wotlk-playerbots`       | [`kubernetes/apps/games/azerothcore/app/helmrelease.yaml`](../kubernetes/apps/games/azerothcore/app/helmrelease.yaml)     | Moved to `ghcr.io/materia-ops/azerothcore-wotlk-playerbots` (1.5.1, the first release published under the org)                                                       |
+| `ghcr.io/malpractis/*` comment                          | [`kubernetes/apps/games/azerothcore-db/app/pullsecret.yaml`](../kubernetes/apps/games/azerothcore-db/app/pullsecret.yaml) | Comment updated to `ghcr.io/materia-ops/*`; notes the pull PAT stays owned by the personal `malpractis` account                                                      |
+| `ghcr.io/malpractis/raidscope` / `wlogs-parser` comment | [`kubernetes/apps/default/raidscope/app/helmrelease.yaml`](../kubernetes/apps/default/raidscope/app/helmrelease.yaml)     | Historical comment reworded to point here                                                                                                                            |
+| `instance: Malpractis`                                  | `kubernetes/apps/torrents/qbitmanage/app/externalsecret.yaml`                                                             | Notifiarr instance label renamed to `Materia` (cosmetic); app has since been removed (replaced by qui)                                                               |
+| GHCR host-rule username `malpractis`                    | [`.github/workflows/renovate.yaml`](../.github/workflows/renovate.yaml)                                                   | **Stays as-is** — this is the PAT-owning personal account (which still exists), not the org; the token authenticates against `ghcr.io` regardless of image namespace |
+| Filter for **both** namespaces                          | [`.github/workflows/image-pull.yaml`](../.github/workflows/image-pull.yaml)                                               | Narrowed to `ghcr.io/materia-ops/` only — see [image-pull](#image-pullyaml--pre-warm-images-on-prs) above                                                            |
 
 > [!NOTE]
 > `github.com/Malpractis/...` links in old release notes, commit history, and this

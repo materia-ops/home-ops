@@ -3,12 +3,12 @@
   ansible.builtin.find:
     paths: "{{ pihole_talos_nodes_dir }}"
     patterns: "*.yaml.j2"
-    contains: '^# talos:node-ip='
+    contains: "^# talos:node-ip="
     recurse: true
   delegate_to: localhost
   become: false
   run_once: true
-  check_mode: false   # read-only
+  check_mode: false # read-only
   register: _pihole_talos_files
 
 - name: Read k8s node IPs from the Talos node files

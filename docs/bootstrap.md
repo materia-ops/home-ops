@@ -8,7 +8,7 @@ rebuild it. Everything here is driven by [`bootstrap/`](../bootstrap),
 
 The guiding principle is **one source of truth**. The bootstrap helmfile does not carry
 its own chart versions or values; every release's chart URL, version, and values are
-read at runtime from the *same* files Flux reconciles later
+read at runtime from the _same_ files Flux reconciles later
 (`kubernetes/apps/<ns>/<app>/app/ocirepository.yaml` + `helmrelease.yaml`, via
 [`bootstrap/helmfile/templates/`](../bootstrap/helmfile/templates)). When Flux takes
 over it adopts identical releases — zero drift, nothing to keep in sync.
@@ -91,15 +91,15 @@ then applies two things:
   `network`, and `security` namespaces (annotated
   `kustomize.toolkit.fluxcd.io/prune: disabled` so Flux never garbage-collects them)
   plus the three **seed Secrets**, rendered through vals:
-  - `onepassword-connect-credentials-secret` + `onepassword-connect-vault-secret`
-    (security) — break the chicken-and-egg: External Secrets needs 1Password Connect,
-    and Connect needs its credentials. These two are the only secrets ever injected
-    from a workstation; everything else is an `ExternalSecret`.
-  - `cloudflare-tunnel-id-secret` (network) — the tunnel ID for cloudflared.
+    - `onepassword-connect-credentials-secret` + `onepassword-connect-vault-secret`
+      (security) — break the chicken-and-egg: External Secrets needs 1Password Connect,
+      and Connect needs its credentials. These two are the only secrets ever injected
+      from a workstation; everything else is an `ExternalSecret`.
+    - `cloudflare-tunnel-id-secret` (network) — the tunnel ID for cloudflared.
 - **CRDs** — [`bootstrap/helmfile/crds.yaml`](../bootstrap/helmfile/crds.yaml) renders
   (never installs) envoy-gateway, grafana-operator, and prometheus-operator-crds with
   `--include-crds` and pipes only the `CustomResourceDefinition` documents to
-  `kubectl apply`. Installing CRDs out-of-band means Flux Kustomizations that *consume*
+  `kubectl apply`. Installing CRDs out-of-band means Flux Kustomizations that _consume_
   CRD-backed resources (HTTPRoutes, ServiceMonitors, dashboards) don't all need
   `dependsOn` chains to the operator that ships the CRD.
 
@@ -108,16 +108,16 @@ then applies two things:
 `helmfile sync` on [`bootstrap/helmfile/apps.yaml`](../bootstrap/helmfile/apps.yaml)
 (each release `needs` the previous one):
 
-| # | Release | Why it's in the chain |
-| :-- | :--- | :--- |
-| 1 | **cilium** (kube-system) | CNI — nodes go `Ready`. Post-sync hooks wait for the BGP CRDs, then apply the app's own `networks.yaml` (BGP peering to the UDM Pro + the LB IP pool), which brings the `192.168.10.x` VIPs alive |
-| 2 | **coredns** (kube-system) | Cluster DNS |
-| 3 | **spegel** (kube-system) | P2P registry mirror before the image-pull storm |
-| 4 | **cert-manager** (security) | Post-sync hook applies the ClusterIssuers |
-| 5 | **external-secrets** (security) | ESO operator |
-| 6 | **onepassword-connect** (security) | Consumes the seed Secrets; from here `ExternalSecret`s work |
-| 7 | **flux-operator** (flux-system) | Flux lifecycle manager |
-| 8 | **flux-instance** (flux-system) | The `FluxInstance`: GitRepository `https://github.com/materia-ops/home-ops.git`, path `kubernetes/flux/cluster` |
+| #   | Release                            | Why it's in the chain                                                                                                                                                                             |
+| :-- | :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **cilium** (kube-system)           | CNI — nodes go `Ready`. Post-sync hooks wait for the BGP CRDs, then apply the app's own `networks.yaml` (BGP peering to the UDM Pro + the LB IP pool), which brings the `192.168.10.x` VIPs alive |
+| 2   | **coredns** (kube-system)          | Cluster DNS                                                                                                                                                                                       |
+| 3   | **spegel** (kube-system)           | P2P registry mirror before the image-pull storm                                                                                                                                                   |
+| 4   | **cert-manager** (security)        | Post-sync hook applies the ClusterIssuers                                                                                                                                                         |
+| 5   | **external-secrets** (security)    | ESO operator                                                                                                                                                                                      |
+| 6   | **onepassword-connect** (security) | Consumes the seed Secrets; from here `ExternalSecret`s work                                                                                                                                       |
+| 7   | **flux-operator** (flux-system)    | Flux lifecycle manager                                                                                                                                                                            |
+| 8   | **flux-instance** (flux-system)    | The `FluxInstance`: GitRepository `https://github.com/materia-ops/home-ops.git`, path `kubernetes/flux/cluster`                                                                                   |
 
 ### 6. `kubeconfig` (final)
 
@@ -161,7 +161,7 @@ i.e. the OS, cluster state, and OpenEBS hostpath volumes — and drops the node 
 maintenance mode. Note:
 
 - **Ceph OSDs are not wiped** by the reset. For a genuine from-scratch rebuild, zap the
-  Micron 7450s separately (or let Rook re-adopt the existing cluster — decide *before*
+  Micron 7450s separately (or let Rook re-adopt the existing cluster — decide _before_
   you bootstrap).
 - App data is recoverable regardless via kopiur/Kopia from the NAS.
 - Repeated rebuilds in a short window can hit Docker Hub / Let's Encrypt rate limits;

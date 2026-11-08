@@ -25,8 +25,10 @@ entries:
       redirect_uris:
         - url: https://grafana.materia.wtf/login/generic_oauth
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -70,8 +72,10 @@ entries:
       redirect_uris:
         - url: https://flux-operator.materia.wtf/oauth2/callback
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -115,8 +119,10 @@ entries:
       redirect_uris:
         - url: https://raidscope.materia.wtf/auth
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -158,8 +164,10 @@ entries:
       redirect_uris:
         - url: https://nas.materia.wtf/api/v2.0/auth/oidc_callback
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -190,7 +198,6 @@ entries:
     attrs:
       order: 0
 
-
   # ════════════════════════════════════════════════════════════════════════════
   # Media
   # ════════════════════════════════════════════════════════════════════════════
@@ -210,8 +217,10 @@ entries:
       redirect_uris:
         - url: https://autobrr.materia.wtf/api/auth/oidc/callback
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -256,8 +265,10 @@ entries:
       redirect_uris:
         - url: https://calibre.materia.wtf/login/generic/authorized
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -309,8 +320,10 @@ entries:
       redirect_uris:
         - url: https://qui.materia.wtf/api/auth/oidc/callback
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -356,8 +369,10 @@ entries:
           matching_mode: strict
       # Radarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -402,8 +417,10 @@ entries:
           matching_mode: strict
       # Radarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -448,8 +465,10 @@ entries:
           matching_mode: strict
       # Radarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -492,8 +511,10 @@ entries:
       redirect_uris:
         - url: https://requests.materia.wtf/auth/oidc-callback
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -546,8 +567,10 @@ entries:
       redirect_uris:
         - url: https://shelfmark.materia.wtf/api/auth/oidc/callback
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -601,8 +624,10 @@ entries:
           matching_mode: strict
       # Sonarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -647,8 +672,10 @@ entries:
           matching_mode: strict
       # Sonarr matches OIDCUSERIDENTIFIER against sub
       sub_mode: user_username
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
@@ -691,8 +718,10 @@ entries:
       redirect_uris:
         - url: https://tracearr.materia.wtf/api/v1/auth/oauth2/callback/oidc
           matching_mode: strict
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]

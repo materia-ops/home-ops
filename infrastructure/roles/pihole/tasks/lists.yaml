@@ -11,7 +11,7 @@
         url: http://127.0.0.1/api/lists
         headers: "{{ _pihole_sid_header }}"
       register: _pihole_lists
-      check_mode: false   # read-only probe
+      check_mode: false # read-only probe
 
     - name: Index current and wanted adlists
       ansible.builtin.set_fact:
@@ -26,7 +26,13 @@
         headers: "{{ _pihole_sid_header }}"
         method: POST
         body_format: json
-        body: { address: "{{ item.address }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
+        body:
+          {
+            address: "{{ item.address }}",
+            comment: "{{ item.comment }}",
+            groups: [0],
+            enabled: true,
+          }
         status_code: [200, 201]
       loop: "{{ pihole_adlists }}"
       loop_control: { label: "{{ item.type }} {{ item.address }}" }
@@ -82,7 +88,7 @@
         argv: [pihole-FTL, sqlite3, /etc/pihole/gravity.db, "SELECT address FROM adlist;"]
       register: _replica_lists
       until: (_replica_lists.stdout_lines | sort) == (pihole_adlists | map(attribute='address') | sort)
-      retries: 40   # nebula-sync runs every 10 minutes
+      retries: 40 # nebula-sync runs every 10 minutes
       delay: 30
       changed_when: false
       delegate_to: "{{ pihole_replica }}"
@@ -117,7 +123,7 @@
         url: http://127.0.0.1/api/domains
         headers: "{{ _pihole_sid_header }}"
       register: _pihole_domains
-      check_mode: false   # read-only probe
+      check_mode: false # read-only probe
 
     - name: Index current and wanted domain entries
       ansible.builtin.set_fact:
@@ -132,7 +138,8 @@
         headers: "{{ _pihole_sid_header }}"
         method: POST
         body_format: json
-        body: { domain: "{{ item.domain }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
+        body:
+          { domain: "{{ item.domain }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
         status_code: [200, 201]
       loop: "{{ pihole_domains }}"
       loop_control: { label: "{{ item.type }} {{ item.kind }} {{ item.domain }}" }
@@ -145,7 +152,14 @@
         headers: "{{ _pihole_sid_header }}"
         method: PUT
         body_format: json
-        body: { type: "{{ item.type }}", kind: "{{ item.kind }}", comment: "{{ item.comment }}", groups: [0], enabled: true }
+        body:
+          {
+            type: "{{ item.type }}",
+            kind: "{{ item.kind }}",
+            comment: "{{ item.comment }}",
+            groups: [0],
+            enabled: true,
+          }
       loop: "{{ pihole_domains }}"
       loop_control: { label: "{{ item.type }} {{ item.kind }} {{ item.domain }}" }
       when:
@@ -183,7 +197,7 @@
         url: http://127.0.0.1/api/config/dns
         headers: "{{ _pihole_sid_header }}"
       register: _pihole_dns
-      check_mode: false   # read-only probe
+      check_mode: false # read-only probe
 
     - name: Add missing host records
       ansible.builtin.uri:

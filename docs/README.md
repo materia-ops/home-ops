@@ -2,14 +2,14 @@
 
 Documentation for the **matalos** cluster and this repository.
 
-| Document | Covers |
-| :--- | :--- |
-| [architecture.md](./architecture.md) | System architecture — hardware, network topology, Kubernetes platform, storage, secrets, and the GitOps data flow |
-| [bootstrap.md](./bootstrap.md) | Bootstrap — from bare machines to a Flux-managed cluster: Talos install, the `just bootstrap cluster` pipeline, handoff to Flux, reset/rebuild |
-| [repo-structure.md](./repo-structure.md) | Component structure — how the repository is laid out, the anatomy of an app, reusable components, and repo conventions |
-| [cicd.md](./cicd.md) | CI/CD — every GitHub Actions workflow, the self-hosted runners, Renovate, konflate PR gating, and the companion image-repo pipelines |
-| [repo-workflow.md](./repo-workflow.md) | How to interact with the repository — the change lifecycle, keeping the pipelines green, adding apps and secrets, and upgrade procedures |
-| [operations.md](./operations.md) | Operations — monitoring and logging strategy, reliability, scaling, backup/restore, and the production deployment checklist |
+| Document                                       | Covers                                                                                                                                            |
+| :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [architecture.md](./architecture.md)           | System architecture — hardware, network topology, Kubernetes platform, storage, secrets, and the GitOps data flow                                 |
+| [bootstrap.md](./bootstrap.md)                 | Bootstrap — from bare machines to a Flux-managed cluster: Talos install, the `just bootstrap cluster` pipeline, handoff to Flux, reset/rebuild    |
+| [repo-structure.md](./repo-structure.md)       | Component structure — how the repository is laid out, the anatomy of an app, reusable components, and repo conventions                            |
+| [cicd.md](./cicd.md)                           | CI/CD — every GitHub Actions workflow, the self-hosted runners, Renovate, konflate PR gating, and the companion image-repo pipelines              |
+| [repo-workflow.md](./repo-workflow.md)         | How to interact with the repository — the change lifecycle, keeping the pipelines green, adding apps and secrets, and upgrade procedures          |
+| [operations.md](./operations.md)               | Operations — monitoring and logging strategy, reliability, scaling, backup/restore, and the production deployment checklist                       |
 | [disaster-recovery.md](./disaster-recovery.md) | Disaster recovery — the ordered total-loss runbook: node reset/reimage, `just bootstrap cluster`, Flux convergence, and kopiur/Kopia data restore |
 
 ## Scope notes
@@ -27,5 +27,5 @@ conventional application repo would carry are intentionally **not** here:
 - **Caching strategy** — there is no application cache tier to design. The caching that
   exists (Spegel P2P image mirroring, CI image pre-pull, kubelet image GC tuning) is
   covered in [architecture.md](./architecture.md) and [cicd.md](./cicd.md).
-- **Implementation code** — the manifests *are* the implementation; there is no
+- **Implementation code** — the manifests _are_ the implementation; there is no
   separate application codebase in this repo.

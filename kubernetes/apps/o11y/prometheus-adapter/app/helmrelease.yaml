@@ -16,7 +16,7 @@ spec:
     rules:
       default: false
       external:
-        - seriesQuery: "{__name__=\"probe_success\"}"
+        - seriesQuery: '{__name__="probe_success"}'
           resources:
             namespaced: false
           name:

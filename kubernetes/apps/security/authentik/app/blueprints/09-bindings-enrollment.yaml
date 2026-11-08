@@ -8,10 +8,11 @@ entries:
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-enrollment-invitation"]]
-      stage: !Find [authentik_stages_invitation.invitationstage, [name, "materia-enrollment-invitation"]]
+      stage:
+        !Find [authentik_stages_invitation.invitationstage, [name, "materia-enrollment-invitation"]]
     attrs:
       order: 10
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies
 
   - id: binding_enrollment_prompt
     model: authentik_flows.flowstagebinding
@@ -20,31 +21,34 @@ entries:
       stage: !Find [authentik_stages_prompt.promptstage, [name, "materia-enrollment-prompt"]]
     attrs:
       order: 20
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies
 
   - id: binding_enrollment_user_write
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-enrollment-invitation"]]
-      stage: !Find [authentik_stages_user_write.userwritestage, [name, "materia-enrollment-user-write"]]
+      stage:
+        !Find [authentik_stages_user_write.userwritestage, [name, "materia-enrollment-user-write"]]
     attrs:
       order: 30
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies
 
   - id: binding_enrollment_email_verification
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-enrollment-invitation"]]
-      stage: !Find [authentik_stages_email.emailstage, [name, "materia-enrollment-email-verification"]]
+      stage:
+        !Find [authentik_stages_email.emailstage, [name, "materia-enrollment-email-verification"]]
     attrs:
       order: 40
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies
 
   - id: binding_enrollment_login
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-enrollment-invitation"]]
-      stage: !Find [authentik_stages_user_login.userloginstage, [name, "materia-authentication-login"]]
+      stage:
+        !Find [authentik_stages_user_login.userloginstage, [name, "materia-authentication-login"]]
     attrs:
       order: 100
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies

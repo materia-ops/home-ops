@@ -118,13 +118,13 @@ expected port — see Gotchas.
 
 Configure each app's SMTP settings as:
 
-| Setting     | Value                                                  |
-| ----------- | ------------------------------------------------------ |
-| Host        | `proton-mail-bridge-relay.default.svc.cluster.local`   |
-| Port        | `25`                                                   |
-| Encryption  | None                                                   |
-| Username    | _(leave blank)_                                        |
-| Password    | _(leave blank)_                                        |
+| Setting       | Value                                                |
+| ------------- | ---------------------------------------------------- |
+| Host          | `proton-mail-bridge-relay.default.svc.cluster.local` |
+| Port          | `25`                                                 |
+| Encryption    | None                                                 |
+| Username      | _(leave blank)_                                      |
+| Password      | _(leave blank)_                                      |
 | From / Sender | an address under `materia.wtf`                       |
 
 The relay only accepts connections from the cluster pod network

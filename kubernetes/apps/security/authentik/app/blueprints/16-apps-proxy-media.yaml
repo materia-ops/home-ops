@@ -13,7 +13,8 @@ entries:
       mode: forward_single
       external_host: https://prowlarr.materia.wtf
       skip_path_regex: ^/api
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -48,7 +49,8 @@ entries:
       mode: forward_single
       external_host: https://lidarr.materia.wtf
       skip_path_regex: ^/api
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -83,7 +85,8 @@ entries:
       mode: forward_single
       external_host: https://bazarr.materia.wtf
       skip_path_regex: ^/api
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -118,7 +121,8 @@ entries:
       mode: forward_single
       external_host: https://bazarr-anime.materia.wtf
       skip_path_regex: ^/api
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -152,7 +156,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://sabnzbd.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -186,7 +191,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://qbittorrent.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -220,7 +226,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://notifiarr.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -254,7 +261,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://stash.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -292,7 +300,8 @@ entries:
       mode: forward_single
       external_host: https://readarr.materia.wtf
       skip_path_regex: ^/api
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]

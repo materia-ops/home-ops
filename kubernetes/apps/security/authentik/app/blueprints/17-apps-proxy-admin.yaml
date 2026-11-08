@@ -12,7 +12,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://vmsingle.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -46,7 +47,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://vmalert.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -80,7 +82,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://vmalertmanager.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -114,7 +117,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://status.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -140,8 +144,8 @@ entries:
     attrs:
       order: 0
 
-# Flux Operator moved from forward-auth (proxy provider) to native OIDC —
-# see the flux-operator entries in 15-apps-oidc.yaml.
+  # Flux Operator moved from forward-auth (proxy provider) to native OIDC —
+  # see the flux-operator entries in 15-apps-oidc.yaml.
 
   # ── Proxmox ───────────────────────────────────────────────────────────────────
   - id: provider_pve_0
@@ -151,7 +155,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://pve-0.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -185,7 +190,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://pi-0.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]
@@ -219,7 +225,8 @@ entries:
     attrs:
       mode: forward_single
       external_host: https://pi-1.materia.wtf
-      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "proxy-outpost-reduced"]]

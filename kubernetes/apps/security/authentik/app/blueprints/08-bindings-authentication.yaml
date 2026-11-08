@@ -18,11 +18,12 @@ entries:
     model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf binding_auth_deny
-      policy: !Find [authentik_policies_reputation.reputationpolicy, [name, "materia-reputation-block"]]
+      policy:
+        !Find [authentik_policies_reputation.reputationpolicy, [name, "materia-reputation-block"]]
     attrs:
       order: 0
-      negate: false  # ReputationPolicy passes=True when score <= threshold (bad rep); no negate needed
-      failure_result: true  # policy error → show deny stage (fail safe)
+      negate: false # ReputationPolicy passes=True when score <= threshold (bad rep); no negate needed
+      failure_result: true # policy error → show deny stage (fail safe)
 
   # Order 10: Captcha (remote clients only — i.e. NOT on the LAN)
   - id: binding_auth_captcha
@@ -41,18 +42,22 @@ entries:
       policy: !Find [authentik_policies_expression.expressionpolicy, [name, "materia-lan-check"]]
     attrs:
       order: 0
-      negate: true          # captcha runs only when NOT on the LAN (remote)
-      failure_result: true  # policy error → show captcha (fail safe)
+      negate: true # captcha runs only when NOT on the LAN (remote)
+      failure_result: true # policy error → show captcha (fail safe)
 
   # Order 20: Identification (always shown)
   - id: binding_auth_identification
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
-      stage: !Find [authentik_stages_identification.identificationstage, [name, "materia-authentication-identification"]]
+      stage:
+        !Find [
+          authentik_stages_identification.identificationstage,
+          [name, "materia-authentication-identification"],
+        ]
     attrs:
       order: 20
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies
 
   # Order 25: Passkey (WebAuthn) as first factor — for any client whose identified
   # user has a passkey enrolled. Prompted BEFORE password; on success the password
@@ -63,7 +68,11 @@ entries:
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
-      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, "materia-authentication-passkey-validation"]]
+      stage:
+        !Find [
+          authentik_stages_authenticator_validate.authenticatorvalidatestage,
+          [name, "materia-authentication-passkey-validation"],
+        ]
     attrs:
       order: 25
       policy_engine_mode: all
@@ -75,14 +84,15 @@ entries:
       policy: !Find [authentik_policies_expression.expressionpolicy, [name, "materia-has-passkey"]]
     attrs:
       order: 1
-      failure_result: false  # policy error → skip passkey, fall through to password
+      failure_result: false # policy error → skip passkey, fall through to password
 
   # Order 30: Password — shown only when the identified user has no passkey.
   - id: binding_auth_password
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
-      stage: !Find [authentik_stages_password.passwordstage, [name, "materia-authentication-password"]]
+      stage:
+        !Find [authentik_stages_password.passwordstage, [name, "materia-authentication-password"]]
     attrs:
       order: 30
       policy_engine_mode: all
@@ -95,14 +105,18 @@ entries:
       policy: !Find [authentik_policies_expression.expressionpolicy, [name, "materia-no-passkey"]]
     attrs:
       order: 1
-      failure_result: true  # policy error → require password (fail safe)
+      failure_result: true # policy error → require password (fail safe)
 
   # Order 40: MFA Validation — shown only when the user has no passkey.
   - id: binding_auth_mfa
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
-      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, "materia-authentication-mfa-validation"]]
+      stage:
+        !Find [
+          authentik_stages_authenticator_validate.authenticatorvalidatestage,
+          [name, "materia-authentication-mfa-validation"],
+        ]
     attrs:
       order: 40
       policy_engine_mode: all
@@ -117,7 +131,7 @@ entries:
       policy: !Find [authentik_policies_expression.expressionpolicy, [name, "materia-no-passkey"]]
     attrs:
       order: 1
-      failure_result: true  # policy error → require MFA (fail safe)
+      failure_result: true # policy error → require MFA (fail safe)
 
   # Order 45: Force passkey enrolment for any user who logged in with a password and
   # doesn't yet have one. Once enrolled, materia-no-passkey flips to False so this
@@ -131,7 +145,11 @@ entries:
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
-      stage: !Find [authentik_stages_authenticator_webauthn.authenticatorwebauthnstage, [name, "materia-authenticator-webauthn-setup"]]
+      stage:
+        !Find [
+          authentik_stages_authenticator_webauthn.authenticatorwebauthnstage,
+          [name, "materia-authenticator-webauthn-setup"],
+        ]
     attrs:
       order: 45
       policy_engine_mode: all
@@ -143,17 +161,18 @@ entries:
       policy: !Find [authentik_policies_expression.expressionpolicy, [name, "materia-no-passkey"]]
     attrs:
       order: 1
-      failure_result: false  # policy error → assume passkey exists, skip enrolment
+      failure_result: false # policy error → assume passkey exists, skip enrolment
 
   # Order 100: User Login (always runs)
   - id: binding_auth_login
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
-      stage: !Find [authentik_stages_user_login.userloginstage, [name, "materia-authentication-login"]]
+      stage:
+        !Find [authentik_stages_user_login.userloginstage, [name, "materia-authentication-login"]]
     attrs:
       order: 100
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies
 
   # --- materia-source-authentication ---
   # Used by all OAuth/social sources after the provider has authenticated the user.
@@ -162,7 +181,8 @@ entries:
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-source-authentication"]]
-      stage: !Find [authentik_stages_user_login.userloginstage, [name, "materia-authentication-login"]]
+      stage:
+        !Find [authentik_stages_user_login.userloginstage, [name, "materia-authentication-login"]]
     attrs:
       order: 10
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies

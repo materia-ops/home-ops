@@ -8,7 +8,8 @@ entries:
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
-      stage: !Find [authentik_stages_user_logout.userlogoutstage, [name, "materia-session-invalidation"]]
+      stage:
+        !Find [authentik_stages_user_logout.userlogoutstage, [name, "materia-session-invalidation"]]
     attrs:
       order: 10
-      policy_engine_mode: all  # all([]) = True → always run when no policies
+      policy_engine_mode: all # all([]) = True → always run when no policies

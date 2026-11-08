@@ -159,4 +159,4 @@ spec:
           memory: 1Gi
     prometheus:
       rules:
-        enabled: false  # managed via prometheusrule.yaml with corrected metric names
+        enabled: false # managed via prometheusrule.yaml with corrected metric names
