@@ -52,44 +52,41 @@ jobs:
 
       - name: Extract Images
         id: extract
-        # Private images are dropped: talosctl image pull uses the node's containerd,
-        # which has no GHCR auth, so they hang the runner (they pull fine in-cluster
-        # via the ghcr-pull-secret when the pod actually starts).
+        # Private images are dropped: this check runs anonymously, and they pull
+        # fine in-cluster via the ghcr-pull-secret when the pod actually starts.
         run: |
           echo 'images<<EOF' >> $GITHUB_OUTPUT
           flate diff images -p ./kubernetes/flux/cluster -o json \
             | jq -c 'map(select(startswith("ghcr.io/materia-ops/") | not))' >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
+  # Proves each changed image reference resolves in its registry, on a
+  # GitHub-hosted runner with no credentials. This replaced a talosctl
+  # pre-pull on the self-hosted runner, which needed a Talos credential that
+  # any branch could reach; Spegel covers most of the warm-up it bought.
   pull:
-    # Self-hosted runner: same-repo PRs only. A fork PR must never reach it.
-    if: >-
-      ${{ needs.extract.outputs.images != '[]'
-      && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ needs.extract.outputs.images != '[]' }}
     needs: extract
-    name: Image Pull - Pull Images
-    runs-on: ${{ github.event.repository.name }}-runner
+    name: Image Pull - Verify Images
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         image: ${{ fromJSON(needs.extract.outputs.images) }}
       max-parallel: 4
       fail-fast: false
     steps:
-      - name: Setup Mise
-        uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
-        with:
-          cache: false
-          tool_versions: |
-            # Pinned to the cluster's Talos version (see .mise/config.toml);
-            # renovate tracks it via the custom manager in .renovaterc.json5.
-            talosctl 1.14.5
-
-      - name: Pull Image
+      - name: Verify Image
         env:
           IMAGE: ${{ matrix.image }}
-        # NODE is not set here — it comes from the self-hosted runner's
-        # environment (set on home-ops-runner), not from this workflow.
-        run: talosctl --nodes "$NODE" image pull "$IMAGE"
+        run: |
+          for attempt in 1 2 3; do
+            if docker manifest inspect "$IMAGE" > /dev/null; then
+              echo "resolves: $IMAGE"; exit 0
+            fi
+            sleep $((attempt * 10))
+          done
+          echo "::error title=Image does not resolve::$IMAGE"
+          exit 1
 
   success:
     if: ${{ !cancelled() }}

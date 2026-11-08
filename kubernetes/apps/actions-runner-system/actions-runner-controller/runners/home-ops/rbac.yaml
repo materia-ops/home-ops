@@ -41,15 +41,3 @@ subjects:
   - kind: ServiceAccount
     name: home-ops-runner
     namespace: actions-runner-system
----
-# Talos identity for image-pull.yaml only (talosctl image pull against the
-# pod's own node). Stays os:admin — the ImagePull machine API requires it.
-# With cluster-admin gone, no pod holds node-OS and cluster-wide power at
-# the same time.
-apiVersion: talos.dev/v1alpha1
-kind: ServiceAccount
-metadata:
-  name: home-ops-runner
-spec:
-  roles:
-    - os:admin

@@ -1,14 +1,14 @@
 ---
 # Default-deny egress for the whole runner namespace (security review #4 /
-# infra-automation #3): the cluster's highest-value pods — the Talos-admin
-# CI runner and the privileged dind builder — get an explicit egress
-# allowlist instead of unrestricted pod/node/LAN reach. Ingress is left
-# unenforced (nothing routes to runners; the controller only polls out).
+# infra-automation #3): the cluster's highest-value pods — the Ansible
+# runner (root SSH to the managed hosts) and the privileged dind builder —
+# get an explicit egress allowlist instead of unrestricted pod/node/LAN
+# reach. Ingress is left unenforced (nothing routes to runners; the
+# controller only polls out).
 #
 # Egress is CIDR-based (public 80/443 minus the private ranges), NOT a
 # per-host FQDN allowlist — see the toCIDRSet rule below for why. LAN
-# access is whatever the explicit :22 and :50000 rules grant and nothing
-# more.
+# access is whatever the explicit :22 rule grants and nothing more.
 #
 # If a workflow fails on a blocked destination it will be a private-range
 # or metadata address (by design) — grant it narrowly like the SSH rule,
@@ -41,14 +41,6 @@ spec:
     # Runner <-> job pods within the namespace.
     - toEndpoints:
         - {}
-    # talosctl image pull (image-pull.yaml) to the node apid endpoints.
-    - toEntities:
-        - host
-        - remote-node
-      toPorts:
-        - ports:
-            - port: "50000"
-              protocol: TCP
     # Ansible over SSH to exactly the managed hosts — not the whole LAN.
     # Update this list when the inventory changes.
     - toCIDRSet:
@@ -67,8 +59,8 @@ spec:
     # enumerated, producing recurring "Network unreachable" job failures.
     # The security property that mattered is preserved by the excepts: a
     # compromised runner still cannot reach the LAN or 169.254.169.254.
-    # LAN reach is granted narrowly and explicitly by the :22 and :50000
-    # rules above; nothing else on the private ranges is permitted.
+    # LAN reach is granted narrowly and explicitly by the :22 rule above;
+    # nothing else on the private ranges is permitted.
     - toCIDRSet:
         - cidr: 0.0.0.0/0
           except:

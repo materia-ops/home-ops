@@ -223,7 +223,7 @@ jobs:
   # pays for one runner cold start. Push to main and workflow_dispatch only —
   # it holds credentials and runs on the self-hosted runner, so it must stay
   # off the pull_request path. The steps run in the baked job image, in a pod
-  # separate from the runner (which holds the Talos os:admin mount).
+  # separate from the runner.
   ansible:
     name: Ansible Check + Apply
     needs: [image, plan]

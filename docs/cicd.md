@@ -18,15 +18,14 @@ flowchart TD
     subgraph homeops["home-ops"]
         disp --> ren[Renovate run] --> bump[Bump PR]
         pr[Manual PR] --> checks
-        bump --> checks{"PR checks:<br/>konflate diff + status<br/>Image Pull pre-warm"}
+        bump --> checks{"PR checks:<br/>konflate diff + status<br/>Image Pull verify"}
         checks -->|merge to main| main[main]
     end
     main -->|webhook / poll| flux[Flux reconcile]
     flux --> cluster[(matalos cluster)]
 ```
 
-Nothing deploys from CI directly — CI validates and pre-warms; **Flux is the only
-deployer**.
+Nothing deploys from CI directly — CI only validates; **Flux is the only deployer**.
 
 ## Runners
 
@@ -35,10 +34,11 @@ Two runner types:
 - **GitHub-hosted (`ubuntu-latest`)** for anything that doesn't need LAN access.
 - **Self-hosted (`home-ops-runner`)** — Actions Runner Controller (ARC) in the
   `actions-runner-system` namespace, min 0 / max 3, autoscaling per queued job (scale
-  from zero — no warm runner holds the Talos `os:admin` identity between jobs). These
-  runners are _inside_ the cluster and are granted Talos API access
-  (`kubernetesTalosAPIAccess` allows `actions-runner-system`), which is what lets CI run
-  `talosctl` against the nodes and Ansible against the Pis.
+  from zero). These runners are _inside_ the cluster, which is what lets CI run Ansible
+  against the Pis (egress allows only `:22` to the managed hosts). Only the Ansible job
+  (`ansible.yaml`) uses them, and they hold **no Talos credential**. Until 2026-11 a
+  Talos `os:admin` mount served the image pre-pull, and any same-repo branch could have
+  reached it.
 
 CI secrets follow the same 1Password-first model as the cluster. Workflows load
 credentials with `OP_CI_SERVICE_ACCOUNT_TOKEN`, which belongs to the 1Password service
@@ -65,18 +65,21 @@ action. So:
 
 ## Workflows in this repo
 
-### `image-pull.yaml` — pre-warm images on PRs
+### `image-pull.yaml` — verify changed images on PRs
 
 On every PR touching `kubernetes/**`: [flate](https://github.com/home-operations/flate)
 diffs the rendered Flux state between the PR and main and extracts the _changed_ image
-references, then a matrix job on the self-hosted runners runs
-`talosctl image pull` on the nodes. By the time the PR merges and Flux rolls the
-workload, the image is already on disk — no pull latency, no rollout stuck on a slow
-registry.
+references. A matrix job on GitHub-hosted runners then checks that each one resolves
+(`docker manifest inspect`, anonymous, with retries). A typo'd tag or digest fails the
+PR instead of the rollout.
 
-Private `ghcr.io/materia-ops/*` images are filtered out: the node's containerd has no
-GHCR auth for anonymous pulls (they pull fine at pod start via `ghcr-pull-secret`), so
-including them would hang the runner. (The filter also covered `ghcr.io/malpractis/*`
+The job used to `talosctl image pull` each image onto the nodes from the self-hosted
+runner, to pre-warm them. That needed a Talos `os:admin` credential on a runner any
+same-repo branch could target, so it was retired in 2026-11. Spegel's P2P mirror covers
+most of the warm-up: only the first node to pull a new image waits on the registry.
+
+Private `ghcr.io/materia-ops/*` images are filtered out: the check runs anonymously
+(they pull fine at pod start via `ghcr-pull-secret`). (The filter also covered `ghcr.io/malpractis/*`
 during the [GHCR namespace migration](#ghcr-namespace-migration-malpractis--materia-ops);
 that prefix was dropped once nothing referenced it.)
 

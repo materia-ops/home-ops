@@ -8,20 +8,20 @@ matalos cluster.
 The observability stack lives in the `o11y` namespace, built on VictoriaMetrics rather
 than kube-prometheus-stack:
 
-| Concern | Component | Notes |
-| :--- | :--- | :--- |
-| Metrics TSDB | VictoriaMetrics (`vmsingle`) | 90-day retention, 50 Gi on `ceph-block` |
-| Scraping | `vmagent` + prometheus-operator CRDs | Apps expose `ServiceMonitor`/`PodMonitor`; the operator CRDs are installed standalone |
-| Alert evaluation | `vmalert` | `PrometheusRule` CRs, colocated with apps in their directories |
-| Alert delivery | Alertmanager → **Pushover** | Flux reconciliation errors route here too (notification-controller → Alertmanager provider) |
-| Alert hygiene | silence-operator | Declarative, Git-managed silences |
-| Logs | VictoriaLogs | Cluster log aggregation |
-| Dashboards | Grafana (grafana-operator) | Dashboards as `GrafanaDashboard` CRs next to the app that owns them |
-| Uptime / synthetic | gatus-sidecar (bundles gatus) | Endpoints declared via `gatus.home-operations.com/endpoint` annotations on HTTPRoutes; external checks resolve via public DNS (`1.1.1.1`) so they test the real public path |
-| Blackbox probes | blackbox-exporter | ICMP/TCP/HTTP probes for non-cluster targets |
-| Hardware | smartctl-exporter, node-exporter, drm-exporter (iGPU) | Disk health, node metrics, GPU utilisation |
-| Network gear | unpoller | UniFi controller metrics |
-| Pi-holes | Ansible `observability` play | Exporters on `pi-0`/`pi-1` feed the same stack |
+| Concern            | Component                                             | Notes                                                                                                                                                                       |
+| :----------------- | :---------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metrics TSDB       | VictoriaMetrics (`vmsingle`)                          | 90-day retention, 50 Gi on `ceph-block`                                                                                                                                     |
+| Scraping           | `vmagent` + prometheus-operator CRDs                  | Apps expose `ServiceMonitor`/`PodMonitor`; the operator CRDs are installed standalone                                                                                       |
+| Alert evaluation   | `vmalert`                                             | `PrometheusRule` CRs, colocated with apps in their directories                                                                                                              |
+| Alert delivery     | Alertmanager → **Pushover**                           | Flux reconciliation errors route here too (notification-controller → Alertmanager provider)                                                                                 |
+| Alert hygiene      | silence-operator                                      | Declarative, Git-managed silences                                                                                                                                           |
+| Logs               | VictoriaLogs                                          | Cluster log aggregation                                                                                                                                                     |
+| Dashboards         | Grafana (grafana-operator)                            | Dashboards as `GrafanaDashboard` CRs next to the app that owns them                                                                                                         |
+| Uptime / synthetic | gatus-sidecar (bundles gatus)                         | Endpoints declared via `gatus.home-operations.com/endpoint` annotations on HTTPRoutes; external checks resolve via public DNS (`1.1.1.1`) so they test the real public path |
+| Blackbox probes    | blackbox-exporter                                     | ICMP/TCP/HTTP probes for non-cluster targets                                                                                                                                |
+| Hardware           | smartctl-exporter, node-exporter, drm-exporter (iGPU) | Disk health, node metrics, GPU utilisation                                                                                                                                  |
+| Network gear       | unpoller                                              | UniFi controller metrics                                                                                                                                                    |
+| Pi-holes           | Ansible `observability` play                          | Exporters on `pi-0`/`pi-1` feed the same stack                                                                                                                              |
 
 **Strategy:** every app ships its own monitors, rules, and dashboards in its own
 directory (the standard app pattern), so observability arrives with the deployment
@@ -51,7 +51,7 @@ Defence in depth, roughly outermost-in:
   snapshots.
 - **DNS resilience** — two Pi-holes on separate Pis; Ansible rolls DNS changes
   one Pi at a time with a resolve check between hosts.
-- **Pi-hole API access** � three layers. FTL's `webserver.acl` (Ansible `pihole` role)
+- **Pi-hole API access** — three layers. FTL's `webserver.acl` (Ansible `pihole` role)
   serves the web UI and API only to localhost and the k8s node IPs, which pod egress is
   masqueraded to. The role reads those IPs from the Talos node files, the single
   source for node IPs. The `pihole-api` CiliumClusterwideNetworkPolicy then denies ports
@@ -108,7 +108,7 @@ automation in place:
 - **Scale-to-zero** — the `zeroscaler` component (HPA + `HPAScaleToZero` feature gate)
   parks idle workloads at 0 replicas; prometheus-adapter feeds custom metrics.
 - **CI runners** — ARC scales `home-ops-runner` 0→3 with queue depth (no warm runner
-  holds the Talos `os:admin` identity between jobs).
+  idles between jobs; the runners hold no Talos credential).
 - **Adding a node** — one new file in `talos/nodes/<role>/`, a switch port trunked for
   VLANs 20/70/90, and `just talos apply-node`; Ceph picks up a Micron 7450 OSD via the
   model filter automatically.
@@ -123,7 +123,7 @@ For routine changes the PR checks are the checklist. For **significant** changes
 **Before merge**
 
 - [ ] konflate diff read and matches intent — no surprise deletions or unrelated churn
-- [ ] Image Pull check green (images exist and are pullable)
+- [ ] Image Pull check green (every changed image reference resolves)
 - [ ] Stateful app? Confirm a fresh snapshot exists (or trigger one with `just kube
       snapshot-kopiur`) before a risky upgrade
 - [ ] DB migration in the release? Plan is roll-forward; don't merge right before
