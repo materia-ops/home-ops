@@ -210,6 +210,8 @@ jobs:
         password: ${{ github.token }}
     defaults:
       run:
+        # Job containers default to sh; the steps use bash arrays.
+        shell: bash
         working-directory: infrastructure
     env:
       # The checkout can be world-writable inside the job pod, and Ansible
