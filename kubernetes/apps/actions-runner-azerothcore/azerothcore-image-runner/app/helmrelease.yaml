@@ -17,29 +17,22 @@ spec:
     controllerServiceAccount:
       name: actions-runner-controller
       namespace: actions-runner-system
-    # Hand-written dind spec: containerMode.type: dind can't set the dind
-    # container's resources, and the compile runs INSIDE dockerd. The workflow's
-    # BUILD_JOBS=4 matches CPU limit 5 (nproc in the container reports host cores).
+    # The compile runs inside buildkitd. The workflow's BUILD_JOBS=4 matches its
+    # CPU limit of 5 (nproc in the container reports host cores).
     template:
       spec:
-        # Privileged dind: the pod must not carry a Kubernetes API credential.
+        # Builds run PR code: the pod must not carry a Kubernetes API credential.
         automountServiceAccountToken: false
-        initContainers:
-          - name: init-dind-externals
-            image: ghcr.io/actions/actions-runner:2.338.2@sha256:759a1d94a15b05941aba5196974ff43fe15b4cbba29b694b35cbc32a1166b232
-            command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
-            volumeMounts:
-              - name: dind-externals
-                mountPath: /home/runner/tmpDir
         containers:
           - name: runner
             image: ghcr.io/actions/actions-runner:2.338.2@sha256:759a1d94a15b05941aba5196974ff43fe15b4cbba29b694b35cbc32a1166b232
-            command: ["/home/runner/run.sh"]
-            env:
-              - name: DOCKER_HOST
-                value: unix:///var/run/docker.sock
-              - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
-                value: "120"
+            # Don't take a job until buildkitd is listening, for up to 120s.
+            command:
+              [
+                "bash",
+                "-c",
+                "for _ in {1..120}; do (exec 3<>/dev/tcp/127.0.0.1/1234) 2>/dev/null && break; sleep 1; done; exec /home/runner/run.sh",
+              ]
             resources:
               requests:
                 cpu: 250m
@@ -50,38 +43,6 @@ spec:
             volumeMounts:
               - name: work
                 mountPath: /home/runner/_work
-              - name: dind-sock
-                mountPath: /var/run
-          - name: dind
-            image: docker:29-dind@sha256:08a98015fce594af7c382883bea080ea206de74402a95da9dc52b6428c8cd121
-            args:
-              - dockerd
-              - --host=unix:///var/run/docker.sock
-              - --group=$(DOCKER_GROUP_GID)
-            env:
-              # GID of the docker group in the runner image above - only
-              # valid for that digest; re-check when the runner pin moves.
-              - name: DOCKER_GROUP_GID
-                value: "123"
-            securityContext:
-              privileged: true
-            resources:
-              requests:
-                cpu: "2"
-                memory: 4Gi
-              limits:
-                cpu: "5"
-                memory: 12Gi
-            volumeMounts:
-              - name: work
-                mountPath: /home/runner/_work
-              - name: dind-sock
-                mountPath: /var/run
-              - name: dind-externals
-                mountPath: /home/runner/externals
-              - name: docker-graph
-                mountPath: /var/lib/docker
-          # Rootless builder; replaces dind once a trial build has passed on it.
           - name: buildkitd
             image: docker.io/moby/buildkit:v0.34.2-rootless@sha256:c8252268760e1baba80780d63d738ef9f260fb7c7c0973c78494cb9ddd99eda1
             args:
@@ -95,8 +56,8 @@ spec:
                 type: Unconfined
             resources:
               requests:
-                cpu: 250m
-                memory: 512Mi
+                cpu: "2"
+                memory: 4Gi
               limits:
                 cpu: "5"
                 memory: 12Gi
@@ -110,10 +71,3 @@ spec:
           - name: work
             emptyDir:
               sizeLimit: 10Gi
-          - name: dind-sock
-            emptyDir: {}
-          - name: dind-externals
-            emptyDir: {}
-          - name: docker-graph
-            emptyDir:
-              sizeLimit: 80Gi

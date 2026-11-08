@@ -39,12 +39,12 @@ Two runner types:
   (`ansible.yaml`) uses them, and they hold **no Talos credential**. Until 2026-11 a
   Talos `os:admin` mount served the image pre-pull, and any same-repo branch could have
   reached it.
-- **Self-hosted (`azerothcore-image-runner`)** — the privileged dind builder for the
+- **Self-hosted (`azerothcore-image-runner`)** — the rootless BuildKit builder for the
   azerothcore-image repo, including its PR trial builds. It runs alone in the
   `actions-runner-azerothcore` namespace with no Kubernetes API token, egress limited to
-  DNS and public 80/443, and no github-bot key in the namespace. Privileged dind is
-  still root on its node, so that isolation limits what it can reach by network, not
-  what a compromised build could read from the node itself.
+  DNS and public 80/443, and no github-bot key in the namespace. No container in the pod
+  is privileged: `buildkitd` runs as uid 1000 in a user namespace, with seccomp
+  `Unconfined` because rootless BuildKit needs it.
 
 CI secrets follow the same 1Password-first model as the cluster. Workflows load
 credentials with `OP_CI_SERVICE_ACCOUNT_TOKEN`, which belongs to the 1Password service
