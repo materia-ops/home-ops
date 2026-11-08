@@ -8,8 +8,6 @@ spec:
   dependsOn:
     - name: actions-runner-controller
       namespace: actions-runner-system
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
   interval: 1h
   path: ./kubernetes/apps/actions-runner-ansible/home-ops-runner/app
   prune: true

@@ -60,13 +60,16 @@ jobs:
           path: _pr
           persist-credentials: false
 
+      # Claude loads these when it reads nearby files.
+      - name: Strip agent config from the PR checkout
+        run: find _pr \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name AGENTS.md -o -name .claude \) -prune -exec rm -rf {} +
+
       - name: Collect Upgrade Evidence
         continue-on-error: true
         timeout-minutes: 3
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        # rm first: a PR must not be able to ship a forged evidence file.
         run: |
           rm -rf "$GITHUB_WORKSPACE/.review-evidence"
           python3 .github/scripts/upgrade_evidence.py \
