@@ -1,4 +1,4 @@
-# SSH host keys, keyed by inventory name (HostKeyAlias); see docs/cicd.md.
+# Keyed by inventory name (HostKeyAlias), not address.
 pi-0 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPMSvB+KB0daPaqtxIV1Vi2+CzCDG0xu4C0EpyRt5BMu
 pi-1 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKYhI+RhABC9oDGW4/PgaM8Ek0aGQh09tyFo3kDa0Qgv
 pve-0 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP0NLgEkufk9jQHLCTL6io9JAyuLCraQH4GXZXL7+FvP
