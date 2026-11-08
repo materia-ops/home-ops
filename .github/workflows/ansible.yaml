@@ -203,6 +203,7 @@ jobs:
           fi
           SEL=""
           if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/dnscrypt_proxy/'; then SEL="${SEL:+$SEL,}dnscrypt"; fi
+          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/network/'; then SEL="${SEL:+$SEL,}network"; fi
           if printf '%s\n' "$FILES" | grep -qE '^(infrastructure/roles/pihole/|talos/nodes/)'; then SEL="${SEL:+$SEL,}pihole"; fi
           if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/unattended_upgrades/'; then SEL="${SEL:+$SEL,}unattended_upgrades"; fi
           if printf '%s\n' "$FILES" | grep -qE '^infrastructure/inventory/group_vars/'; then SEL="${SEL:+$SEL,}observability"; fi
