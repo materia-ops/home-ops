@@ -10,3 +10,8 @@ network_v6_address: fdbd:4657:e91a:20::2/64
 
 # Pi-hole web UI (managed by the `pihole` role) — envoy-internal route hostname
 pihole_webserver_domain: pi-1.materia.wtf
+
+# Unattended upgrades (managed by the `unattended_upgrades` role) — pi-1 reboots
+# an hour before pi-0 so both Pi-holes are never down at once.
+unattended_upgrades_upgrade_time: "03:00"
+unattended_upgrades_reboot_time: "03:30"

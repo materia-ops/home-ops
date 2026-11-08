@@ -13,7 +13,7 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 | [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization) |
 | [`talos/`](../talos) | Talos machine configuration (minijinja templates + per-node overrides) |
 | [`bootstrap/`](../bootstrap) | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources |
-| [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability, pihole) |
+| [`infrastructure/`](../infrastructure) | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability, pihole; unattended upgrades on the Pis and `pve-0`) |
 | [`.github/workflows/`](../.github/workflows) | CI — see [cicd.md](./cicd.md) |
 | [`.mise/`](../.mise/config.toml) | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment |
 | [`.justfile`](../.justfile) | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules |
@@ -127,8 +127,11 @@ from the same files Flux reconciles. Fully documented in [bootstrap.md](./bootst
 (serial, one Pi at a time, with a resolve check), a `pihole` play (the FTL settings
 in `pihole_ftl_config` plus `webserver.domain`, serial with a web UI check; on pi-0 it
 also enforces the adlists and domain entries and ensures the hand-made local DNS records
-in `host_vars/pi-0.yaml`, which nebula-sync copies to pi-1, then rebuilds gravity on both)
-and an `observability` play. Secrets
+in `host_vars/pi-0.yaml`, which nebula-sync copies to pi-1, then rebuilds gravity on both),
+an `observability` play, and an `unattended_upgrades` play that configures apt's own
+timers on the Pis and `pve-0` (the Pis take all Debian/Raspberry Pi updates and reboot on
+their own, staggered an hour apart; `pve-0` takes Debian security updates only and never
+reboots, so Proxmox upgrades stay manual). Secrets
 come from 1Password via the `op` CLI. CI runs check mode on PRs and applies on merge —
 see [cicd.md](./cicd.md).
 

@@ -85,3 +85,10 @@
   any_errors_fatal: true
   roles:
     - role: pihole
+
+- name: Configure unattended upgrades
+  hosts: raspberry_pis:proxmox
+  become: true
+  tags: ["unattended_upgrades"]
+  roles:
+    - role: unattended_upgrades
