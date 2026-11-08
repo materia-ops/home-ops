@@ -188,18 +188,33 @@
       allowedVersions: "/^18\\./",
       automerge: false,
     },
+    // The next two holds are coupled: both lift in ONE PR, once a
+    // prometheus.prometheus release's meta/runtime.yml requires_ansible
+    // admits 2.22 (the note below flags every prometheus.prometheus bump).
     {
-      description: "Hold the ansible job image's Python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed); lift together with the ansible-core hold below",
+      description: "Hold the ansible job image's Python at 3.14 — ansible-core 2.21 crashes on import under 3.15 (dataclasses._is_type removed). Coupled hold: lifts together with the ansible-core hold, when a prometheus.prometheus release's meta/runtime.yml requires_ansible admits 2.22 (then also bump --python-version in the requirements.txt uv header)",
       matchManagers: [ "dockerfile" ],
       matchFileNames: [ "infrastructure/Dockerfile" ],
       matchPackageNames: [ "/(^|/)python$/" ],
       allowedVersions: "<3.15",
     },
     {
-      description: "Hold ansible-core at 2.21 — prometheus.prometheus 0.30.x declares requires_ansible <=2.21.99; lift once a release supports 2.22",
-      matchFileNames: [ "infrastructure/requirements.{in,txt}" ],
+      // pip-compile reports the dep against requirements.in, with the .txt
+      // lock in lockFiles; matchFileNames checks both.
+      description: "Hold ansible-core at 2.21 — prometheus.prometheus 0.30.x declares requires_ansible <=2.21.99 in meta/runtime.yml. Coupled hold: lifts together with the Python <3.15 hold, when a prometheus.prometheus release's requires_ansible admits 2.22",
+      matchManagers: [ "pip-compile" ],
+      matchFileNames: [ "infrastructure/requirements.in" ],
       matchPackageNames: [ "ansible-core" ],
       allowedVersions: "<2.22",
+    },
+    {
+      description: "Flag every prometheus.prometheus bump: it is the unlock trigger for the coupled ansible-core <2.22 / Python <3.15 holds",
+      matchManagers: [ "ansible-galaxy" ],
+      matchFileNames: [ "infrastructure/requirements.yaml" ],
+      matchPackageNames: [ "prometheus.prometheus" ],
+      prBodyNotes: [
+        "🔓 **prometheus.prometheus gates the ansible-core and Python holds.** Check `requires_ansible` in this release's [`meta/runtime.yml`](https://github.com/prometheus-community/ansible/blob/{{{newVersion}}}/meta/runtime.yml). If it admits ansible-core 2.22, open a follow-up that lifts **both** coupled holds in `.renovaterc.json5` (ansible-core `<2.22` and the job image's Python `<3.15`) and bumps `--python-version` in the `infrastructure/requirements.txt` uv header. See [docs/cicd.md](https://github.com/materia-ops/home-ops/blob/main/docs/cicd.md#ansibleyaml--infrastructure-configuration).",
+      ],
     },
     {
       description: "The lock is pip-compile's; pip_requirements would bump its transitive pins without regenerating hashes",
