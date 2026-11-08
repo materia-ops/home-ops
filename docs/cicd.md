@@ -99,32 +99,53 @@ for the case a disabled schedule never runs at all. To trial a newer runner by
 hand, dispatch the workflow with the `version` input; the runbook is in
 [operations.md](operations.md#known-failure-modes-and-their-runbooks).
 
-### `ansible.yaml` — Pi-hole infrastructure
+### `ansible.yaml` — infrastructure configuration
+
+Configures the hosts outside the cluster from `infrastructure/`: the two Pi-holes
+(`pi-0`, `pi-1`: networking, dnscrypt-proxy, Pi-hole) and the Proxmox host `pve-0`
+(unattended upgrades), plus the observability play (node and smartctl exporters) on
+every host.
 
 The toolchain (Python, `ansible-core`, the Galaxy collections, `op`) is baked into a
-job image built from `infrastructure/Dockerfile` and published as
-`ghcr.io/materia-ops/home-ops-ansible:<hash>`, where the tag is a hash of the Dockerfile
-and the two requirements files. Renovate bumps those pins like any other dependency, and
-a changed hash builds a fresh image on the next run.
+job image built from `infrastructure/Dockerfile` and published to the **private** GHCR
+package `ghcr.io/materia-ops/home-ops-ansible`. The tag is the first 16 hex characters
+of a hash of the Dockerfile, `requirements.txt` and `requirements.yaml`, so the image is
+rebuilt only when one of those changes:
 
-PRs run a credential-less **Validate** on a GitHub-hosted runner: build the image
-(unpushed) and syntax-check the playbook in it. The self-hosted job is gated off the
-`pull_request` path entirely. On push to `main` (and manual dispatch):
+- `<hash16>` — built by `main`'s own run of this workflow, with a build-provenance
+  attestation. `main` reuses an existing tag only after `gh attestation verify` proves
+  it was built on `refs/heads/main`. Any ref with `packages: write` can overwrite a tag,
+  so a tag without that attestation is rebuilt.
+- `dev-<hash16>` — built by a dispatch on any other ref. It is not attested, and `main`
+  never reads it.
 
-1. **Image** — on a GitHub-hosted runner, builds and pushes the job image only if its
-   tag is missing, and hands on the digest-pinned reference.
+Nothing prunes old tags yet, so every input change leaves its previous image (and its
+attestation) behind in the package.
+
+PRs run a credential-less **Validate** on a GitHub-hosted runner. When the image inputs
+are unchanged, it pulls the published `<hash16>` image. When they changed, or for a
+fork without GHCR access, it builds the image locally (unpushed). It then syntax-checks
+the playbook in the image. The self-hosted job is gated off the `pull_request` path
+entirely. On push to `main` (and manual dispatch):
+
+1. **Image** — on a GitHub-hosted runner, reuses the tag if it exists (and, on `main`,
+   is attested), otherwise builds, pushes and attests it, and hands on the
+   digest-pinned `tag@sha256` reference.
 2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
    `roles/pihole/` or `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
-   `inventory/group_vars/` → `observability`, structural
-   files → everything). On push, the diff runs from the commit of the **last successful
-   push run on `main`**, not from the push's own `before`, so a cancelled or failed run's
-   changes fold into the next one; with no usable diff (no earlier success, an
-   unexpected compare result, the 300-file API cap, an API error) it runs everything.
-   A dispatch takes its `tags` input verbatim.
-3. **Check + Apply** — one job on the self-hosted runner (LAN access to the Pis),
+   `inventory/group_vars/` → `observability`, structural files (playbook, inventory,
+   requirements, `ansible.cfg`, Dockerfile) → everything). On push, the diff runs from
+   the commit of the **last successful push run on `main`**, not from the push's own
+   `before`, so a cancelled or failed run's changes fold into the next one; with no
+   usable diff (no earlier success, an unexpected compare result, the 300-file API cap,
+   an API error) it runs everything. A dispatch takes its `tags` input verbatim, and a
+   blank value means everything.
+3. **Check + Apply** — one job on the self-hosted runner (LAN access to the hosts),
    running in the job image, so a run pays for one runner cold start and no installs:
-   `ansible-playbook --check --diff` against the live Pis, then Apply if Check passed,
-   on push to `main` (or manual dispatch with `check_only=false`).
+   `ansible-playbook --check --diff` against the live hosts, then Apply if Check passed,
+   on push to `main` (or manual dispatch on `main` with `check_only=false`). Check and
+   Apply are steps of the same job, so **re-running a failed Apply re-runs Check too**.
+   A failed Check never reaches Apply.
 
 Only one run touches the hosts at a time: the Check + Apply job sits in a single
 `ansible-hosts` concurrency group shared by every event and branch, check-only
@@ -140,6 +161,30 @@ does that lookup for both Plan and this guard.
 The dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a verification
 between hosts (a DNS resolve; the web UI answering on its ingress hostname), so a bad
 change can only take out one Pi-hole before the rollout stops.
+
+**Dependency updates.** `requirements.in` pins `ansible-core`. Renovate's `pip-compile`
+manager bumps that pin and regenerates `requirements.txt`, a `uv pip compile
+--generate-hashes` lock that pip installs with `--require-hashes`. The plain
+`pip_requirements` manager is disabled for the lock, because it would bump the
+transitive pins without regenerating their hashes. Lock maintenance runs monthly
+(first of the month) to pick up transitive fixes. Every image input (the Dockerfile's
+base images, both requirements files) is grouped into one **ansible job image** PR,
+opened weekly before 6am Monday, because each image change triggers a full Apply on
+merge.
+
+**Coupled holds.** Two `allowedVersions` holds in `.renovaterc.json5` keep the image on
+a working combination:
+
+- **`ansible-core` < 2.22.** prometheus.prometheus 0.30.x declares
+  `requires_ansible: ">=2.14.0,<=2.21.99"` in its `meta/runtime.yml`.
+- **Python < 3.15** (the Dockerfile's `python` base image). ansible-core 2.21 crashes
+  on import under 3.15, because `dataclasses._is_type` was removed.
+
+The Python hold exists only because of the ansible-core one, so the two lift together.
+The trigger is a prometheus.prometheus release whose `requires_ansible` admits 2.22.
+Every prometheus.prometheus bump PR carries a note to check that field. When it does
+admit 2.22, one PR removes both holds and bumps `--python-version` in the
+`requirements.txt` uv header, which Renovate's regeneration otherwise keeps at 3.14.
 
 ### `tag.yaml` — monthly repo tag
 
