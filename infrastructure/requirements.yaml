@@ -1,4 +1,5 @@
 collections:
-  - name: prometheus.prometheus
   - name: community.general
     version: "14.0.0"
+  - name: prometheus.prometheus
+    version: "0.30.2"
