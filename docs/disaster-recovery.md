@@ -191,6 +191,122 @@ archive back on the LAN first:
 4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
    postgres-<app>-b2-sync -n <ns>` and patch `suspend` back to `false`.
 
+#### Restore drill
+
+To prove the backups restore without touching the production clusters, restore into a
+throwaway namespace and compare the result with production in `psql`. Both sources are
+covered: Garage (optionally to a point in time) and B2 (the "Garage is lost" path above).
+The test is applied by hand with `kubectl` and nothing in it is committed. Last run
+2026-11-08: tracearr and authentik, from both sources, about 3 minutes each.
+
+> [!CAUTION]
+> Do **not** reuse `components/cnpg/restore` for a drill. It is built for in-place
+> recovery, so it keeps `components/cnpg/app`'s WAL archiver pointed at the production
+> bucket. A drill cluster must only ever *read* the archive.
+
+The drill's own manifests hold the safety rails:
+
+- **No `spec.plugins` on the Cluster.** Without it there is no WAL archiver, so nothing is
+  written to the bucket. The plugin appears only under `externalClusters`, as the recovery
+  source.
+- **No `retentionPolicy` on the ObjectStore**, so the drill can never prune backups.
+- **Its own namespace and cluster name**, with `serverName: postgres-<app>` pointing at
+  production's archive prefix.
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: restore-test
+---
+# plus an ExternalSecret postgres-backup-secret: copy components/cnpg/app/externalsecret-backup.yaml
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: postgres-<app>-backup
+  namespace: restore-test
+spec:
+  configuration:            # copy components/cnpg/app/objectstore.yaml's configuration;
+    destinationPath: s3://postgres-<app>-backup   # drop data.encryption
+    endpointURL: http://garage.internal:3900
+    # s3Credentials, wal, data: as in the component
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_DEFAULT_REGION
+        value: garage
+  # NO retentionPolicy
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: restore-<app>
+  namespace: restore-test
+spec:
+  instances: 1
+  imageName: <the app's current imageName>   # TimescaleDB apps: also its preload + parameters
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+  bootstrap:
+    recovery:
+      source: origin
+      database: <app>
+      owner: <app>
+      # recoveryTarget:
+      #   targetTime: "2026-11-08T15:09:00+11:00"   # optional PITR; omit for latest
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: postgres-<app>-backup
+          serverName: postgres-<app>
+  # NO plugins: block
+```
+
+Wait with `kubectl wait -n restore-test cluster/restore-<app> --for=condition=Ready`, then run
+the same catalog and row-count queries against `restore-<app>-1` and the production primary
+(`kubectl exec -i ... -c postgres -- psql -U postgres -X < queries.sql`). A point-in-time
+target is the strongest check: pick a moment just before a known change and confirm the
+restore shows the state before it. Expect a restored TimescaleDB cluster to start running its
+background jobs immediately. That is harmless, since without an archiver its writes stay on
+its own disk.
+
+**From B2.** barman cannot read the rclone-crypt copy itself, so do in-cluster what step 3
+above does, with a scratch endpoint standing in for a rebuilt Garage:
+
+1. In `restore-test`, run a pod from the `b2-sync` image with two containers that share an
+   `emptyDir`. The loader runs `sleep infinity` with the b2-sync CronJob's `RCLONE_CONFIG_B2*`
+   env, plus an ExternalSecret for the `cnpg` item's `b2-crypt-*` and `b2-key-*` fields. The
+   server runs `rclone serve s3 /data --addr :8080 --auth-key "$ACCESS_KEY_ID,$SECRET_ACCESS_KEY"`
+   with `postgres-backup-secret` as its env, so barman's usual keys work against it. Give the
+   pod a Service on port 8080.
+2. Copy only what a latest restore needs: the newest `base/<backupId>/`, every
+   `wals/<timeline+high>/` directory from that backup's `beginWal` onward (both are in
+   `kubectl get backup -o custom-columns=ID:.status.backupId,BEGIN:.status.beginWal`), and the
+   timeline history files:
+
+   ```sh
+   kubectl exec -n restore-test b2-s3 -c loader -- rclone copy \
+     b2crypt:postgres-<app>-backup/postgres-<app> /data/postgres-<app>-backup/postgres-<app> \
+     --include 'base/<backupId>/**' --include 'wals/<dir>/**' --include 'wals/*.history.gz'
+   ```
+
+   History files are `.history.gz`, not `.history`. A cluster that has failed over (authentik
+   is on timeline 0x2B) will not recover without them.
+3. Apply the ObjectStore and Cluster above with `endpointURL:
+   http://b2-s3.restore-test.svc:8080`. The bucket is the directory name under `/data`.
+
+The B2 copy is only as current as the last hourly sync (`:20`).
+
+**Teardown:** `kubectl delete ns restore-test`. openebs-hostpath volumes are deleted with
+their PVCs. Afterwards, check that production's ObjectStore `status.serverRecoveryWindow` is
+unchanged.
+
+> [!TIP]
+> From Git Bash, prefix `kubectl exec` with `MSYS_NO_PATHCONV=1`, or arguments like `/data`
+> are rewritten into Windows paths. With it set, `KUBECONFIG` must be a Windows-form path.
+
 ## Verification
 
 At each stage, from [bootstrap.md](./bootstrap.md#verification) and the
