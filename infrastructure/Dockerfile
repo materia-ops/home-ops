@@ -9,10 +9,7 @@ FROM docker.io/library/python:3.14-slim-trixie@sha256:af8a5aa14780025dbfbcfbc81b
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl git openssh-client \
-    && rm -rf /var/lib/apt/lists/* \
-    # The workflow passes ansible_python_interpreter=/usr/bin/python3 for the
-    # Pis; it also applies to delegate_to: localhost tasks run in here.
-    && ln -s /usr/local/bin/python3 /usr/bin/python3
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=op /usr/local/bin/op /usr/local/bin/op
 

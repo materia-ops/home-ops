@@ -4,10 +4,14 @@ all:
     ansible_become: true # Always use sudo
   children:
     proxmox:
+      vars: &remote_vars
+        # Per-group, not in all: implicit localhost would inherit it.
+        ansible_python_interpreter: /usr/bin/python3
       hosts:
         pve-0:
           ansible_host: pve-0.internal
     raspberry_pis:
+      vars: *remote_vars
       # Order matters for serial rollouts: replica (pi-1) before primary (pi-0)
       hosts:
         pi-1:
