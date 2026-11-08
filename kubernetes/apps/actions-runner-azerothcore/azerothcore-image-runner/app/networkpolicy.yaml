@@ -1,5 +1,5 @@
 ---
-# Privileged dind: DNS and the public internet only, no apiserver, node or LAN.
+# Builds run PR code: DNS and the public internet only, no apiserver, node or LAN.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
