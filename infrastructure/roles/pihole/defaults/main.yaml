@@ -52,9 +52,10 @@ pihole_op_item: pihole
 # Empty = leave that part alone.
 pihole_adlists: [] # {type, comment, address}; authoritative
 pihole_domains: [] # {type, kind, comment, domain}; authoritative
-pihole_local_hosts: [] # "ip name" entries ensured in dns.hosts
-pihole_local_cnames: [] # "alias,target" entries ensured in dns.cnameRecords
+pihole_local_hosts: [] # "ip name" entries in dns.hosts; authoritative
+pihole_local_cnames: [] # "alias,target" entries in dns.cnameRecords; authoritative
 pihole_node_records: false # also ensure "<ip> <node>[.<dns.domain>]" per k8s node
+pihole_external_dns_zones: ["materia.wtf"] # records under these belong to external-dns; never pruned
 
 # Node IPs come only from the Talos node files' `# talos:node-ip=` header.
 pihole_talos_nodes_dir: "{{ playbook_dir }}/../talos/nodes"

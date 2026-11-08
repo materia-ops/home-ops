@@ -180,7 +180,8 @@
       when: item.key not in _domains_want
       changed_when: true
 
-# Ensure-present only: external-dns writes *.materia.wtf into the same arrays.
+# Authoritative except for names under pihole_external_dns_zones, which
+# external-dns writes into the same arrays.
 - name: Hand-made local DNS records
   when: (_hosts_want + pihole_local_cnames) | length > 0
   vars:
@@ -191,6 +192,13 @@
       {%- set _ = out.extend([ip ~ ' ' ~ name, ip ~ ' ' ~ name ~ '.' ~ pihole_ftl_config.dns.domain.name]) -%}
       {%- endfor -%}
       {{ out }}
+    _zones_re: "{{ pihole_external_dns_zones | map('regex_escape') | join('|') }}"
+    _hosts_stale: >-
+      {{ _pihole_dns.json.config.dns.hosts | reject('in', _hosts_want)
+      | reject('search', '\s(\S+\.)?(' ~ _zones_re ~ ')(\s|$)') | list }}
+    _cnames_stale: >-
+      {{ _pihole_dns.json.config.dns.cnameRecords | reject('in', pihole_local_cnames)
+      | reject('search', '^(\S+\.)?(' ~ _zones_re ~ '),') | list }}
   block:
     - name: Read current local DNS records
       ansible.builtin.uri:
@@ -198,6 +206,15 @@
         headers: "{{ _pihole_sid_header }}"
       register: _pihole_dns
       check_mode: false # read-only probe
+
+    - name: Remove unlisted host records
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/config/dns/hosts/{{ item | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
+        method: DELETE
+        status_code: [204]
+      loop: "{{ _hosts_stale }}"
+      changed_when: true
 
     - name: Add missing host records
       ansible.builtin.uri:
@@ -207,6 +224,15 @@
         status_code: [200, 201]
       loop: "{{ _hosts_want }}"
       when: item not in _pihole_dns.json.config.dns.hosts
+      changed_when: true
+
+    - name: Remove unlisted CNAME records
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/config/dns/cnameRecords/{{ item | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
+        method: DELETE
+        status_code: [204]
+      loop: "{{ _cnames_stale }}"
       changed_when: true
 
     - name: Add missing CNAME records
