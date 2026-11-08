@@ -33,7 +33,6 @@ spec:
       shared_buffers: 256MB
       max_wal_size: 4GB
       checkpoint_timeout: 10min
-      # compress full-page images in WAL; reload-only, no restart
       wal_compression: lz4
       autovacuum_max_workers: "3"
       autovacuum_vacuum_cost_limit: "2000"
