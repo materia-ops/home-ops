@@ -75,7 +75,7 @@ jobs:
       # /tmp into the container, and Renovate lowercases this value.
       RENOVATE_LOG_FILE: /tmp/renovate-${{ github.run_id }}-${{ github.run_attempt }}.log
       # The runner pin. Not RENOVATE_-prefixed: it must not reach the container.
-      RUNNER_VERSION: "44.221.6"
+      RUNNER_VERSION: "44.222.1"
     steps:
       # A pull_request_target run's own check lands on main's commit, which
       # Renovate's merge gate never reads, so the verdict is a PR-head status.
