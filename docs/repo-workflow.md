@@ -46,8 +46,9 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
     - **konflate** comments the rendered Flux diff — _read it_; it's the ground truth of
       what will change in the cluster, including effects of shared components you may
       not have touched directly.
-    - **Image Pull** pre-warms any changed images onto the nodes. A failure here usually
-      means a typo'd image reference — fix it before merge, not after.
+    - **Image Pull** checks that every changed image reference resolves in its registry.
+      A failure here usually means a typo'd image reference — fix it before merge, not
+      after.
     - **Validate (Syntax Check)** (only when `infrastructure/**` changed) checks the
       playbook without credentials; the live `--check` dry-run runs post-merge, gating
       the apply.

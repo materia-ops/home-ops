@@ -12,8 +12,8 @@ spec:
   values:
     githubConfigUrl: https://github.com/materia-ops/home-ops
     githubConfigSecret: home-ops-runner-secret
-    # 0: no warm pod holding the Talos os:admin identity between jobs; ARC
-    # cold-starts a runner in ~30-60s, fine for the push/dispatch-only load.
+    # 0: no warm runner idles between jobs; ARC cold-starts one in ~30-60s,
+    # fine for the push/dispatch-only load.
     minRunners: 0
     maxRunners: 3
     containerMode:
@@ -38,16 +38,4 @@ spec:
             env:
               - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
                 value: "false"
-              - name: NODE
-                valueFrom:
-                  fieldRef:
-                    fieldPath: status.hostIP
-            volumeMounts:
-              - mountPath: /var/run/secrets/talos.dev
-                name: talos
-                readOnly: true
         serviceAccountName: *name
-        volumes:
-          - name: talos
-            secret:
-              secretName: *name

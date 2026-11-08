@@ -325,8 +325,8 @@
       // (mise + talosctl pins); set it group-wide to keep them together.
       separateMinorPatch: true,
       // Clear the mise rule's 3-day age for the mise member: with it, the
-      // tuppr + image-pull pins ship as a group of two and the mise pin is
-      // stranded alone below minimumGroupSize (#1761). An age gate on the
+      // tuppr pin is held alone below minimumGroupSize until the mise pin
+      // ages in (#1761 stranded it the other way round). An age gate on the
       // whole group is not an option — custom.talos-factory has no release
       // timestamps, so it would hold the tuppr pin forever.
       minimumReleaseAge: null,
@@ -349,9 +349,9 @@
       addLabels: ["type/digest"],
     },
   ],
-  // Track the CI version pins that no standard manager covers: flate and
-  // talosctl in image-pull.yaml (pinned to .mise/config.toml and the
-  // cluster's Talos version respectively) and the renovate runner's own version.
+  // Track the CI version pins that no standard manager covers: flate in
+  // image-pull.yaml (pinned to .mise/config.toml) and the renovate runner's
+  // own version.
   customManagers: [
     {
       customType: "regex",
@@ -359,14 +359,6 @@
       matchStrings: ["github:home-operations/flate (?<currentValue>[0-9.]+)"],
       datasourceTemplate: "github-releases",
       depNameTemplate: "home-operations/flate",
-      extractVersionTemplate: "^v(?<version>.*)$",
-    },
-    {
-      customType: "regex",
-      managerFilePatterns: [".github/workflows/image-pull.yaml"],
-      matchStrings: ["talosctl (?<currentValue>[0-9.]+)"],
-      datasourceTemplate: "github-releases",
-      depNameTemplate: "siderolabs/talos",
       extractVersionTemplate: "^v(?<version>.*)$",
     },
     {
