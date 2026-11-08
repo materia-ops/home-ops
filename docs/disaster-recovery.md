@@ -163,6 +163,7 @@ archive back on the LAN first:
    same ones the CronJob uses, with keys resolved just-in-time by `op run` from an env file:
 
    ```sh
+   # b2-crypt-* are stored rclone-obscured, the only form rclone accepts for crypt passwords
    RCLONE_CONFIG_B2CRYPT_TYPE=crypt
    RCLONE_CONFIG_B2CRYPT_REMOTE=b2:materia-cnpg
    RCLONE_CONFIG_B2CRYPT_FILENAME_ENCRYPTION=off
