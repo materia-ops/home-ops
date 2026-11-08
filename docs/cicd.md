@@ -33,7 +33,7 @@ Two runner types:
 
 - **GitHub-hosted (`ubuntu-latest`)** for anything that doesn't need LAN access.
 - **Self-hosted (`home-ops-runner`)** — Actions Runner Controller (ARC) in the
-  `actions-runner-system` namespace, min 0 / max 3, autoscaling per queued job (scale
+  `actions-runner-ansible` namespace, min 0 / max 3, autoscaling per queued job (scale
   from zero). These runners are _inside_ the cluster, which is what lets CI run Ansible
   against the Pis (egress allows only `:22` to the managed hosts). Only the Ansible job
   (`ansible.yaml`) uses them, and they hold **no Talos credential**. Until 2026-11 a

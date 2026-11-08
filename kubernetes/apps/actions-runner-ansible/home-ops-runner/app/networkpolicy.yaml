@@ -1,0 +1,50 @@
+---
+# Default-deny egress: the Ansible runner holds root SSH to the managed hosts.
+# LAN access is only the :22 rule below; public 80/443 stays open because CI
+# pulls redirect through CDN hosts that cannot be enumerated.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: home-ops-runner-egress
+spec:
+  endpointSelector: {}
+  enableDefaultDeny:
+    egress: true
+    ingress: false
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+    # ARC kubernetes containerMode drives job pods through the API server.
+    - toEntities:
+        - kube-apiserver
+    # Runner <-> job pods within the namespace.
+    - toEndpoints:
+        - {}
+    # Update this list when the inventory changes.
+    - toCIDRSet:
+        - cidr: 192.168.1.2/32 # pi-0.internal
+        - cidr: 192.168.20.2/32 # pi-1.internal
+        - cidr: 192.168.20.9/32 # pve-0.internal
+      toPorts:
+        - ports:
+            - port: "22"
+              protocol: TCP
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+            - 169.254.169.254/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
