@@ -180,9 +180,9 @@
       when: item.key not in _domains_want
       changed_when: true
 
-# Ensure-present only: external-dns writes *.materia.wtf into the same arrays.
+# Never pruned wholesale: external-dns writes *.materia.wtf into the same arrays.
 - name: Hand-made local DNS records
-  when: (_hosts_want + pihole_local_cnames) | length > 0
+  when: (_hosts_want + pihole_local_hosts_absent + pihole_local_cnames) | length > 0
   vars:
     _hosts_want: "{{ pihole_local_hosts + (_node_records if pihole_node_records else []) }}"
     _node_records: >-
@@ -198,6 +198,16 @@
         headers: "{{ _pihole_sid_header }}"
       register: _pihole_dns
       check_mode: false # read-only probe
+
+    - name: Remove retired host records
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/config/dns/hosts/{{ item | urlencode | replace('/', '%2F') }}"
+        headers: "{{ _pihole_sid_header }}"
+        method: DELETE
+        status_code: [204]
+      loop: "{{ pihole_local_hosts_absent }}"
+      when: item in _pihole_dns.json.config.dns.hosts and item not in _hosts_want
+      changed_when: true
 
     - name: Add missing host records
       ansible.builtin.uri:

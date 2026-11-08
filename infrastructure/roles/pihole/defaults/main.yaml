@@ -53,6 +53,7 @@ pihole_op_item: pihole
 pihole_adlists: [] # {type, comment, address}; authoritative
 pihole_domains: [] # {type, kind, comment, domain}; authoritative
 pihole_local_hosts: [] # "ip name" entries ensured in dns.hosts
+pihole_local_hosts_absent: [] # retired "ip name" entries removed from dns.hosts
 pihole_local_cnames: [] # "alias,target" entries ensured in dns.cnameRecords
 pihole_node_records: false # also ensure "<ip> <node>[.<dns.domain>]" per k8s node
 
