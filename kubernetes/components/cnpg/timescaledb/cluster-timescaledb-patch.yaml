@@ -6,7 +6,7 @@ metadata:
   name: postgres-${APP}
 spec:
   # CNPG's standard image plus TimescaleDB (TSL build), toolkit and PostGIS
-  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:18.6-3.7.0-202611052319-standard-bookworm@sha256:a5a60bac642b54b10abd0f9a9563a1de33ab00594125acfd9305ab7d7a6be4ac
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:18.6-3.7.0-202611081338-standard-bookworm@sha256:fde1036e271fd63c45208bea9b6b431e9ee3fd79c715ddd7c9be3e8f46e8752f
   bootstrap:
     initdb:
       postInitApplicationSQL:
