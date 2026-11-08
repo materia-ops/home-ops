@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+# Hourly mirror of this cluster's barman archive from Garage (LAN primary, fast
+# restores) to B2 (offsite DR copy). Restore procedure: docs/disaster-recovery.md.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app postgres-${APP}-offsite
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: postgres-${APP}-offsite
+  interval: 1h
+  values:
+    controllers:
+      *app :
+        type: cronjob
+        cronjob:
+          schedule: "20 * * * *"
+          timeZone: Australia/Melbourne
+          concurrencyPolicy: Forbid
+          # chart default (30s) silently drops a run on a controller blip
+          startingDeadlineSeconds: 1800
+          # a hung run becomes a failed Job instead of Forbid-blocking every later run
+          activeDeadlineSeconds: 10800
+          backoffLimit: 2
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+        pod:
+          restartPolicy: OnFailure
+        containers:
+          *app :
+            image:
+              repository: docker.io/rclone/rclone
+              tag: 1.76.0@sha256:7cbeec24a44f206067597c0368be4de90ae19a64d5113c7d1938bd737a81e466
+            args:
+              - sync
+              # the serverName prefix, not the bucket root: a missing or empty
+              # source prefix is a listing error, and rclone never deletes after
+              # an error. Follow any serverName change in cluster.yaml here.
+              - garage:postgres-${APP}-backup/postgres-${APP}
+              - b2:materia-cnpg/postgres-${APP}-backup/postgres-${APP}
+              # S3→S3 compare by MD5 ETag from the listing; multipart data.tar
+              # has no MD5 either side and falls back to size (immutable anyway)
+              - --checksum
+              - --fast-list
+              # caps a partial Garage wipe (rclone hides up to N, then fails the
+              # Job); normal churn is barman's daily 30d-retention trim
+              - --max-delete=2000
+              - --checkers=16
+              - --transfers=8
+              - --stats=5m
+              - --stats-one-line
+              - --stats-log-level=NOTICE
+            env:
+              HOME: /tmp
+              RCLONE_CONFIG_B2_ENDPOINT: https://s3.us-west-002.backblazeb2.com
+              RCLONE_CONFIG_B2_NO_CHECK_BUCKET: "true"
+              RCLONE_CONFIG_B2_PROVIDER: Other
+              RCLONE_CONFIG_B2_REGION: us-west-002
+              RCLONE_CONFIG_B2_TYPE: s3
+              RCLONE_CONFIG_GARAGE_ENDPOINT: http://garage.internal:3900
+              RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE: "true"
+              RCLONE_CONFIG_GARAGE_PROVIDER: Other
+              RCLONE_CONFIG_GARAGE_REGION: garage
+              RCLONE_CONFIG_GARAGE_TYPE: s3
+              TZ: Australia/Melbourne
+              XDG_CACHE_HOME: /tmp/.cache
+            envFrom:
+              - secretRef:
+                  name: postgres-${APP}-offsite-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

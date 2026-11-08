@@ -131,6 +131,37 @@ just kube browse-pvc <namespace> <claim>
 > any more. To reach it before it is deleted, run `kopia` against that path directly with
 > the `volsync-template` 1Password password. Delete this note once the share is gone.
 
+### Postgres (CloudNativePG)
+
+CNPG clusters do not use kopiur. barman-cloud archives WAL and takes a daily base backup into
+a per-app Garage bucket on the NAS (`garage.internal:3900`, `postgres-<app>-backup`), and the
+restore procedure lives in [`components/cnpg/restore`](../kubernetes/components/cnpg/restore/kustomization.yaml).
+Every cluster built from `components/cnpg/app` also runs an hourly `postgres-<app>-offsite`
+CronJob that `rclone sync`s its archive to Backblaze B2 (`materia-cnpg/postgres-<app>-backup/`).
+B2 keeps hidden (deleted or superseded) objects for 30 days.
+
+**If Garage survived**, restore as normal: the B2 copy is not involved.
+
+**If Garage is lost**, do not point CNPG at B2 directly. Restoring over the WAN was the reason
+CNPG moved to Garage in the first place; it does not complete reliably. Instead, put the
+archive back on the LAN first:
+
+1. Suspend each `postgres-<app>-offsite` CronJob until step 3 is done. A missing or empty
+   source prefix only fails the sync, but a partly-copied one would hide up to
+   `--max-delete` B2 objects:
+   `flux suspend hr postgres-<app>-offsite -n <ns>`, then
+   `kubectl patch cronjob postgres-<app>-offsite -n <ns> -p '{"spec":{"suspend":true}}'`.
+2. Rebuild Garage, create `postgres-<app>-backup` with an owner key for barman (update the
+   `cnpg` 1Password item's `s3-key-id` / `s3-secret-key` if it is a new key) and the
+   read-only `cnpg-offsite-ro` grant (see the comment in
+   [`components/cnpg/app/objectstore.yaml`](../kubernetes/components/cnpg/app/objectstore.yaml)).
+3. Copy the archive back with rclone, loading the `cnpg` item's `b2-key-id` / `b2-secret-key`
+   just-in-time (`op run`), e.g.
+   `rclone copy b2:materia-cnpg/postgres-<app>-backup garage:postgres-<app>-backup --checksum`.
+   To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
+4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
+   postgres-<app>-offsite -n <ns>` and patch `suspend` back to `false`.
+
 ## Verification
 
 At each stage, from [bootstrap.md](./bootstrap.md#verification) and the

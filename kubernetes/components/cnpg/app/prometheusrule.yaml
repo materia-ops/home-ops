@@ -18,3 +18,17 @@ spec:
           for: 1h
           labels:
             severity: critical
+        # KubeJobFailed covers a failed run; this covers no successful run at
+        # all (missed schedule, suspended, Forbid-wedged, never succeeded).
+        - alert: CNPGOffsiteSyncStale
+          expr: |-
+            time() - kube_cronjob_status_last_successful_time{cronjob="postgres-${APP}-offsite"} > 21600
+              or absent(kube_cronjob_status_last_successful_time{cronjob="postgres-${APP}-offsite"})
+              or kube_cronjob_spec_suspend{cronjob="postgres-${APP}-offsite"} == 1
+          annotations:
+            summary: >-
+              No successful Garage → B2 offsite sync for postgres-${APP} in 6h
+          for: 1h
+          labels:
+            depends_on: internet
+            severity: warning

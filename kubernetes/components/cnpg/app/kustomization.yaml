@@ -5,7 +5,10 @@ kind: Component
 resources:
   - ./cluster.yaml
   - ./externalsecret-backup.yaml
+  - ./externalsecret-offsite.yaml
+  - ./helmrelease-offsite.yaml
   - ./objectstore.yaml
+  - ./ocirepository-offsite.yaml
   - ./pooler.yaml
   - ./prometheusrule.yaml
   - ./pushsecret.yaml
