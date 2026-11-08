@@ -1,0 +1,19 @@
+---
+# unattended-upgrades role defaults. Ansible only lays down the policy; the
+# hosts then upgrade themselves on apt's own systemd timers.
+
+# Replaces the distro's default origin list (the template emits #clear first).
+# ${distro_codename} is expanded by unattended-upgrades on the host, not Jinja.
+unattended_upgrades_origins_patterns:
+  - "origin=Debian,codename=${distro_codename},label=Debian"
+  - "origin=Debian,codename=${distro_codename}-updates,label=Debian"
+  - "origin=Debian,codename=${distro_codename}-security,label=Debian-Security"
+  - "origin=Raspberry Pi Foundation,codename=${distro_codename},label=Raspberry Pi Foundation"
+
+# apt-daily (refresh lists) runs before apt-daily-upgrade (install). No
+# randomized delay on the upgrade timer so per-host reboot staggering holds.
+unattended_upgrades_update_time: "02:00"
+unattended_upgrades_upgrade_time: "03:00"
+
+unattended_upgrades_automatic_reboot: true
+unattended_upgrades_reboot_time: "03:30"

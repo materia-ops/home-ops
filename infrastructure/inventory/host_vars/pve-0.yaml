@@ -1,0 +1,8 @@
+# host_vars/pve-0.yaml
+# Unattended upgrades (managed by the `unattended_upgrades` role): Debian security
+# only, never reboot. pve-0 hosts c1 and the NAS, so Proxmox packages (kernel,
+# pve-manager, QEMU) stay a deliberate manual full-upgrade.
+unattended_upgrades_origins_patterns:
+  - "origin=Debian,codename=${distro_codename}-security,label=Debian-Security"
+unattended_upgrades_automatic_reboot: false
+unattended_upgrades_upgrade_time: "05:00"
