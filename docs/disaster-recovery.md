@@ -139,7 +139,9 @@ restore procedure lives in [`components/cnpg/restore`](../kubernetes/components/
 Every cluster built from `components/cnpg/app` also pulls in
 [`components/cnpg/b2-sync`](../kubernetes/components/cnpg/b2-sync/kustomization.yaml): an hourly
 `postgres-<app>-b2-sync` CronJob that `rclone sync`s its archive to Backblaze B2
-(`materia-cnpg/postgres-<app>-backup/`).
+(`materia-cnpg/postgres-<app>-backup/`), encrypted client-side with rclone crypt (only file
+contents; names stay readable, with a `.bin` suffix). The crypt password and salt live in the
+`cnpg` 1Password item; **without them the B2 copy cannot be read**.
 B2 keeps hidden (deleted or superseded) objects for 30 days.
 
 **If Garage survived**, restore as normal: the B2 copy is not involved.
@@ -161,6 +163,12 @@ archive back on the LAN first:
    same ones the CronJob uses, with keys resolved just-in-time by `op run` from an env file:
 
    ```sh
+   RCLONE_CONFIG_B2CRYPT_TYPE=crypt
+   RCLONE_CONFIG_B2CRYPT_REMOTE=b2:materia-cnpg
+   RCLONE_CONFIG_B2CRYPT_FILENAME_ENCRYPTION=off
+   RCLONE_CONFIG_B2CRYPT_DIRECTORY_NAME_ENCRYPTION=false
+   RCLONE_CONFIG_B2CRYPT_PASSWORD=op://kubernetes/cnpg/b2-crypt-password
+   RCLONE_CONFIG_B2CRYPT_PASSWORD2=op://kubernetes/cnpg/b2-crypt-salt
    RCLONE_CONFIG_B2_TYPE=s3
    RCLONE_CONFIG_B2_PROVIDER=Other
    RCLONE_CONFIG_B2_ENDPOINT=https://s3.us-west-002.backblazeb2.com
@@ -176,7 +184,9 @@ archive back on the LAN first:
    RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY=op://kubernetes/cnpg/s3-secret-key
    ```
 
-   `op run --env-file=<that file> -- rclone copy b2:materia-cnpg/postgres-<app>-backup garage:postgres-<app>-backup --checksum`.
+   `op run --env-file=<that file> -- rclone copy b2crypt:postgres-<app>-backup garage:postgres-<app>-backup`.
+   Reading through `b2crypt:` decrypts on the fly and strips the `.bin` suffix, so Garage gets
+   the original barman objects.
    To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
 4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
    postgres-<app>-b2-sync -n <ns>` and patch `suspend` back to `false`.
