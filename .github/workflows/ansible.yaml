@@ -38,9 +38,9 @@ env:
 
 jobs:
   # PR path. The live-host dry run needs the SSH key and the 1Password token,
-  # so it cannot run for a pull_request; this builds the job image (unpushed)
-  # and syntax-checks the playbook in it on a GitHub-hosted runner with no
-  # credentials. It catches Dockerfile, syntax, and role-resolution errors
+  # so it cannot run for a pull_request; this pulls the published job image
+  # (or builds it, unpushed, when its inputs changed) and syntax-checks the
+  # playbook in it on a GitHub-hosted runner with no credentials. It catches Dockerfile, syntax, and role-resolution errors
   # pre-merge, and Check still gates Apply once the change lands on main.
   validate:
     name: Validate (Image + Syntax Check)
@@ -90,17 +90,20 @@ jobs:
             ansible-playbook -i inventory/hosts.yaml playbook.yaml --syntax-check
 
   # The job image is tagged by a hash of its inputs, so it is only rebuilt
-  # when the Dockerfile or a requirements file changes; otherwise this job
-  # just confirms the tag exists. Serialized so racing runs can't both push it.
+  # when the Dockerfile or a requirements file changes. Main trusts an existing
+  # tag only if main's own workflow built and attested it: any ref with
+  # packages: write can overwrite a tag. Other refs use a separate dev- tag
+  # that main never reads. No concurrency group: a pending run in one is
+  # cancelled by a third arrival, and racing pushes of a hash tag are harmless
+  # because each run hands on its own digest.
   image:
     name: Image (build if missing)
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-image
-      cancel-in-progress: false
     permissions:
+      attestations: write
       contents: read
+      id-token: write
       packages: write
     outputs:
       image: ${{ steps.ref.outputs.image }}@${{ steps.exists.outputs.digest || steps.build.outputs.digest }}
@@ -113,7 +116,8 @@ jobs:
         id: ref
         env:
           HASH: ${{ hashFiles('infrastructure/Dockerfile', 'infrastructure/requirements.txt', 'infrastructure/requirements.yaml') }}
-        run: echo "image=${IMAGE_REPO}:${HASH:0:16}" >> "$GITHUB_OUTPUT"
+          PREFIX: ${{ github.ref != 'refs/heads/main' && 'dev-' || '' }}
+        run: echo "image=${IMAGE_REPO}:${PREFIX}${HASH:0:16}" >> "$GITHUB_OUTPUT"
       - name: Login to GHCR
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
@@ -123,13 +127,19 @@ jobs:
       - name: Check for existing image
         id: exists
         env:
+          GH_TOKEN: ${{ github.token }}
           IMAGE: ${{ steps.ref.outputs.image }}
+          ON_MAIN: ${{ github.ref == 'refs/heads/main' }}
+          REPO: ${{ github.repository }}
         run: |
-          if DIGEST="$(docker buildx imagetools inspect "$IMAGE" --format '{{.Manifest.Digest}}' 2>/dev/null)"; then
-            echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"; echo "$IMAGE@$DIGEST exists, skipping build"
-          else
-            echo "$IMAGE missing, building"
+          if ! DIGEST="$(docker buildx imagetools inspect "$IMAGE" --format '{{.Manifest.Digest}}' 2>/dev/null)"; then
+            echo "$IMAGE missing, building"; exit 0
           fi
+          if [ "$ON_MAIN" = "true" ] && ! gh attestation verify "oci://$IMAGE@$DIGEST" --repo "$REPO" \
+              --signer-workflow "$REPO/.github/workflows/ansible.yaml" --source-ref refs/heads/main >/dev/null; then
+            echo "::warning::$IMAGE@$DIGEST has no main-built attestation, rebuilding"; exit 0
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"; echo "$IMAGE@$DIGEST exists, skipping build"
       - name: Setup Docker Buildx
         if: steps.exists.outputs.digest == ''
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -141,6 +151,13 @@ jobs:
           context: infrastructure
           push: true
           tags: ${{ steps.ref.outputs.image }}
+      - name: Attest image
+        if: steps.exists.outputs.digest == '' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE_REPO }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
 
   # Decide which play tags to run from the changed paths.
   # Only roles/dnscrypt_proxy changed -> dnscrypt; roles/pihole or talos/nodes -> pihole;
@@ -178,7 +195,7 @@ jobs:
             "https://api.github.com/repos/$REPO/compare/$BEFORE...$SHA" \
             | python3 -c 'import sys,json; d=json.load(sys.stdin); print("\n".join(f["filename"] for f in d.get("files",[])))')"
           echo "Changed files:"; printf '%s\n' "$FILES"
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/(playbook\.yaml|requirements\.ya?ml|requirements\.txt|ansible\.cfg|Dockerfile|inventory/hosts\.yaml)$'; then
+          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/(playbook\.yaml|requirements\.(in|txt|ya?ml)|ansible\.cfg|Dockerfile|inventory/hosts\.yaml)$'; then
             echo "tags=" >> "$GITHUB_OUTPUT"; echo "structural change -> all"; exit 0
           fi
           SEL=""
@@ -256,3 +273,7 @@ jobs:
           if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
           if [ -n "$LIMIT" ]; then args+=(--limit "$LIMIT"); fi
           ansible-playbook -i inventory/hosts.yaml playbook.yaml "${args[@]}"
+      # RUNNER_TEMP is on the runner's work volume (node disk), not pod-ephemeral.
+      - name: Remove SSH Key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ansible_id_ed25519"
