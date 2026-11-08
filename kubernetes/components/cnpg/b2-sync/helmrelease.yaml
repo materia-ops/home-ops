@@ -1,0 +1,95 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+# Garage → B2 DR mirror; restore steps in docs/disaster-recovery.md.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app postgres-${APP}-b2-sync
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: postgres-${APP}-b2-sync
+  interval: 1h
+  values:
+    global:
+      # SA owned by serviceaccount.yaml
+      createDefaultServiceAccount: false
+    controllers:
+      *app :
+        type: cronjob
+        serviceAccount:
+          name: *app
+        cronjob:
+          schedule: "20 * * * *"
+          timeZone: Australia/Melbourne
+          concurrencyPolicy: Forbid
+          # chart default (30s) silently drops a run on a controller blip
+          startingDeadlineSeconds: 1800
+          # a hung run becomes a failed Job instead of Forbid-blocking every later run
+          activeDeadlineSeconds: 10800
+          backoffLimit: 2
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+        pod:
+          restartPolicy: OnFailure
+        containers:
+          *app :
+            image:
+              repository: docker.io/rclone/rclone
+              tag: 1.76.0@sha256:7cbeec24a44f206067597c0368be4de90ae19a64d5113c7d1938bd737a81e466
+            args:
+              - sync
+              # serverName prefix, not bucket root: an empty source errors instead
+              # of hiding all of B2. Keep in step with cluster.yaml's serverName.
+              - garage:postgres-${APP}-backup/postgres-${APP}
+              - b2:materia-cnpg/postgres-${APP}-backup/postgres-${APP}
+              # not --checksum: B2 ETags aren't guaranteed MD5 under SSE-B2
+              - --update
+              - --use-server-modtime
+              - --fast-list
+              # caps a partial Garage wipe; normal churn is barman's daily trim
+              - --max-delete=2000
+              - --checkers=16
+              - --transfers=8
+              - --stats=5m
+              - --stats-one-line
+              - --stats-log-level=NOTICE
+            env:
+              HOME: /tmp
+              RCLONE_CONFIG_B2_ENDPOINT: https://s3.us-west-002.backblazeb2.com
+              RCLONE_CONFIG_B2_NO_CHECK_BUCKET: "true"
+              RCLONE_CONFIG_B2_PROVIDER: Other
+              RCLONE_CONFIG_B2_REGION: us-west-002
+              RCLONE_CONFIG_B2_TYPE: s3
+              RCLONE_CONFIG_GARAGE_ENDPOINT: http://garage.internal:3900
+              RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE: "true"
+              RCLONE_CONFIG_GARAGE_PROVIDER: Other
+              RCLONE_CONFIG_GARAGE_REGION: garage
+              RCLONE_CONFIG_GARAGE_TYPE: s3
+              TZ: Australia/Melbourne
+              XDG_CACHE_HOME: /tmp/.cache
+            envFrom:
+              - secretRef:
+                  name: postgres-${APP}-b2-sync-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

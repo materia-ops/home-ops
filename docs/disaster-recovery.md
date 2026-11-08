@@ -131,6 +131,56 @@ just kube browse-pvc <namespace> <claim>
 > any more. To reach it before it is deleted, run `kopia` against that path directly with
 > the `volsync-template` 1Password password. Delete this note once the share is gone.
 
+### Postgres (CloudNativePG)
+
+CNPG clusters do not use kopiur. barman-cloud archives WAL and takes a daily base backup into
+a per-app Garage bucket on the NAS (`garage.internal:3900`, `postgres-<app>-backup`), and the
+restore procedure lives in [`components/cnpg/restore`](../kubernetes/components/cnpg/restore/kustomization.yaml).
+Every cluster built from `components/cnpg/app` also pulls in
+[`components/cnpg/b2-sync`](../kubernetes/components/cnpg/b2-sync/kustomization.yaml): an hourly
+`postgres-<app>-b2-sync` CronJob that `rclone sync`s its archive to Backblaze B2
+(`materia-cnpg/postgres-<app>-backup/`).
+B2 keeps hidden (deleted or superseded) objects for 30 days.
+
+**If Garage survived**, restore as normal: the B2 copy is not involved.
+
+**If Garage is lost**, do not point CNPG at B2 directly. Restoring over the WAN was the reason
+CNPG moved to Garage in the first place; it does not complete reliably. Instead, put the
+archive back on the LAN first:
+
+1. Suspend each `postgres-<app>-b2-sync` CronJob until step 3 is done. A missing or empty
+   source prefix only fails the sync, but a partly-copied one would hide up to
+   `--max-delete` B2 objects:
+   `flux suspend hr postgres-<app>-b2-sync -n <ns>`, then
+   `kubectl patch cronjob postgres-<app>-b2-sync -n <ns> -p '{"spec":{"suspend":true}}'`.
+2. Rebuild Garage, create `postgres-<app>-backup` with an owner key for barman (update the
+   `cnpg` 1Password item's `s3-key-id` / `s3-secret-key` if it is a new key) and the
+   read-only `matalos-cnpg-ro` grant (see the comment in
+   [`components/cnpg/app/objectstore.yaml`](../kubernetes/components/cnpg/app/objectstore.yaml)).
+3. Copy the archive back with rclone. The remotes are defined by environment variables, the
+   same ones the CronJob uses, with keys resolved just-in-time by `op run` from an env file:
+
+   ```sh
+   RCLONE_CONFIG_B2_TYPE=s3
+   RCLONE_CONFIG_B2_PROVIDER=Other
+   RCLONE_CONFIG_B2_ENDPOINT=https://s3.us-west-002.backblazeb2.com
+   RCLONE_CONFIG_B2_REGION=us-west-002
+   RCLONE_CONFIG_B2_ACCESS_KEY_ID=op://kubernetes/cnpg/b2-key-id
+   RCLONE_CONFIG_B2_SECRET_ACCESS_KEY=op://kubernetes/cnpg/b2-secret-key
+   RCLONE_CONFIG_GARAGE_TYPE=s3
+   RCLONE_CONFIG_GARAGE_PROVIDER=Other
+   RCLONE_CONFIG_GARAGE_ENDPOINT=http://garage.internal:3900
+   RCLONE_CONFIG_GARAGE_REGION=garage
+   RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE=true
+   RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID=op://kubernetes/cnpg/s3-key-id
+   RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY=op://kubernetes/cnpg/s3-secret-key
+   ```
+
+   `op run --env-file=<that file> -- rclone copy b2:materia-cnpg/postgres-<app>-backup garage:postgres-<app>-backup --checksum`.
+   To recover objects hidden in the last 30 days, add `--s3-version-at "<time before the loss>"`.
+4. Follow the `components/cnpg/restore` procedure unchanged, then `flux resume hr
+   postgres-<app>-b2-sync -n <ns>` and patch `suspend` back to `false`.
+
 ## Verification
 
 At each stage, from [bootstrap.md](./bootstrap.md#verification) and the
