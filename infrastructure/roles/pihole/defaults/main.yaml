@@ -33,6 +33,10 @@ pihole_ftl_config:
   ntp:
     sync:
       server: au.pool.ntp.org
+  resolver:
+    # FTL default IPV4_ONLY names an IPv6 client once, on first sight; SLAAC
+    # privacy addresses rotate daily, so most stayed bare addresses.
+    refreshNames: ALL
   webserver:
     # Localhost + k8s node IPs (pod egress is masqueraded to them). Break-glass: docs/operations.md.
     acl: "{{ (['+127.0.0.1', '+[::1]'] + (_pihole_k8s_nodes.values() | sort | map('regex_replace', '^', '+') | list)) | join(',') }}"
