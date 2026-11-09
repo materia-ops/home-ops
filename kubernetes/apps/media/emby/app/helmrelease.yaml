@@ -42,6 +42,9 @@ spec:
               limits:
                 memory: 8Gi
     defaultPodOptions:
+      annotations:
+        # Below 1G so BBR cannot overrun the 1GbE client ports (Shield).
+        kubernetes.io/egress-bandwidth: 900M
       resourceClaims:
         - name: gpu
           resourceClaimTemplateName: emby-gpu
