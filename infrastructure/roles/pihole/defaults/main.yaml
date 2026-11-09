@@ -12,6 +12,9 @@ pihole_tls_cert: "/etc/pihole/tls.pem"
 # config, so keys not listed keep their current value).
 pihole_ftl_config:
   dns:
+    # FTL default is 2s: browsers re-ask for every blocked name every 2s (x3 for
+    # A/AAAA/HTTPS) and trip the rate limit. Cost: an unblock takes up to 5m to reach clients.
+    blockTTL: 300
     domain:
       name: internal
     domainNeeded: true
