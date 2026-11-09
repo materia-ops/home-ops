@@ -29,7 +29,7 @@ spec:
             nameOverride: authserver
             image: &image
               repository: ghcr.io/materia-ops/azerothcore-wotlk-playerbots
-              tag: 1.9.9@sha256:673d0c76310a58f1f65644cf7e9df5b9a19f3a260d311353bd6c6a4112b222bb
+              tag: 1.9.11@sha256:254ec8d869fc9ad18e6910f46a152de83206c4cb3667affd17e8f92853d692be
             # Image CMD is worldserver; same image runs both servers.
             command: ["authserver"]
             env:
@@ -153,7 +153,6 @@ spec:
               AC_PLAYERBOTS_BOT_ONLY_GROUP_FULL_XP: "1"
               AC_PLAYERBOTS_COMBAT_STRATEGIES: "+behind,+threat"
               AC_PLAYERBOTS_COMMAND_SERVER_PORT: "0"
-              AC_PLAYERBOTS_ENABLE_PERIODIC_ONLINE_OFFLINE: "1"
               AC_PLAYERBOTS_FREE_METHOD_LOOT: "1"
               # Level brackets (ex-#1523): bots follow the real players' level
               # ranges. SyncFactions needs identical faction bracket tables —
@@ -163,11 +162,14 @@ spec:
               AC_PLAYERBOTS_LEVEL_BRACKETS_DYNAMIC_USE_DYNAMIC_DISTRIBUTION: "1"
               AC_PLAYERBOTS_LEVEL_BRACKETS_ENABLED: "1"
               AC_PLAYERBOTS_MAX_RANDOM_BOTS: "300"
-              AC_PLAYERBOTS_MIN_RANDOM_BOTS: "300"
+              AC_PLAYERBOTS_MIN_RANDOM_BOTS: "200"
               AC_PLAYERBOTS_PREFERRED_SPEC_WEAPONS: "1"
               AC_PLAYERBOTS_PREFER_CLASS_ARMOR_TYPE: "1"
               AC_PLAYERBOTS_RANDOM_BOT_AUTO_JOIN_BG: "1"
               AC_PLAYERBOTS_RANDOM_BOT_COMBAT_STRATEGIES: "+behind,+threat"
+              # Scheduled: MIN_RANDOM_BOTS at 05:00, MAX_RANDOM_BOTS at 20:00
+              # local (dist default RandomBotCountMin/MaxTime).
+              AC_PLAYERBOTS_RANDOM_BOT_COUNT_MODE: "2"
               AC_PLAYERBOTS_RANDOM_GEAR_QUALITY_LIMIT: "4"
               AC_PLAYERBOTS_TOXIC_LINKS_REPLIES_CHANCE: "0"
               AC_SOAP_ENABLED: "1"
