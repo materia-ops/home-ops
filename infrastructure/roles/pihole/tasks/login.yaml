@@ -19,7 +19,7 @@
     body_format: json
     body: { password: "{{ _pihole_app_password }}" }
   register: _pihole_auth
-  until: _pihole_auth.status != -1 # FTL restarting
+  until: _pihole_auth.status == 200 # -1 or a stray 401: FTL restarting (ours, or a nebula-sync import)
   retries: 10
   delay: 3
   failed_when: false
