@@ -17,14 +17,25 @@ spec:
         - matchLabels:
             io.kubernetes.pod.namespace: network
             gateway.envoyproxy.io/owning-gateway-name: envoy-internal
-        # gatus probes /api/healthz on the Service (helmrelease.yaml)
-        - matchLabels:
-            io.kubernetes.pod.namespace: o11y
-            app.kubernetes.io/name: gatus-sidecar
       toPorts: &http
         - ports:
             - port: "3000"
               protocol: TCP
+    # gatus builds checks from any Service/HTTPRoute annotation, so it gets
+    # only the health endpoint (helmrelease.yaml). Own entry: the http rule
+    # proxies this peer alone; the gateway and kubelet entries stay L3/L4.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: o11y
+            app.kubernetes.io/name: gatus-sidecar
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: ^/api/healthz$
     # kubelet probes
     - fromEntities:
         - host
