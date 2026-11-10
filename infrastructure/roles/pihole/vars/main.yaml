@@ -1,0 +1,5 @@
+---
+# First host of this play that already holds the 1Password pair ('' if none yet).
+_pihole_op_holder: >-
+  {{ ansible_play_hosts_all | map('extract', hostvars) | selectattr('_pihole_app_password', 'defined')
+     | map(attribute='inventory_hostname') | first | default('') }}
