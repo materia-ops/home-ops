@@ -24,16 +24,16 @@ mise trust && mise install   # installs pinned talosctl, flux, kubectl, helmfile
 just                         # lists available recipes (bootstrap, kube, talos modules)
 ```
 
-`mise` loads `.secrets.env` and points `KUBECONFIG` at a `kubeconfig` file in the repo
-root. Day to day that file does not exist here: the kubeconfig is obtained through
-1Password, so in a mise-activated shell set `KUBECONFIG` (or pass `--kubeconfig`) to your
-own. The bootstrap recipes depend on neither: they export `KUBECONFIG` for themselves,
-pointing at the repo-root file their own stages fetch, so a rebuild never talks to the
-cluster your shell was pointed at. `just bootstrap cluster` and
-`just talos generate-kubeconfig` write that file: a plaintext admin kubeconfig,
-gitignored. Store it in your secret manager and delete it rather than keeping it there
-day to day. mise does not set `TALOSCONFIG`: export it yourself before running
-`just talos` or `just bootstrap` recipes
+`mise` loads `.secrets.env`. It sets neither `KUBECONFIG` nor `TALOSCONFIG`: `kubectl`,
+`flux` and the `just kube` recipes use whatever kubeconfig your shell already points at
+(here it is obtained through 1Password). The bootstrap recipes do not depend on that:
+they export `KUBECONFIG` for themselves, pointing at a `kubeconfig` file in the repo root
+that their own stages fetch, so a rebuild never talks to the cluster your shell was
+pointed at. `just bootstrap cluster` and `just talos generate-kubeconfig` write that
+file: a plaintext admin kubeconfig, gitignored, which nothing reads unless you pass it
+explicitly (`KUBECONFIG=./kubeconfig kubectl …`). Store it in your secret manager and
+delete it rather than keeping it there day to day. Export `TALOSCONFIG` yourself before
+running `just talos` or `just bootstrap` recipes
 (here it is loaded just-in-time from 1Password, never kept in the checkout). Git hooks
 come from lefthook (`.lefthook.toml`).
 

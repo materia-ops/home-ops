@@ -143,7 +143,9 @@ obtained through 1Password (see
 
 Logs a warning naming that file: it is a plaintext admin credential. Store it in your
 secret manager, then delete it. Until you have, pass it explicitly
-(`KUBECONFIG=./kubeconfig kubectl …`) if your shell points at another kubeconfig.
+(`KUBECONFIG=./kubeconfig kubectl …`): outside the bootstrap recipes nothing points at
+it, since mise sets neither `KUBECONFIG` nor `TALOSCONFIG` and `kubectl` uses the
+shell's own.
 
 ## Stage 2 — Handoff to Flux
 
