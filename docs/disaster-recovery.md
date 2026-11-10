@@ -29,9 +29,10 @@ Everything runs from a workstation checkout of this repo:
   just-in-time into `TALOSCONFIG` (tmpfs/temp file) — mise deliberately does not set it.
 - **Kubernetes API identity:** the kubeconfig is likewise obtained through 1Password
   for day-to-day access. `just bootstrap cluster` fetches a fresh one from Talos into
-  a gitignored repo-root `kubeconfig`, which is where mise points `KUBECONFIG`, so the
-  rebuild does not depend on an existing kubeconfig. That file is a plaintext admin
-  credential: once the rebuild is done, store it in 1Password and delete the file.
+  a gitignored repo-root `kubeconfig` and exports `KUBECONFIG` at it for its own
+  stages, so the rebuild neither depends on an existing kubeconfig nor uses the old
+  cluster's. That file is a plaintext admin credential: once the rebuild is done,
+  store it in 1Password and delete the file (the last stage logs a reminder).
 - **Local environment file** (gitignored): `.secrets.env`, loaded by mise.
 - **1Password:** an authenticated `op` session (or service account) that can read the
   `kubernetes` vault — `vals` resolves every `ref+op://` reference through it. The two
@@ -94,6 +95,7 @@ simply be re-run:
 | `base`                | Waits for nodes to register, applies namespaces + the three seed Secrets (via vals/1Password) + CRDs                                                 |
 | `apps`                | `helmfile sync` of the core chain: cilium → coredns → spegel → cert-manager → external-secrets → onepassword-connect → flux-operator → flux-instance |
 | `kubeconfig` (final)  | Re-fetches the kubeconfig against the real API endpoint, now announced by Cilium                                                                     |
+| `handover`            | Logs a reminder that the repo-root `kubeconfig` is a plaintext admin credential to store and delete                                                  |
 
 Full detail per stage in [bootstrap.md](./bootstrap.md#stage-1--just-bootstrap-cluster).
 

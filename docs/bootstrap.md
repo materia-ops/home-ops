@@ -132,10 +132,18 @@ then applies two things:
 Re-fetches the kubeconfig pointed at the real API endpoint, now that Cilium is
 announcing the VIP.
 
-Both `kubeconfig` stages write to a gitignored `kubeconfig` file in the repo root. It is
-a bootstrap artifact, not the day-to-day credential: routine cluster access uses a
-kubeconfig obtained through 1Password (see
+Both `kubeconfig` stages write to a gitignored `kubeconfig` file in the repo root, and
+the bootstrap module exports `KUBECONFIG` pointing at it, so every stage talks to the
+cluster being built, never to whatever kubeconfig the shell had. It is a bootstrap
+artifact, not the day-to-day credential: routine cluster access uses a kubeconfig
+obtained through 1Password (see
 [repo-workflow.md](./repo-workflow.md#environment-setup)).
+
+### 7. `handover`
+
+Logs a warning naming that file: it is a plaintext admin credential. Store it in your
+secret manager, then delete it. Until you have, pass it explicitly
+(`KUBECONFIG=./kubeconfig kubectl …`) if your shell points at another kubeconfig.
 
 ## Stage 2 — Handoff to Flux
 

@@ -25,12 +25,15 @@ just                         # lists available recipes (bootstrap, kube, talos m
 ```
 
 `mise` loads `.secrets.env` and points `KUBECONFIG` at a `kubeconfig` file in the repo
-root. `just bootstrap cluster` and `just talos generate-kubeconfig` write that file: a
-plaintext admin kubeconfig, gitignored. Delete it once the copy in 1Password is current
-rather than keeping it there day to day.
-Here the kubeconfig is obtained through 1Password, so in a mise-activated shell set
-`KUBECONFIG` (or pass `--kubeconfig`) to your own. mise does not set `TALOSCONFIG`
-either: export it yourself before running `just talos` or `just bootstrap` recipes
+root. Day to day that file does not exist here: the kubeconfig is obtained through
+1Password, so in a mise-activated shell set `KUBECONFIG` (or pass `--kubeconfig`) to your
+own. The bootstrap recipes depend on neither: they export `KUBECONFIG` for themselves,
+pointing at the repo-root file their own stages fetch, so a rebuild never talks to the
+cluster your shell was pointed at. `just bootstrap cluster` and
+`just talos generate-kubeconfig` write that file: a plaintext admin kubeconfig,
+gitignored. Store it in your secret manager and delete it rather than keeping it there
+day to day. mise does not set `TALOSCONFIG`: export it yourself before running
+`just talos` or `just bootstrap` recipes
 (here it is loaded just-in-time from 1Password, never kept in the checkout). Git hooks
 come from lefthook (`.lefthook.toml`).
 
