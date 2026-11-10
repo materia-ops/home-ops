@@ -114,7 +114,13 @@ MTU 9000).
 
 Cilium replaces kube-proxy and announces LoadBalancer VIPs from the
 `192.168.10.0/24` pool over BGP: cluster ASN **64514** peering with the UDM Pro
-(`192.168.1.1`, ASN **64513**). Notable VIPs:
+(`192.168.1.1`, ASN **64513**). The router side is the FRR config in
+[`bgp.conf`](../bgp.conf), hand-uploaded to the UDM: that file is the one loaded there.
+The peering is IPv4 only on both ends. [`bgp-v6.conf`](../bgp-v6.conf) is a variant
+with an added IPv6 peer group that has not been applied, and nothing on the Cilium side
+(one IPv4 peer, an IPv4 address family, an IPv4 pool in
+[`networks.yaml`](../kubernetes/apps/kube-system/cilium/app/networks.yaml)) would
+advertise IPv6 to it. Notable VIPs:
 
 | VIP                                | Service                                                             |
 | :--------------------------------- | :------------------------------------------------------------------ |

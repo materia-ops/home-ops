@@ -17,7 +17,8 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 | [`.github/workflows/`](../.github/workflows)             | CI — see [cicd.md](./cicd.md)                                                                                                            |
 | [`.mise/`](../.mise/config.toml)                         | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment (two kubectl plugins aside, below) |
 | [`.justfile`](../.justfile)                              | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules                                                |
-| `bgp.conf`, `bgp-v6.conf`                                | FRR BGP configs for the UDM Pro side of the Cilium peering; hand-uploaded, not applied from the repo                                     |
+| `bgp.conf`                                               | FRR BGP config for the UDM Pro side of the Cilium peering (IPv4). The one loaded on the UDM; hand-uploaded, not applied from the repo    |
+| `bgp-v6.conf`                                            | Variant of `bgp.conf` with an added IPv6 peer group. Not applied to the UDM; the Cilium side is IPv4 only                                |
 | `docs/`                                                  | This documentation (committed); work notes live in the private materia-vault                                                             |
 
 `just kube snapshot-kopiur` and `just kube browse-pvc` call the `kubectl kopiur` and
