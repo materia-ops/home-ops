@@ -78,7 +78,7 @@ Cilium over BGP to route LoadBalancer VIPs.
 | 🛡️  | [Authentik](https://goauthentik.io/)                                                                                  | SSO — OIDC + Envoy forward-auth, blueprint-managed               |
 | 📈  | [VictoriaMetrics](https://victoriametrics.com/) / VictoriaLogs / [Grafana](https://grafana.com/)                      | Metrics (90 d), logs, dashboards-as-code, Pushover alerting      |
 | 🤖  | [Renovate](https://www.mend.io/renovate) + [konflate](https://github.com/home-operations)                             | Automated updates; rendered Flux diffs as PR checks              |
-| 🏃  | [ARC](https://github.com/actions/actions-runner-controller)                                                           | Self-hosted GitHub runners in-cluster (image pre-pull, Ansible)  |
+| 🏃  | [ARC](https://github.com/actions/actions-runner-controller)                                                           | Self-hosted GitHub runners in-cluster (Ansible, image builds)    |
 | ⬆️  | tuppr + [Spegel](https://spegel.dev/)                                                                                 | Automated Talos/K8s upgrades; P2P registry mirror                |
 
 ## 📁 Layout
@@ -86,7 +86,7 @@ Cilium over BGP to route LoadBalancer VIPs.
 ```text
 ├── kubernetes/
 │   ├── apps/          # one directory per namespace, one per app (ks.yaml + app/)
-│   ├── components/    # reusable Kustomize components (kopiur, alerts, sso, …)
+│   ├── components/    # reusable Kustomize components (kopiur, alerts, authentik-forward-auth, …)
 │   └── flux/cluster/  # the single Flux entrypoint
 ├── talos/             # machine config templates (minijinja + 1Password refs)
 ├── bootstrap/         # day-0 helmfile bring-up (CRDs → core apps → Flux)

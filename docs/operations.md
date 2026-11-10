@@ -10,7 +10,7 @@ than kube-prometheus-stack:
 
 | Concern            | Component                                             | Notes                                                                                                                                                                       |
 | :----------------- | :---------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Metrics TSDB       | VictoriaMetrics (`vmsingle`)                          | 90-day retention, 50 Gi on `ceph-block`                                                                                                                                     |
+| Metrics TSDB       | VictoriaMetrics (`vmsingle`)                          | 90-day retention, 75 Gi on `ceph-block`                                                                                                                                     |
 | Scraping           | `vmagent` + prometheus-operator CRDs                  | Apps expose `ServiceMonitor`/`PodMonitor`; the operator CRDs are installed standalone                                                                                       |
 | Alert evaluation   | `vmalert`                                             | `PrometheusRule` CRs, colocated with apps in their directories                                                                                                              |
 | Alert delivery     | Alertmanager → **Pushover**                           | Flux reconciliation errors route here too (notification-controller → Alertmanager provider)                                                                                 |
@@ -40,15 +40,17 @@ Defence in depth, roughly outermost-in:
   failed HelmRelease upgrade cleans up, stops, and alerts (fail-and-hold — upgrade
   remediation is deliberately unset so DB-migrating apps are never auto-rolled-back;
   recovery is roll-forward). The cluster converges on Git even after operator mistakes.
-- **Rollout safety** — CI pre-pulls changed images to every node before merge; Spegel
-  P2P-mirrors images between nodes, so workloads reschedule even during a registry
-  outage; Reloader restarts pods when their ConfigMaps/Secrets rotate.
+- **Rollout safety** — CI checks that every changed image reference resolves before
+  merge; Spegel P2P-mirrors images between nodes, so workloads reschedule even during a
+  registry outage; Reloader restarts pods when their ConfigMaps/Secrets rotate.
 - **Storage** — Ceph replicates across the three NVMe OSDs (one per node); a node
   failure keeps every `ceph-block` PVC available.
 - **Backups** — kopiur snapshots every stateful app into the `materia` Kopia repository on
   the NAS on its own schedule; snapshot on demand with `just kube snapshot-kopiur` and
   restore with `just kube kopiur-restore`. MySQL (AzerothCore) additionally dumps ahead of
-  snapshots.
+  snapshots. Postgres takes a separate path: CloudNativePG archives to Garage (S3) on the
+  NAS with an hourly encrypted mirror to Backblaze B2 — see
+  [disaster-recovery.md](./disaster-recovery.md#postgres-cloudnativepg).
 - **DNS resilience** — two Pi-holes on separate Pis; Ansible rolls DNS changes
   one Pi at a time with a resolve check between hosts.
 - **Pi-hole API access** — three layers. FTL's `webserver.acl` (Ansible `pihole` role)
@@ -95,8 +97,8 @@ Defence in depth, roughly outermost-in:
   `.github/workflows/renovate.yaml` to the last green run's version, or dispatch the
   workflow with `version` set to a known-good release
   ([#1681](https://github.com/materia-ops/home-ops/pull/1681)). The assertion red with
-  `repo=result`: `missing` means Renovate never reached that repository (github-bot
-  App uninstalled, repository gone — prune it from `RENOVATE_AUTODISCOVER_FILTER`);
+  `repo=result`: `missing` means Renovate never reached that repository (the
+  `materia-minion` App uninstalled, repository gone — prune it from `RENOVATE_AUTODISCOVER_FILTER`);
   any other value is Renovate's abort reason, detailed in the `Run Renovate` log. A
   yellow warning names transient or by-design skips and needs no action.
 
@@ -106,7 +108,9 @@ Vertical headroom is the primary axis (32 GB/node, NVMe-backed everything); the
 automation in place:
 
 - **Scale-to-zero** — the `zeroscaler` component (HPA + `HPAScaleToZero` feature gate)
-  parks idle workloads at 0 replicas; prometheus-adapter feeds custom metrics.
+  parks NFS-dependent workloads at 0 replicas while the `nfs_probe` blackbox probe fails
+  and restores them to 1 when it recovers; idleness plays no part. prometheus-adapter
+  serves the probe result as an external metric.
 - **CI runners** — ARC scales `home-ops-runner` 0→3 with queue depth (no warm runner
   idles between jobs; the runners hold no Talos credential).
 - **Adding a node** — one new file in `talos/nodes/<role>/`, a switch port trunked for

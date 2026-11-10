@@ -6,18 +6,23 @@ at runtime and [repo-workflow.md](./repo-workflow.md) for how to make changes.
 
 ## Top level
 
-| Path                                                     | Purpose                                                                                                                      |
-| :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| [`kubernetes/apps/`](../kubernetes/apps)                 | Everything Flux deploys, one directory per namespace                                                                         |
-| [`kubernetes/components/`](../kubernetes/components)     | Reusable Kustomize components apps opt into                                                                                  |
-| [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization)                                                                    |
-| [`talos/`](../talos)                                     | Talos machine configuration (minijinja templates + per-node overrides)                                                       |
-| [`bootstrap/`](../bootstrap)                             | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources                                                      |
-| [`infrastructure/`](../infrastructure)                   | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, observability, pihole; unattended upgrades on the Pis and `pve-0`) |
-| [`.github/workflows/`](../.github/workflows)             | CI — see [cicd.md](./cicd.md)                                                                                                |
-| [`.mise/`](../.mise/config.toml)                         | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment                        |
-| [`.justfile`](../.justfile)                              | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules                                    |
-| `docs/`                                                  | This documentation (committed); work notes live in the private materia-vault                                                 |
+| Path                                                     | Purpose                                                                                                                                  |
+| :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| [`kubernetes/apps/`](../kubernetes/apps)                 | Everything Flux deploys, one directory per namespace                                                                                     |
+| [`kubernetes/components/`](../kubernetes/components)     | Reusable Kustomize components apps opt into                                                                                              |
+| [`kubernetes/flux/cluster/`](../kubernetes/flux/cluster) | The single Flux entrypoint (`cluster-apps` Kustomization)                                                                                |
+| [`talos/`](../talos)                                     | Talos machine configuration (minijinja templates + per-node overrides)                                                                   |
+| [`bootstrap/`](../bootstrap)                             | Day-0 bring-up: helmfile (CRDs, then core apps) and kustomize resources                                                                  |
+| [`infrastructure/`](../infrastructure)                   | Ansible for out-of-cluster hosts (the Pi-holes: dnscrypt, network, observability, pihole; unattended upgrades on the Pis and `pve-0`)    |
+| [`.github/workflows/`](../.github/workflows)             | CI — see [cicd.md](./cicd.md)                                                                                                            |
+| [`.mise/`](../.mise/config.toml)                         | Toolchain versions (talosctl, flux, helmfile, kubectl, …) — `mise install` gets a working environment (two kubectl plugins aside, below) |
+| [`.justfile`](../.justfile)                              | Task runner — `just` lists recipes, grouped into `bootstrap`, `kube`, and `talos` modules                                                |
+| `bgp.conf`, `bgp-v6.conf`                                | FRR BGP configs for the UDM Pro side of the Cilium peering; hand-uploaded, not applied from the repo                                     |
+| `docs/`                                                  | This documentation (committed); work notes live in the private materia-vault                                                             |
+
+`just kube snapshot-kopiur` and `just kube browse-pvc` call the `kubectl kopiur` and
+`kubectl browse-pvc` plugins, which are not in `.mise/config.toml`: install them
+separately, and keep `kubectl kopiur` in step with the kopiur operator version.
 
 ## Anatomy of an app
 
@@ -73,20 +78,21 @@ namespace kustomization lists the group directory itself.
 Shared behavior lives in [`kubernetes/components/`](../kubernetes/components) and is
 mixed into apps via `spec.components`:
 
-| Component                | What opting in gives you                                                                                                                                                                                                                                                                                                                                               |
-| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alerts`                 | Flux `Alert`/`Provider` routing reconciliation errors to Alertmanager (plus a GitHub commit-status variant)                                                                                                                                                                                                                                                            |
-| `kopiur/backup`          | The standard backup opt-in: everything in `kopiur/snapshot` **plus** the app PVC (`KOPIUR_CAPACITY`, `KOPIUR_STORAGECLASS`, owned here) and a bootstrap `Restore` that populates it from the latest snapshot. The component owns the PVC, so capacity changes happen here; a bound PVC cannot be re-pointed at the `Restore` afterwards (`dataSourceRef` is immutable) |
-| `kopiur/snapshot`        | Scheduled kopiur backups of an **existing** PVC the component does not own (`SnapshotPolicy` + `SnapshotSchedule`) into the `materia` repository. Parameterised by `APP`, `KOPIUR_SCHEDULE`, `KOPIUR_CACHE_CAPACITY`, `KOPIUR_PUID`/`KOPIUR_PGID`                                                                                                                      |
-| `namespace`              | The Namespace object itself (`name: _`, renamed by the kustomization's `namespace:` field) with `prune: disabled`, so no namespace directory carries its own `namespace.yaml`. Mixed into namespace-level kustomizations, not apps                                                                                                                                     |
-| `kopiur/secret`          | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps                                                                                                                                                                       |
-| `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC                                                                                                                                                                                                                                                                                         |
-| `cnpg`                   | A CloudNativePG Postgres cluster for the app (`cnpg/app`), with barman-cloud backups and a pgbouncer pooler. The app user's password is pushed to the 1Password item `postgres-<app>-app`; each app templates its own connection settings from that item. `cnpg/restore` overlays a recovery bootstrap                                                                 |
-| `cnpg/single-instance`   | Layer after `cnpg/app` for databases that don't warrant HA: one instance, no synchronous replication (CNPG rejects `number` >= instances) and no PDB (the primary's `minAvailable: 1` would block node drains). The database is down while its node reboots                                                                                                            |
-| `cnpg/timescaledb`       | Layer after `cnpg/app` for apps that need TimescaleDB's community edition: swaps in a CNPG-compatible TimescaleDB image and adds its preload library, licence and extensions                                                                                                                                                                                           |
-| `gpu`                    | Intel iGPU resource claims for transcoding workloads                                                                                                                                                                                                                                                                                                                   |
-| `theme-park`             | theme.park styling injection                                                                                                                                                                                                                                                                                                                                           |
-| `zeroscaler`             | An HPA that scales the workload to zero when idle (uses the `HPAScaleToZero` feature gate)                                                                                                                                                                                                                                                                             |
+| Component                | What opting in gives you                                                                                                                                                                                                                                                                                                                                                                                            |
+| :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `alerts`                 | Flux `Alert`/`Provider` routing reconciliation errors to Alertmanager (plus a GitHub commit-status variant)                                                                                                                                                                                                                                                                                                         |
+| `kopiur/backup`          | The standard backup opt-in: everything in `kopiur/snapshot` **plus** the app PVC (`KOPIUR_CAPACITY`, `KOPIUR_STORAGECLASS`, owned here) and a bootstrap `Restore` that populates it from the latest snapshot. The component owns the PVC, so capacity changes happen here; a bound PVC cannot be re-pointed at the `Restore` afterwards (`dataSourceRef` is immutable)                                              |
+| `kopiur/snapshot`        | Scheduled kopiur backups of an **existing** PVC the component does not own (`SnapshotPolicy` + `SnapshotSchedule`) into the `materia` repository. Parameterised by `APP`, `KOPIUR_SCHEDULE`, `KOPIUR_CACHE_CAPACITY`, `KOPIUR_PUID`/`KOPIUR_PGID`                                                                                                                                                                   |
+| `namespace`              | The Namespace object itself (`name: _`, renamed by the kustomization's `namespace:` field) with `prune: disabled`, so no namespace directory carries its own `namespace.yaml`. Mixed into namespace-level kustomizations, not apps                                                                                                                                                                                  |
+| `kopiur/secret`          | The kopiur repository password (`kopiur-secret`) in a namespace, so that namespace's backup movers can open the `materia` ClusterRepository. Mixed into namespace-level kustomizations, not apps                                                                                                                                                                                                                    |
+| `authentik-forward-auth` | Envoy `SecurityPolicy` forward-auth via Authentik for apps without native OIDC                                                                                                                                                                                                                                                                                                                                      |
+| `cnpg`                   | A CloudNativePG Postgres cluster for the app (`cnpg/app`), with barman-cloud backups and a pgbouncer pooler. The app user's password is pushed to the 1Password item `postgres-<app>-app`; each app templates its own connection settings from that item. `cnpg/app` also pulls in `cnpg/b2-sync`, an hourly rclone-crypt mirror of the backup bucket to Backblaze B2. `cnpg/restore` overlays a recovery bootstrap |
+| `cnpg/single-instance`   | Layer after `cnpg/app` for databases that don't warrant HA: one instance, no synchronous replication (CNPG rejects `number` >= instances) and no PDB (the primary's `minAvailable: 1` would block node drains). The database is down while its node reboots                                                                                                                                                         |
+| `cnpg/timescaledb`       | Layer after `cnpg/app` for apps that need TimescaleDB's community edition: swaps in a CNPG-compatible TimescaleDB image and adds its preload library, licence and extensions                                                                                                                                                                                                                                        |
+| `dragonfly`              | A two-replica Dragonfly (Redis-compatible) instance for the app, `${APP}-dragonfly`, with a generated password (`ExternalSecret`) and a `PodMonitor`                                                                                                                                                                                                                                                                |
+| `gpu`                    | Intel iGPU resource claims for transcoding workloads                                                                                                                                                                                                                                                                                                                                                                |
+| `theme-park`             | theme.park styling injection                                                                                                                                                                                                                                                                                                                                                                                        |
+| `zeroscaler`             | An HPA (0↔1) on the `nfs_probe` blackbox probe: parks the workload at 0 replicas while the NAS NFS export is unreachable and restores it when the probe recovers. Not idle-based. Uses the `HPAScaleToZero` feature gate; `ZEROSCALER_METRIC_NAME`, `ZEROSCALER_JOB_NAME` and `CONTROLLER` substitutions override the defaults                                                                                      |
 
 ## Flux entrypoint
 
@@ -110,7 +116,7 @@ talos/
 ```
 
 Rendering is minijinja + `vals` (1Password resolution) driven by `just talos` recipes; a
-node.s role is the directory its file lives in, and the three layers are merged by
+node's role is the directory its file lives in, and the three layers are merged by
 `talosctl machineconfig patch` (cluster → role → node).
 Disk roles are model-matched (`diskSelector` / `UserVolumeConfig`), so hardware swaps
 mean updating a model string, not device paths.
@@ -123,7 +129,8 @@ from the same files Flux reconciles. Fully documented in [bootstrap.md](./bootst
 
 ## Infrastructure (Ansible)
 
-[`infrastructure/`](../infrastructure) manages the two Pi-holes: a `dnscrypt` play
+[`infrastructure/`](../infrastructure) manages the two Pi-holes: a `network` play
+(serial; each Pi's static addressing and upstream DNS), a `dnscrypt` play
 (serial, one Pi at a time, with a resolve check), a `pihole` play (the FTL settings
 in `pihole_ftl_config` plus `webserver.domain`, serial with a web UI check; on pi-0 it
 also enforces the adlists and domain entries and ensures the hand-made local DNS records
@@ -142,7 +149,8 @@ see [cicd.md](./cicd.md).
   slot, not at the end. Exception: functionally-ordered content (e.g. Authentik
   flow/binding blueprints where `order:` and `!KeyOf` references impose a sequence).
 - **One 1Password item per app**, with multiple fields, consumed by a single
-  `ExternalSecret`. Shared infra credentials (e.g. `ghcr-pull`) are the exception.
+  `ExternalSecret`. The exceptions are credentials several apps share: `ghcr-pull`, and
+  the `azerothcore` item read by azerothcore, azerothcore-db and wow-panel.
 - **Schema headers** — every YAML file starts with a `yaml-language-server: $schema=`
   comment. CRD schemas are self-published to `schemas.materia.wtf` by
   `crd-schema-publisher`, so editors validate against exactly what the cluster runs.

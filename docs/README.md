@@ -25,7 +25,7 @@ conventional application repo would carry are intentionally **not** here:
   (CloudNativePG operator in `database/`, MySQL for AzerothCore in `games/`). Their
   schemas are owned by the upstream applications, not by this repo.
 - **Caching strategy** — there is no application cache tier to design. The caching that
-  exists (Spegel P2P image mirroring, CI image pre-pull, kubelet image GC tuning) is
+  exists (Spegel P2P image mirroring, kubelet image GC tuning) is
   covered in [architecture.md](./architecture.md) and [cicd.md](./cicd.md).
 - **Implementation code** — the manifests _are_ the implementation; there is no
   separate application codebase in this repo.

@@ -39,22 +39,30 @@ flowchart LR
 
 ## Stage 0 — Machine preparation
 
-Talos images come from the Image Factory using
-[`talos/schematic.yaml.j2`](../talos/schematic.yaml.j2), which selects system
-extensions per node type: `qemu-guest-agent` for the `matalos-c1` VM;
-`i915` + `mei` (iGPU) for the bare-metal P330s; `iscsi-tools`, `util-linux-tools`,
-`intel-ucode`, and `nfsrahead` everywhere. Kernel args trade hardening for speed
+Talos images come from the Image Factory, built from a schematic that selects system
+extensions per node type. The shared
+[`talos/schematic.yaml.j2`](../talos/schematic.yaml.j2) covers the bare-metal P330s
+(`i915` + `mei` for the iGPU); the `matalos-c1` VM carries a complete override,
+[`matalos-c1.schematic.yaml.j2`](../talos/nodes/controlplane/matalos-c1.schematic.yaml.j2),
+with `qemu-guest-agent` instead. Both include `iscsi-tools`, `util-linux-tools`,
+`intel-ucode`, and `nfsrahead`. Kernel args trade hardening for speed
 (mitigations off, SELinux/AppArmor off) and enable IOMMU passthrough.
 
 ```sh
-just talos download-image matalos-c2 v1.13.8   # builds the schematic, fetches the ISO
+just talos download-image matalos-c2 v1.14.5 true   # bare metal: builds the schematic, fetches the ISO
+just talos download-image matalos-c1 v1.14.5        # VM: no third argument
 ```
 
-For bare-metal ISO boots the schematic also injects
+The version is the tag on `machine.install.image` in
+[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2); read it from there rather than
+trusting the example above.
+
+For bare-metal ISO boots the trailing `true` makes the schematic also inject
 `bond=bond0:...:802.3ad` and a static `ip=` kernel arg, so a freshly booted node comes
 up on its bonded VLAN-20 address and is immediately reachable in maintenance mode —
-no console fiddling. Boot each machine from its ISO (PiKVM for the P330s, Proxmox for
-`matalos-c1`).
+no console fiddling. The argument is positional and must be the bare word `true`:
+without it, or written as `iso=true`, the ISO is built without those args. Boot each
+machine from its ISO (PiKVM for the P330s, Proxmox for `matalos-c1`).
 
 ## Stage 1 — `just bootstrap cluster`
 
@@ -97,9 +105,9 @@ then applies two things:
       from a workstation; everything else is an `ExternalSecret`.
     - `cloudflare-tunnel-id-secret` (network) — the tunnel ID for cloudflared.
 - **CRDs** — [`bootstrap/helmfile/crds.yaml`](../bootstrap/helmfile/crds.yaml) renders
-  (never installs) envoy-gateway, grafana-operator, and prometheus-operator-crds with
-  `--include-crds` and pipes only the `CustomResourceDefinition` documents to
-  `kubectl apply`. Installing CRDs out-of-band means Flux Kustomizations that _consume_
+  (never installs) envoy-gateway, grafana-operator, kopiur, prometheus-operator-crds, and
+  snapshot-controller with `--include-crds` and pipes only the
+  `CustomResourceDefinition` documents to `kubectl apply`. Installing CRDs out-of-band means Flux Kustomizations that _consume_
   CRD-backed resources (HTTPRoutes, ServiceMonitors, dashboards) don't all need
   `dependsOn` chains to the operator that ships the CRD.
 
@@ -123,6 +131,11 @@ then applies two things:
 
 Re-fetches the kubeconfig pointed at the real API endpoint, now that Cilium is
 announcing the VIP.
+
+Both `kubeconfig` stages write to a gitignored `kubeconfig` file in the repo root. It is
+a bootstrap artifact, not the day-to-day credential: routine cluster access uses a
+kubeconfig obtained through 1Password (see
+[repo-workflow.md](./repo-workflow.md#environment-setup)).
 
 ## Stage 2 — Handoff to Flux
 

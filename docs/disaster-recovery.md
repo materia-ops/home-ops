@@ -21,12 +21,18 @@ Everything runs from a workstation checkout of this repo:
 
 - **Toolchain:** `mise trust && mise install` (talosctl, kubectl, helmfile, kustomize,
   minijinja, vals, gum, just — pinned in [`.mise/config.toml`](../.mise/config.toml)).
+  Two kubectl plugins are not in that file and need installing separately:
+  `kubectl kopiur` (for `just kube snapshot-kopiur`; keep it in step with the kopiur
+  operator version) and `kubectl browse-pvc` (for `just kube browse-pvc`).
 - **Talos API identity:** a `talosconfig`, needed to reach the nodes at all. It lives
   only in 1Password (`talosconfig-matalos`, `kubernetes` vault) and is loaded
   just-in-time into `TALOSCONFIG` (tmpfs/temp file) — mise deliberately does not set it.
-- **Local secret files** (gitignored, wired up by mise): the repo-local `kubeconfig`
-  (re-fetched automatically during bootstrap) and `.secrets.env` (environment loaded
-  by mise).
+- **Kubernetes API identity:** the kubeconfig is likewise obtained through 1Password
+  for day-to-day access. `just bootstrap cluster` fetches a fresh one from Talos into
+  a gitignored repo-root `kubeconfig`, which is where mise points `KUBECONFIG`, so the
+  rebuild does not depend on an existing kubeconfig. That file is a plaintext admin
+  credential: once the rebuild is done, store it in 1Password and delete the file.
+- **Local environment file** (gitignored): `.secrets.env`, loaded by mise.
 - **1Password:** an authenticated `op` session (or service account) that can read the
   `kubernetes` vault — `vals` resolves every `ref+op://` reference through it. The two
   1Password Connect seed secrets applied during bootstrap are the only secrets ever
@@ -39,11 +45,16 @@ Everything runs from a workstation checkout of this repo:
 If a machine needs reimaging, build its boot media first:
 
 ```sh
-just talos download-image <node> <version>   # e.g. just talos download-image matalos-c2 v1.13.8
+just talos download-image <node> <version> true   # bare metal, e.g. matalos-c2 v1.14.5 true
+just talos download-image matalos-c1 <version>    # the VM takes no third argument
 ```
 
-This renders the node's Image Factory schematic (system extensions, bond/VLAN kernel
-args) and fetches the ISO — see [bootstrap.md](./bootstrap.md#stage-0--machine-preparation).
+`<version>` is the tag on `machine.install.image` in
+[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2). This renders the node's Image Factory
+schematic (system extensions, kernel args) and fetches the ISO; the trailing `true` is
+what bakes the static bond and `ip=` args into a bare-metal ISO, and it must be that
+bare word (not `iso=true`) — see
+[bootstrap.md](./bootstrap.md#stage-0--machine-preparation).
 
 ## Stage 1 — Reset or reimage the nodes
 

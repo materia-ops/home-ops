@@ -24,10 +24,15 @@ mise trust && mise install   # installs pinned talosctl, flux, kubectl, helmfile
 just                         # lists available recipes (bootstrap, kube, talos modules)
 ```
 
-`mise` also wires `KUBECONFIG` to the repo-local file and loads `.secrets.env`.
-It does not set `TALOSCONFIG`: export it yourself before running `just talos` or
-`just bootstrap` recipes (here it is loaded just-in-time from 1Password, never kept
-in the checkout). Git hooks come from lefthook (`.lefthook.toml`).
+`mise` loads `.secrets.env` and points `KUBECONFIG` at a `kubeconfig` file in the repo
+root. `just bootstrap cluster` and `just talos generate-kubeconfig` write that file: a
+plaintext admin kubeconfig, gitignored. Delete it once the copy in 1Password is current
+rather than keeping it there day to day.
+Here the kubeconfig is obtained through 1Password, so in a mise-activated shell set
+`KUBECONFIG` (or pass `--kubeconfig`) to your own. mise does not set `TALOSCONFIG`
+either: export it yourself before running `just talos` or `just bootstrap` recipes
+(here it is loaded just-in-time from 1Password, never kept in the checkout). Git hooks
+come from lefthook (`.lefthook.toml`).
 
 Every tool is pinned to an exact version in `.mise/config.toml`, and `.mise/mise.lock`
 records each one's download URL and sha256 for linux-x64 and windows-x64; `mise install`
@@ -41,7 +46,11 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
 ```
 
 1. **Branch and edit.** Keep the YAML schema header comments intact — they're how the
-   editor validates against the cluster's actual CRD versions.
+   editor validates against the cluster's actual CRD versions. Before pushing, render
+   every affected app with `just kube render-local-ks <ns> <ks>` (flate; `<ks>` is the
+   Flux Kustomization's name). It must render clean. `kustomize build` is only a rough
+   fallback, because it cannot resolve Flux substitutions. The recipe is private, so
+   `just kube` does not list it.
 2. **Open the PR.** Watch for:
     - **konflate** comments the rendered Flux diff — _read it_; it's the ground truth of
       what will change in the cluster, including effects of shared components you may
@@ -49,8 +58,9 @@ branch → commit (conventional) → PR → checks → merge → Flux deploys
     - **Image Pull** checks that every changed image reference resolves in its registry.
       A failure here usually means a typo'd image reference — fix it before merge, not
       after.
-    - **Validate (Syntax Check)** (only when `infrastructure/**` changed) checks the
-      playbook without credentials; the live `--check` dry-run runs post-merge, gating
+    - **Validate (Image + Syntax Check)** (only when `infrastructure/**`,
+      `talos/nodes/**` or the Ansible workflow file changed) checks the playbook without
+      credentials; the live `--check` dry-run runs post-merge, gating
       the apply.
 3. **Merge.** The GitHub webhook triggers Flux within seconds. If you're impatient or
    the webhook misfires: `just kube reconcile`.
@@ -128,10 +138,13 @@ Work lands there first; home-ops only merges the resulting image bump.
 
 - **azerothcore-image build-input PRs: open as draft → mark ready for ONE trial build →
   wait for green → merge.** Merging promotes the trial image by digest (~3 min);
-  merging mid-build triggers a full ~2 h rebuild. Rebase the PR if `main` moved.
-- Release PRs (release-please) are merged by a human; the image publish then
-  auto-notifies home-ops Renovate (`repository_dispatch`), so the bump PR appears within
-  a minute — no manual bumping.
+  merging mid-build triggers a full ~2 h rebuild. If `main` moved, merge `main` into
+  the PR branch (never rebase or force-push) and let one fresh trial run.
+- wow-panel and raidscope release PRs (release-please) are merged by a human, and
+  their home-ops bump PR auto-merges. The azerothcore-image release PR is merged by its
+  own workflow, and its home-ops bump PR is the human gate. In every case the image
+  publish auto-notifies home-ops Renovate (`repository_dispatch`), so the bump PR
+  appears within a minute — no manual bumping.
 - If a promotion spans multiple concerns (new module + its conf + a pin), bundle them in
   one home-ops PR so Flux applies them atomically.
 

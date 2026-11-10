@@ -98,9 +98,9 @@ MTU 9000).
 
 | Network                     | Purpose                                                                                            |
 | :-------------------------- | :------------------------------------------------------------------------------------------------- |
-| `192.168.1.0/24`            | Management (UDM Pro `.1`, UniFi gear, Pi-holes)                                                    |
+| `192.168.1.0/24`            | Management (UDM Pro `.1`, UniFi gear, `pi-0` at `.2`)                                              |
 | `192.168.10.0/24`           | Cilium LoadBalancer IP pool — VIPs advertised via BGP (the VLAN 10 L2 segment itself is vestigial) |
-| `192.168.20.0/24` (VLAN 20) | Cluster nodes — native VLAN on node switch ports                                                   |
+| `192.168.20.0/24` (VLAN 20) | Cluster nodes (`.10`–`.12`) and `pi-1` (`.2`) — native VLAN on node switch ports                   |
 | VLAN 70                     | IoT — tagged on node ports, reaches pods via Multus (`bond0.70`)                                   |
 | VLAN 90                     | VPN-isolated — tagged on node ports, reaches pods via Multus (`bond0.90`, e.g. qBittorrent)        |
 | `10.42.0.0/16`              | Pod network                                                                                        |
@@ -169,17 +169,24 @@ flowchart TD
 
 ## Kubernetes platform
 
-| Layer           | Choice                | Notes                                                                                                  |
-| :-------------- | :-------------------- | :----------------------------------------------------------------------------------------------------- |
-| OS              | Talos Linux `v1.13.8` | Immutable, API-managed, no SSH; config templated with minijinja + vals                                 |
-| Kubernetes      | `v1.36.3`             | `HPAScaleToZero` feature gate, topology-spread defaults in the scheduler                               |
-| CNI             | Cilium                | kube-proxy replacement, BGP control plane, L2 announcements available                                  |
-| Runtime tuning  |                       | BBR congestion control, jumbo frames end-to-end, `nvme_tcp`/`vfio` modules, 5-minute hardware watchdog |
-| Registry mirror | Spegel                | Node-to-node P2P image caching — pulls survive registry outages                                        |
-| Upgrades        | tuppr                 | Automated Talos and Kubernetes upgrades from `system-upgrade/`                                         |
+| Layer           | Choice        | Notes                                                                                                  |
+| :-------------- | :------------ | :----------------------------------------------------------------------------------------------------- |
+| OS              | Talos Linux   | Immutable, API-managed, no SSH; config templated with minijinja + vals                                 |
+| Kubernetes      | Talos-managed | `HPAScaleToZero` feature gate, topology-spread defaults in the scheduler                               |
+| CNI             | Cilium        | kube-proxy replacement, BGP control plane (L2 announcements disabled)                                  |
+| Runtime tuning  |               | BBR congestion control, jumbo frames end-to-end, `nvme_tcp`/`vfio` modules, 5-minute hardware watchdog |
+| Registry mirror | Spegel        | Node-to-node P2P image caching — pulls survive registry outages                                        |
+| Upgrades        | tuppr         | Automated Talos and Kubernetes upgrades from `system-upgrade/`                                         |
+
+Versions are deliberately not repeated here. Talos is the tag on `machine.install.image`
+and Kubernetes the kubelet image tag, both in
+[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2); the badges in the
+[README](../README.md) show what is running.
 
 Talos API access from inside the cluster is restricted to the `actions-runner-system`
-and `system-upgrade` namespaces (for CI image pre-pull and tuppr respectively).
+and `system-upgrade` namespaces. tuppr, in `system-upgrade`, is the consumer: the
+`actions-runner-system` entry dates from the CI image pre-pull, retired in 2026-11, and
+nothing in that namespace holds a Talos credential any more.
 
 ## GitOps control plane
 
@@ -255,7 +262,10 @@ Authentik blueprints.
 
 Databases are deployed per-application, not as a shared tier:
 
-- **CloudNativePG operator** (`database/` namespace) for apps that need Postgres.
+- **CloudNativePG operator** (`database/` namespace) for apps that need Postgres. These
+  clusters are not backed up by kopiur: barman-cloud archives to a per-app Garage bucket
+  on the NAS, mirrored hourly to Backblaze B2 — see
+  [disaster-recovery.md](./disaster-recovery.md#postgres-cloudnativepg).
 - **MySQL 8.4 LTS** (`games/azerothcore-db`) for AzerothCore, with its own scheduled
   dumps and kopiur protection of the dump volume.
 

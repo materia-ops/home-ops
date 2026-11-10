@@ -3,7 +3,8 @@
 Flux GitOps monorepo for the Materia Talos Kubernetes cluster. Everything
 merged here reconciles onto a live cluster: the default posture is small,
 reviewable, reversible changes. This repo is PUBLIC — no secrets in git,
-ever; secrets flow through ExternalSecrets (one 1Password item per app).
+ever; secrets flow through ExternalSecrets (one 1Password item per app;
+a shared item where apps share a credential: `azerothcore`, `ghcr-pull`).
 
 ## Shared checkout — never do branch work here
 
@@ -25,12 +26,13 @@ every other one, and commits pick up whatever is in the shared index.
 ## Commit / PR style
 
 Conventional Commits (`type(scope):`) on every commit; PRs are opened
-with `gh pr create` and merged by the maintainer, not by sessions.
+with `gh pr create` and merged by the maintainer; a session merges only
+when he explicitly says `land` (global agent rules, PR / CI).
 
 ## Layout
 
 - `kubernetes/apps/<namespace>/<app>/` — workloads;
-  `kubernetes/{flux,components,templates}/` — shared machinery;
+  `kubernetes/{flux,components}/` — shared machinery;
   `talos/`, `bootstrap/`, `infrastructure/` (ansible).
 - `docs/` — committed public docs (start at docs/README.md). Work
   notes live in the private materia-vault (below), never in this repo.
