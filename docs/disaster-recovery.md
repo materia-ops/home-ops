@@ -28,7 +28,8 @@ Everything runs from a workstation checkout of this repo:
   only in 1Password (`talosconfig-matalos`, `kubernetes` vault) and is loaded
   just-in-time into `TALOSCONFIG` (tmpfs/temp file) — mise deliberately does not set it.
 - **Kubernetes API identity:** the kubeconfig is likewise obtained through 1Password
-  for day-to-day access. `just bootstrap cluster` fetches a fresh one from Talos into
+  for day-to-day access, and mise does not set `KUBECONFIG` either: `kubectl` uses
+  the shell's own. `just bootstrap cluster` fetches a fresh one from Talos into
   a gitignored repo-root `kubeconfig` and exports `KUBECONFIG` at it for its own
   stages, so the rebuild neither depends on an existing kubeconfig nor uses the old
   cluster's. That file is a plaintext admin credential: once the rebuild is done,
