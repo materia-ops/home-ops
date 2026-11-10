@@ -264,11 +264,13 @@ update the file to make CI green until the cause is understood.
 Monthly (or manual) date-based tag on `main` via the github-bot App, giving coarse
 restore points for the whole cluster state.
 
-### `label-sync.yaml` / `labeler.yaml` — housekeeping
+### `labeler.yaml` — housekeeping
 
-Sync the label set from `.github/labels.yaml` (daily) and auto-label PRs by touched
-area (`.github/labeler.yaml`). The labeler runs on `pull_request` with `GITHUB_TOKEN`
-only, so it holds no 1Password token.
+Auto-labels PRs by touched area (`.github/labeler.yaml`). It runs on `pull_request`
+with `GITHUB_TOKEN` only, so it holds no 1Password token. The label set itself is not
+defined here: the org-wide label sync in
+[`materia-ops/.github`](https://github.com/materia-ops/.github) owns it for every
+repository, so a new label is added to its `labels.yaml`.
 
 ### `claude-review.yaml` — report-only PR review
 
