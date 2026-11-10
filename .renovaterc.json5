@@ -362,5 +362,16 @@
       datasourceTemplate: "github-releases",
       depNameTemplate: "renovatebot/renovate",
     },
+    {
+      // The Talos version quoted in the runbooks' copy-paste rebuild commands.
+      // Same datasource, depName and versioning as the node pins, so it rides
+      // the "talos" group PR and is never automerged.
+      customType: "regex",
+      managerFilePatterns: ["docs/bootstrap.md", "docs/disaster-recovery.md"],
+      matchStrings: ["download-image[^\\n]*?\\s(?<currentValue>v\\d+\\.\\d+\\.\\d+)\\b"],
+      datasourceTemplate: "custom.talos-factory",
+      depNameTemplate: "siderolabs/talos",
+      versioningTemplate: "semver",
+    },
   ],
 }

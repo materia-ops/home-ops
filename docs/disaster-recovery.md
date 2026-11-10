@@ -51,7 +51,8 @@ just talos download-image matalos-c1 <version>    # the VM takes no third argume
 ```
 
 `<version>` is the tag on `machine.install.image` in
-[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2). This renders the node's Image Factory
+[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2); Renovate keeps the example version
+above in step with it. This renders the node's Image Factory
 schematic (system extensions, kernel args) and fetches the ISO; the trailing `true` is
 what bakes the static bond and `ip=` args into a bare-metal ISO, and it must be that
 bare word (not `iso=true`) — see

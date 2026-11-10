@@ -54,8 +54,10 @@ just talos download-image matalos-c1 v1.14.5        # VM: no third argument
 ```
 
 The version is the tag on `machine.install.image` in
-[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2); read it from there rather than
-trusting the example above.
+[`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2). Renovate bumps the example above in
+the same PR as that pin (a regex manager in
+[`.renovaterc.json5`](../.renovaterc.json5) matches the version on a `download-image`
+line), but the template is the source of truth if the two ever disagree.
 
 For bare-metal ISO boots the trailing `true` makes the schematic also inject
 `bond=bond0:...:802.3ad` and a static `ip=` kernel arg, so a freshly booted node comes
