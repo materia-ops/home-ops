@@ -9,7 +9,7 @@ set shell := ['bash', '-euo', 'pipefail', '-c']
 apply-node node *args:
     just talos render-config "{{ node }}" | talosctl -n "{{ node }}" apply-config -f /dev/stdin {{ args }}
 
-[doc('Download Talos machine image (iso=true bakes the static bond/ip args for baremetal installs)')]
+[doc('Download Talos machine image (pass true as the third argument to bake the static bond/ip args for baremetal installs)')]
 download-image node version iso="false":
     export SCHEMATIC="$(just talos schematic-id "{{ node }}" "{{ iso }}")"
     curl -fL --remove-on-error --retry 5 --retry-delay 5 --retry-all-errors --progress-bar \
