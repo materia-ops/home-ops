@@ -25,7 +25,9 @@ just                         # lists available recipes (bootstrap, kube, talos m
 ```
 
 `mise` loads `.secrets.env` and points `KUBECONFIG` at a `kubeconfig` file in the repo
-root. Only `just bootstrap cluster` writes that file; no copy is kept there day to day.
+root. `just bootstrap cluster` and `just talos generate-kubeconfig` write that file: a
+plaintext admin kubeconfig, gitignored. Delete it once the copy in 1Password is current
+rather than keeping it there day to day.
 Here the kubeconfig is obtained through 1Password, so in a mise-activated shell set
 `KUBECONFIG` (or pass `--kubeconfig`) to your own. mise does not set `TALOSCONFIG`
 either: export it yourself before running `just talos` or `just bootstrap` recipes
