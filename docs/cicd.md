@@ -10,7 +10,7 @@ There are two deployment paths, both converging on Flux:
 
 ```mermaid
 flowchart TD
-    subgraph companion["Companion repos (azerothcore-image, wow-panel, raidscope)"]
+    subgraph companion["Companion repos (wow-panel, raidscope; azerothcore-image differs, see below)"]
         c1[Conventional commit] --> rp[release-please PR] --> tag[semver tag]
         tag --> build[Image build + GHCR push]
         build --> disp["repository_dispatch: image-published"]
@@ -49,7 +49,9 @@ Two runner types:
 CI secrets follow the same 1Password-first model as the cluster. Workflows load
 credentials with `OP_CI_SERVICE_ACCOUNT_TOKEN`, which belongs to the 1Password service
 account `gh-actions-ci-ro` (read-only, `ci` vault). Anything that needs to write to
-GitHub mints a short-lived **github-bot App token** from the key in `ci`. That token must
+GitHub mints a short-lived **github-bot App token** from the key in `ci`. "github-bot" is
+the name of that 1Password item; the GitHub App itself is `materia-minion`, so its PRs
+and comments are authored by `materia-minion[bot]`. That token must
 carry `workflows: write` for release automation in the companion repos. The Ansible job
 uses its own, [Environment-scoped](#credentials-and-host-keys) token.
 
@@ -103,9 +105,11 @@ Self-hosted Renovate run, triggered by:
 Auto-merge policy (see [`.renovaterc.json5`](../.renovaterc.json5)): mise tools
 (minor/patch, 3-day cooldown), GitHub Actions (minor/patch/digest), trusted
 `home-operations` digests, the raidscope/wow-panel images (semver from
-release-please), and Grafana dashboards — all via PR automerge (the org ruleset
-forbids direct branch pushes). The AzerothCore server and MySQL images never
-auto-merge; everything else waits for review.
+release-please), Grafana dashboards, and Renovate preset bumps (minor/patch) — all via
+PR automerge (the org ruleset forbids direct branch pushes). The AzerothCore server
+image, MySQL, the kopiur chart, CNPG Postgres and the TimescaleDB operand are
+explicitly never auto-merged; everything else waits for review. The config file is the
+full list.
 
 The Renovate runner pin (`RUNNER_VERSION` in the workflow) is the one
 self-update Renovate cannot recover from on its own, so it auto-merges only after
@@ -164,10 +168,10 @@ entirely. On push to `main` (and manual dispatch):
 1. **Image** — on a GitHub-hosted runner, reuses the tag if it exists (and, on `main`,
    is attested), otherwise builds, pushes and attests it, and hands on the
    digest-pinned `tag@sha256` reference.
-2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`,
+2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`,
    `roles/pihole/` or `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
-   `inventory/group_vars/` → `observability`, structural files (playbook, inventory,
-   requirements, `ansible.cfg`, Dockerfile) → everything). On push, the diff runs from
+   `inventory/group_vars/` → `observability`, structural files (playbook, `inventory/hosts.yaml`,
+   requirements, `ansible.cfg`, Dockerfile, `known_hosts`) → everything). On push, the diff runs from
    the commit of the **last successful push run on `main`**, not from the push's own
    `before`, so a cancelled or failed run's changes fold into the next one; with no
    usable diff (no earlier success, an unexpected compare result, the 300-file API cap,
@@ -191,9 +195,10 @@ push run, so rerunning an old run, or a run that reached the group after a newer
 cannot roll the hosts back. [`.github/scripts/ansible_last_applied.py`](../.github/scripts/ansible_last_applied.py)
 does that lookup for both Plan and this guard.
 
-The dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a verification
-between hosts (a DNS resolve; the web UI answering on its ingress hostname), so a bad
-change can only take out one Pi-hole before the rollout stops.
+The network, dnscrypt and pihole plays are `serial: 1` + `any_errors_fatal` with a
+verification between hosts (the interface still connected; a DNS resolve; the web UI
+answering on its ingress hostname), so a bad change can only take out one Pi-hole before
+the rollout stops.
 
 **Dependency updates.** `requirements.in` pins `ansible-core`. Renovate's `pip-compile`
 manager bumps that pin and regenerates `requirements.txt`, a `uv pip compile
@@ -346,10 +351,31 @@ python3 .github/scripts/recyclarr_drift.py --update-baseline
 
 Runs `python3 -m unittest discover -s .github/scripts/tests` on PRs touching
 `.github/scripts/**`. The upgrade-evidence fixtures are real PRs (#1728, #1734,
-#1761, #1917, #1924, #1953, #1955) with recorded API responses, so the suite runs
+#1761, #1917, #1924, #1953, #1955, #1965) with recorded API responses, so the suite runs
 offline. Re-record a fixture with the command in the test module's docstring after a
 deliberate behaviour change. The recyclarr-drift tests build a synthetic TRaSH tree in
 a temp directory.
+
+### `zizmor.yaml` — workflow security lint
+
+Runs zizmor on pushes to `main` and PRs that
+touch `.github/**`. It is report-only: findings are uploaded to code scanning as SARIF
+and never fail the check. Fork PRs are skipped, because they cannot be granted
+`security-events: write`.
+
+### `renovate-lint.yaml` — Renovate config validation
+
+On PRs that touch `.renovaterc.json5` (or the workflow itself), runs
+`renovate-config-validator --strict` inside the same Renovate image `renovate.yaml`
+executes. The two pins move together in the grouped runner-pin PR, so a new runner
+version validates the config before it merges.
+
+### `docs-lint.yaml` — stale links in the docs
+
+On PRs that touch `docs/**`, `README.md` or `CONTRIBUTING.md`, rejects
+`github.com/Malpractis` links (the org moved to `materia-ops`). This file is exempt: its
+[GHCR migration](#ghcr-namespace-migration-malpractis--materia-ops) section keeps them
+as history.
 
 ## konflate — PR gating and Flux visibility
 
@@ -374,7 +400,7 @@ namespace) connected to `github://materia-ops/home-ops`:
 ## Companion repo pipelines
 
 Application code lives in separate repos; home-ops only ever consumes their published
-images by digest/semver. Their shared pattern:
+images by digest/semver. The pattern wow-panel and raidscope share:
 
 1. Conventional Commits → **release-please** maintains a release PR
    (feat → minor, fix → patch, `feat!` → major).
@@ -384,12 +410,17 @@ images by digest/semver. Their shared pattern:
 
 Per-repo notes:
 
-- **azerothcore-image** — ~1h50m builds, so PRs that change build inputs open as
-  **draft** (zero builds), get marked ready for exactly **one trial build**, and merge
-  only when green (merge _promotes_ the trial image by digest, ~3 min; merging mid-build
-  causes a full rebuild). Rebase build-input PRs after `main` moves. ccache seeding cuts
-  warm builds; `versions.json` is the single realm gate.
-- **wow-panel / raidscope** — same release-please pattern; release builds check out the
+- **azerothcore-image** — also release-please, but the gates sit elsewhere. Its release
+  PR is mechanical and merged by its own workflow; the image is built first and the
+  version tag is applied to it afterwards. The human gates are the build-input PR in
+  that repo and the home-ops bump PR, which never auto-merges. Builds take ~1h50m, so
+  PRs that change build inputs open as **draft** (zero builds), get marked ready for
+  exactly **one trial build**, and merge only when green (merge _promotes_ the trial
+  image by digest, ~3 min; merging mid-build causes a full rebuild). When `main` moves,
+  merge `main` into the build-input PR branch (never rebase or force-push) and let one
+  fresh trial run. ccache seeding cuts warm builds; `versions.json` is the single realm
+  gate.
+- **wow-panel / raidscope** — the release-please pattern above; release builds check out the
   **tag ref** (a past bug built from `github.sha` and shipped an empty release — fixed,
   but any broken release can be rebuilt via workflow dispatch from its tag ref).
 
@@ -409,7 +440,7 @@ How each old-namespace reference was resolved:
 | `ghcr.io/malpractis/raidscope` / `wlogs-parser` comment | [`kubernetes/apps/default/raidscope/app/helmrelease.yaml`](../kubernetes/apps/default/raidscope/app/helmrelease.yaml)     | Historical comment reworded to point here                                                                                                                            |
 | `instance: Malpractis`                                  | `kubernetes/apps/torrents/qbitmanage/app/externalsecret.yaml`                                                             | Notifiarr instance label renamed to `Materia` (cosmetic); app has since been removed (replaced by qui)                                                               |
 | GHCR host-rule username `malpractis`                    | [`.github/workflows/renovate.yaml`](../.github/workflows/renovate.yaml)                                                   | **Stays as-is** — this is the PAT-owning personal account (which still exists), not the org; the token authenticates against `ghcr.io` regardless of image namespace |
-| Filter for **both** namespaces                          | [`.github/workflows/image-pull.yaml`](../.github/workflows/image-pull.yaml)                                               | Narrowed to `ghcr.io/materia-ops/` only — see [image-pull](#image-pullyaml--pre-warm-images-on-prs) above                                                            |
+| Filter for **both** namespaces                          | [`.github/workflows/image-pull.yaml`](../.github/workflows/image-pull.yaml)                                               | Narrowed to `ghcr.io/materia-ops/` only — see [image-pull](#image-pullyaml--verify-changed-images-on-prs) above                                                      |
 
 > [!NOTE]
 > `github.com/Malpractis/...` links in old release notes, commit history, and this
