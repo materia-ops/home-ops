@@ -2,17 +2,13 @@
 
 ## UniFi BGP
 
-router bgp 64513
-bgp router-id 192.168.20.1
-no bgp ebgp-requires-policy
+The UDM Pro side of the BGP peering is an FRR config kept at the repo root and
+hand-uploaded to the router; nothing in the repo applies it.
 
-neighbor k8s peer-group
-neighbor k8s remote-as 64514
+- [`bgp.conf`](../../../../bgp.conf) — IPv4 peering. It matches
+  [`app/networks.yaml`](./app/networks.yaml): router `192.168.1.1` (ASN 64513) peering
+  with the three nodes (ASN 64514).
+- [`bgp-v6.conf`](../../../../bgp-v6.conf) — a variant that adds an IPv6 peer group.
 
-neighbor 192.168.20.10 peer-group k8s
-neighbor 192.168.20.11 peer-group k8s
-neighbor 192.168.20.12 peer-group k8s
-
-address-family ipv4 unicast
-neighbor k8s next-hop-self
-neighbor k8s soft-reconfiguration inbound
+Edit those files, not this one. This README used to carry its own copy of the config,
+which drifted from them.
