@@ -17,7 +17,7 @@ download-image node version iso="false":
         "https://factory.talos.dev/image/${SCHEMATIC}/{{ version }}/metal-amd64.iso"
     just log info "Downloaded Talos" version "{{ version }}" schematic "${SCHEMATIC}"
 
-[doc('Generate kubeconfig for the cluster')]
+[doc('Fetch an admin kubeconfig into the repo root (plaintext: store it, then delete it)')]
 [private]
 generate-kubeconfig:
     talosctl kubeconfig -n "$(talosctl config info -o yaml | yq -e '.endpoints[0]')" -f --force-context-name main {{ justfile_dir() }}

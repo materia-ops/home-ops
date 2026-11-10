@@ -5,12 +5,16 @@ set quiet
 set script-interpreter := ['bash', '-euo', 'pipefail']
 set shell := ['bash', '-euo', 'pipefail', '-c']
 
+# Bootstrap talks to the cluster it is building through the kubeconfig its own
+# stages fetch, never an ambient one (which would be the previous cluster's).
+export KUBECONFIG := justfile_dir() / "kubeconfig"
+
 controller := `talosctl config info -o yaml | yq -e '.endpoints[0]'`
 nodes := `talosctl config info -o yaml | yq -e '.nodes | join (" ")'`
 
 [confirm('Bootstrap cluster? [y|N]')]
 [doc('Bootstrap a Talos & Kubernetes cluster end-to-end')]
-cluster: nodes k8s (kubeconfig "node") base apps kubeconfig
+cluster: nodes k8s (kubeconfig "node") base apps kubeconfig handover
 
 [private]
 [script]
@@ -66,6 +70,12 @@ apps:
     if ! helmfile -f "{{ source_directory() }}/helmfile/apps.yaml" sync --hide-notes; then
         just log fatal "Failed to sync helmfile" "stage" "$(basename "$0")"
     fi
+
+# The kubeconfig left in the repo root is a plaintext admin credential.
+[private]
+[script]
+handover:
+    just log warn "Admin kubeconfig left on disk: store it in your secret manager, then delete it" "path" "{{ justfile_dir() }}/kubeconfig" || true
 
 # Wait until nodes register as Ready=False. They only become Ready=True once the CNI is healthy.
 [private]
