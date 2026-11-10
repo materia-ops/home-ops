@@ -272,6 +272,13 @@ defined here: the org-wide label sync in
 [`materia-ops/.github`](https://github.com/materia-ops/.github) owns it for every
 repository, so a new label is added to its `labels.yaml`.
 
+### `label-sync-watchdog.yaml` — is the org label sync still running
+
+Daily (or manual) call of the report-only reusable watchdog in `materia-ops/.github`.
+It opens one issue here when that repo's nightly label sync is disabled or has not
+succeeded for more than three days. The schedule lives in this repo because GitHub
+disables schedules in a public repo after 60 days without activity, and that one is quiet.
+
 ### `claude-review.yaml` — report-only PR review
 
 Runs [claude-code-action](https://github.com/anthropics/claude-code-action) on every

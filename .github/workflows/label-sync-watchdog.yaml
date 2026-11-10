@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Label Sync Watchdog
+
+# The schedule lives here because this repo stays active: GitHub disables
+# schedules in a public repo after 60 idle days, the org sync's included.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 37 5 * * *
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  check:
+    name: Label Sync Watchdog - Call
+    permissions:
+      issues: write # the called job opens the alert issue in this repo
+    # The trailing comment must stay the bare branch name: Renovate reads it
+    # as the ref this SHA follows, and anything more disables the update.
+    uses: materia-ops/.github/.github/workflows/label-sync-watchdog.yaml@785bd1782a13eddf33c4b289f892a9eec4c0d1c6 # main
+    with:
+      # Whole days only; the alert fires once the last success is older.
+      max_age_days: 3
