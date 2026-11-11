@@ -280,20 +280,20 @@ url = "https://github.com/oxc-project/oxc/releases/download/oxfmt_v0.77.0/oxfmt-
 url_api = "https://api.github.com/repos/oxc-project/oxc/releases/assets/717100899"
 
 [[tools."aqua:siderolabs/talos"]]
-version = "1.14.5"
+version = "1.14.6"
 backend = "aqua:siderolabs/talos"
-specifiers = ["1.14.5"]
+specifiers = ["1.14.6"]
 
 [tools."aqua:siderolabs/talos"."platforms.linux-x64"]
-checksum = "sha256:ff432b68986709e6b69c563a08a2ced4232d5196b0dccd6d2e783e9d714d7d7d"
-url = "https://github.com/siderolabs/talos/releases/download/v1.14.5/talosctl-linux-amd64"
-url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/678470893"
+checksum = "sha256:11acde7f7578ffe9cbe6fb8349b34595065f597de0842615982e350b365de987"
+url = "https://github.com/siderolabs/talos/releases/download/v1.14.6/talosctl-linux-amd64"
+url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/736672969"
 provenance = "cosign"
 
 [tools."aqua:siderolabs/talos"."platforms.windows-x64"]
-checksum = "sha256:45b25be0ceef02b55110a2858f2fcc4e2f711f8b3dcd64bbc3c842d45adfd696"
-url = "https://github.com/siderolabs/talos/releases/download/v1.14.5/talosctl-windows-amd64.exe"
-url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/678470928"
+checksum = "sha256:5bd12fdf298fc4bd7bbcdf207d0ca200c620f9c169be31663ebca5f8a81a2d6b"
+url = "https://github.com/siderolabs/talos/releases/download/v1.14.6/talosctl-windows-amd64.exe"
+url_api = "https://api.github.com/repos/siderolabs/talos/releases/assets/736673004"
 provenance = "cosign"
 
 [[tools."github:home-operations/flate"]]

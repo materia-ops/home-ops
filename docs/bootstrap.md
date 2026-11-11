@@ -49,8 +49,8 @@ with `qemu-guest-agent` instead. Both include `iscsi-tools`, `util-linux-tools`,
 (mitigations off, SELinux/AppArmor off) and enable IOMMU passthrough.
 
 ```sh
-just talos download-image matalos-c2 v1.14.5 true   # bare metal: builds the schematic, fetches the ISO
-just talos download-image matalos-c1 v1.14.5        # VM: no third argument
+just talos download-image matalos-c2 v1.14.6 true   # bare metal: builds the schematic, fetches the ISO
+just talos download-image matalos-c1 v1.14.6        # VM: no third argument
 ```
 
 The version is the tag on `machine.install.image` in

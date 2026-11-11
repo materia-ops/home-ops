@@ -47,7 +47,7 @@ Everything runs from a workstation checkout of this repo:
 If a machine needs reimaging, build its boot media first:
 
 ```sh
-just talos download-image <node> <version> true   # bare metal, e.g. matalos-c2 v1.14.5 true
+just talos download-image <node> <version> true   # bare metal, e.g. matalos-c2 v1.14.6 true
 just talos download-image matalos-c1 <version>    # the VM takes no third argument
 ```
 
