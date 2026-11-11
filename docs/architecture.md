@@ -189,10 +189,11 @@ and Kubernetes the kubelet image tag, both in
 [`talos/cluster.yaml.j2`](../talos/cluster.yaml.j2); the badges in the
 [README](../README.md) show what is running.
 
-Talos API access from inside the cluster is restricted to the `actions-runner-system`
-and `system-upgrade` namespaces. tuppr, in `system-upgrade`, is the consumer: the
-`actions-runner-system` entry dates from the CI image pre-pull, retired in 2026-11, and
-nothing in that namespace holds a Talos credential any more.
+Talos API access from inside the cluster is restricted to the `system-upgrade`
+namespace, where tuppr is the only consumer. The allow-list is the
+`KubeTalosAPIAccessConfig` document in
+[`talos/controlplane.yaml.j2`](../talos/controlplane.yaml.j2); the CI runners hold no
+Talos credential (see [cicd.md](./cicd.md#runners)).
 
 ## GitOps control plane
 
