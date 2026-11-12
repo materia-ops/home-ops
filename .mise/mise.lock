@@ -229,20 +229,20 @@ checksum = "sha256:1691938f7de0e931969f9968c3601cf32d6b0d573573afb4ce471f3d28f51
 url = "https://dl.k8s.io/v1.37.2/bin/windows/amd64/kubectl.exe"
 
 [[tools."aqua:mikefarah/yq"]]
-version = "4.54.2"
+version = "4.54.3"
 backend = "aqua:mikefarah/yq"
-specifiers = ["4.54.2"]
+specifiers = ["4.54.3"]
 
 [tools."aqua:mikefarah/yq"."platforms.linux-x64"]
-checksum = "sha256:44c7759059b4910827a0059a2757b22001e59360cdecdb2ef8dedc4b6c7e9f32"
-url = "https://github.com/mikefarah/yq/releases/download/v4.54.2/yq_linux_amd64"
-url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/715419583"
+checksum = "sha256:129534601871538efe0ba4c5e62a34fb1d5f469bcb975c4fddeb467d82974973"
+url = "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_linux_amd64"
+url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/726219936"
 provenance = "cosign"
 
 [tools."aqua:mikefarah/yq"."platforms.windows-x64"]
-checksum = "sha256:d14bfc4c0daf75336e07f534980b0dd560775cbffbedef29d91aa733c9fefb52"
-url = "https://github.com/mikefarah/yq/releases/download/v4.54.2/yq_windows_amd64.exe"
-url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/715419566"
+checksum = "sha256:066ea0a09a282e47588ec1e1867280ff5ede458f7183617a2d99012e4e34f18a"
+url = "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_windows_amd64.exe"
+url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/726219881"
 provenance = "cosign"
 
 [[tools."aqua:mitsuhiko/minijinja"]]
