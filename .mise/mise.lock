@@ -71,19 +71,21 @@ url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.7/clo
 url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/692820426"
 
 [[tools."aqua:elsesiy/kubectl-view-secret"]]
-version = "0.16.0"
+version = "0.17.0"
 backend = "aqua:elsesiy/kubectl-view-secret"
-specifiers = ["0.16.0"]
+specifiers = ["0.17.0"]
 
 [tools."aqua:elsesiy/kubectl-view-secret"."platforms.linux-x64"]
-checksum = "sha256:dad8f7d257e17e0a382f139bd756cdb437268d77973ad8ba3c55b346ce5bdd92"
-url = "https://github.com/elsesiy/kubectl-view-secret/releases/download/v0.16.0/kubectl-view-secret_v0.16.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/elsesiy/kubectl-view-secret/releases/assets/403112645"
+checksum = "sha256:1c8aca396e7379c497f46bae938032cfa4ce446888fa038d7b1b891e39caa0c1"
+checksum_source = "mise-versions"
+url = "https://github.com/elsesiy/kubectl-view-secret/releases/download/v0.17.0/kubectl-view-secret_v0.17.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/elsesiy/kubectl-view-secret/releases/assets/726481576"
 
 [tools."aqua:elsesiy/kubectl-view-secret"."platforms.windows-x64"]
-checksum = "sha256:5e1401d5438524b93661cb360d3763967bfd9a9bc00ed859783e03dec09915a1"
-url = "https://github.com/elsesiy/kubectl-view-secret/releases/download/v0.16.0/kubectl-view-secret_v0.16.0_windows_amd64.tar.gz"
-url_api = "https://api.github.com/repos/elsesiy/kubectl-view-secret/releases/assets/403112646"
+checksum = "sha256:0c860dc997aa77ec0abf58f490dbaef370cb062b6dd9e469d008a1c2a304a483"
+checksum_source = "mise-versions"
+url = "https://github.com/elsesiy/kubectl-view-secret/releases/download/v0.17.0/kubectl-view-secret_v0.17.0_windows_amd64.tar.gz"
+url_api = "https://api.github.com/repos/elsesiy/kubectl-view-secret/releases/assets/726481614"
 
 [[tools."aqua:evilmartians/lefthook"]]
 version = "2.2.2"
