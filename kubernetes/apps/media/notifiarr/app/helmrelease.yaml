@@ -51,11 +51,6 @@ spec:
               DN_RADARR_2_URL: http://radarr-anime.media.svc.cluster.local
               DN_RADARR_2_INTERVAL: 5m
               DN_RADARR_2_TIMEOUT: 15s
-              # Readarr Configuration
-              # DN_READARR_0_NAME: "Readarr"
-              # DN_READARR_0_URL: http://readarr.media.svc.cluster.local
-              # DN_READARR_0_INTERVAL: 5m
-              # DN_READARR_0_TIMEOUT: 15s
               # Sonarr Configuration
               DN_SONARR_0_NAME: "Sonarr"
               DN_SONARR_0_URL: http://sonarr.media.svc.cluster.local
