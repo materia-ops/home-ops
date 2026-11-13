@@ -279,6 +279,9 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       minimumGroupSize: 5,
+      // Keep current-minor patch PRs coming once the next minor ships:
+      // the Talos support matrix can hold the cluster on the older minor.
+      separateMinorPatch: true,
     },
     {
       description: "Rook-Ceph Group",
