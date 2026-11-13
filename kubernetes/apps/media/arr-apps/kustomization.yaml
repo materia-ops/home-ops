@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./bazarr/ks.yaml
   - ./bazarr-anime/ks.yaml
-  # lidarr is not deployed; its ks.yaml is kept wired-off here
   - ./prowlarr/ks.yaml
   - ./radarr/ks.yaml
   - ./radarr-4k/ks.yaml

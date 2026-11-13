@@ -410,7 +410,7 @@ spec:
         create: true
         groups:
           # Migrated from the retired per-app lokirule.yaml files; one
-          # namespace-wide group now also covers bazarr/lidarr, which the
+          # namespace-wide group now also covers bazarr, which the
           # old copies never did. stats by app -> one alert per container.
           - name: sqlite
             type: vlogs

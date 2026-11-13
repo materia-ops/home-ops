@@ -33,11 +33,6 @@ spec:
               DN_LOG_FILES: "5"
               DN_FILE_MODE: "0600"
               DN_TIMEOUT: "60s"
-              # Lidarr Configuration
-              # DN_LIDARR_0_NAME: "Lidarr"
-              # DN_LIDARR_0_URL: http://lidarr.media.svc.cluster.local
-              # DN_LIDARR_0_INTERVAL: 5m
-              # DN_LIDARR_0_TIMEOUT: 15s
               # Prowlarr Configuration
               DN_PROWLARR_0_NAME: "Prowlarr"
               DN_PROWLARR_0_URL: http://prowlarr.media.svc.cluster.local

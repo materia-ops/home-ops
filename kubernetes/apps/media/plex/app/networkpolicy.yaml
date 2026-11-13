@@ -31,7 +31,6 @@ spec:
               values:
                 - bazarr
                 - bazarr-anime
-                - lidarr
                 - notifiarr
                 - radarr
                 - radarr-4k
