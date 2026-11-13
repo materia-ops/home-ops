@@ -33,11 +33,6 @@ spec:
               DN_LOG_FILES: "5"
               DN_FILE_MODE: "0600"
               DN_TIMEOUT: "60s"
-              # Lidarr Configuration
-              # DN_LIDARR_0_NAME: "Lidarr"
-              # DN_LIDARR_0_URL: http://lidarr.media.svc.cluster.local
-              # DN_LIDARR_0_INTERVAL: 5m
-              # DN_LIDARR_0_TIMEOUT: 15s
               # Prowlarr Configuration
               DN_PROWLARR_0_NAME: "Prowlarr"
               DN_PROWLARR_0_URL: http://prowlarr.media.svc.cluster.local
@@ -56,11 +51,6 @@ spec:
               DN_RADARR_2_URL: http://radarr-anime.media.svc.cluster.local
               DN_RADARR_2_INTERVAL: 5m
               DN_RADARR_2_TIMEOUT: 15s
-              # Readarr Configuration
-              # DN_READARR_0_NAME: "Readarr"
-              # DN_READARR_0_URL: http://readarr.media.svc.cluster.local
-              # DN_READARR_0_INTERVAL: 5m
-              # DN_READARR_0_TIMEOUT: 15s
               # Sonarr Configuration
               DN_SONARR_0_NAME: "Sonarr"
               DN_SONARR_0_URL: http://sonarr.media.svc.cluster.local
