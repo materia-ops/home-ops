@@ -21,6 +21,7 @@ spec:
     timezone: Australia/Melbourne
     cronJobTimeZone: true
     webhook:
+      failurePolicy: Ignore
       # stable cert via cert-manager; the chart's default regenerates it on every upgrade
       certManager:
         enabled: true
