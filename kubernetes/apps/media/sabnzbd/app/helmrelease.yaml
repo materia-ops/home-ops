@@ -29,6 +29,7 @@ spec:
                 sabnzbd.media.svc.cluster,
                 sabnzbd.media.svc.cluster.local,
                 sabnzbd.materia.wtf
+              TZ: Australia/Melbourne
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"

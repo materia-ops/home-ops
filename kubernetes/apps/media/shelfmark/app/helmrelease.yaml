@@ -30,6 +30,7 @@ spec:
               OIDC_ADMIN_GROUP: admins
               OIDC_DISCOVERY_URL: https://auth.materia.wtf/application/o/shelfmark/.well-known/openid-configuration
               OIDC_SCOPES: openid,email,profile,groups
+              TZ: Australia/Melbourne
               UID: 1000
               USE_DOH: true
             envFrom:

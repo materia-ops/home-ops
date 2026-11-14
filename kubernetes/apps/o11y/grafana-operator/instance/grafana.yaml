@@ -77,6 +77,8 @@ spec:
                     secretKeyRef:
                       name: grafana-secret
                       key: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+                - name: TZ
+                  value: Australia/Melbourne
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
