@@ -24,6 +24,7 @@ spec:
               tag: v3.5.2
             env:
               PORT: "80"
+              TZ: Australia/Melbourne
             resources:
               requests:
                 cpu: 15m

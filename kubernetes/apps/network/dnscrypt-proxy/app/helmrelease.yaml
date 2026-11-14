@@ -36,6 +36,8 @@ spec:
             image:
               repository: ghcr.io/klutchell/dnscrypt-proxy
               tag: 2.1.20@sha256:9d4e4c1408f71f669ffdc34836d801442dddd7c176838c6d129938d2c1bd95b1
+            env:
+              TZ: Australia/Melbourne
             probes:
               liveness: &dnscrypt-probes
                 enabled: true
