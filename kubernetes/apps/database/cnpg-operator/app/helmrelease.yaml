@@ -10,6 +10,9 @@ spec:
     kind: OCIRepository
     name: cloudnative-pg
   values:
+    additionalEnv:
+      - name: TZ
+        value: Australia/Melbourne
     crds:
       create: true
     monitoring:
