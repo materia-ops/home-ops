@@ -39,6 +39,8 @@ spec:
       log_min_duration_statement: "500"
       log_checkpoints: "on"
       log_lock_waits: "on"
+      log_timezone: Australia/Melbourne
+      timezone: Australia/Melbourne
     pg_hba:
       - hostssl all all all scram-sha-256
 
