@@ -33,6 +33,9 @@ spec:
                 "-c",
                 "for _ in {1..120}; do (exec 3<>/dev/tcp/127.0.0.1/1234) 2>/dev/null && break; sleep 1; done; exec /home/runner/run.sh",
               ]
+            env:
+              - name: TZ
+                value: Australia/Melbourne
             resources:
               requests:
                 cpu: 250m
