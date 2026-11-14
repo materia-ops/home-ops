@@ -63,7 +63,6 @@ spec:
               GEOIPUPDATE_CONF_FILE: ""
               GEOIPUPDATE_DB_DIR: /usr/share/GeoIP
               GEOIPUPDATE_EDITION_IDS: GeoLite2-ASN GeoLite2-City
-              TZ: Australia/Melbourne
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
