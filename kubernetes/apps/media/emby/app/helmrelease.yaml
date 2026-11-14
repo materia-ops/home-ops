@@ -22,6 +22,7 @@ spec:
               tag: 4.10.2.0@sha256:3926aa2a20747561bdd7d8885f5e6bdc335c89c9a15cb0e55ec9a3b636c1d598
             env:
               DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
+              TZ: Australia/Melbourne
             probes:
               liveness: &probes
                 type: HTTP
