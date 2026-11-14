@@ -21,7 +21,6 @@ spec:
     timezone: Australia/Melbourne
     cronJobTimeZone: true
     webhook:
-      # an unreachable webhook must not block pod creation (does not cover explicit denies)
       failurePolicy: Ignore
       # stable cert via cert-manager; the chart's default regenerates it on every upgrade
       certManager:
