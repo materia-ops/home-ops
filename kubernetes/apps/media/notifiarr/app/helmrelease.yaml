@@ -79,6 +79,7 @@ spec:
               DN_TAUTULLI_URL: http://tautulli.media.svc.cluster.local
               DN_TAUTULLI_INTERVAL: 5m
               DN_TAUTULLI_TIMEOUT: 15s
+              TZ: Australia/Melbourne
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"

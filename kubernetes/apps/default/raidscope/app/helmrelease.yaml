@@ -30,6 +30,7 @@ spec:
               # OIDC via Authentik (client id/secret + session key come from the secret).
               OIDC_ISSUER: https://auth.materia.wtf/application/o/raidscope
               OIDC_REDIRECT_URL: https://raidscope.materia.wtf/auth
+              TZ: Australia/Melbourne
             envFrom:
               - secretRef:
                   name: raidscope-secret
