@@ -8,7 +8,7 @@ JUST_UNSTABLE = "1"
 postinstall = "lefthook install"
 
 [tools]
-"aqua:cilium/cilium-cli" = "0.20.2"
+"aqua:cilium/cilium-cli" = "0.20.3"
 "aqua:cli/cli" = "2.103.3"
 "aqua:cloudflare/cloudflared" = "2026.11.0"
 "aqua:fluxcd/flux2" = "2.10.0"
