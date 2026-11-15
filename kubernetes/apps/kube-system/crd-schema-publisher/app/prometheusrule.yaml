@@ -18,3 +18,14 @@ spec:
               being rewritten in a loop (look for one stuck Terminating)
           labels:
             severity: warning
+
+        - alert: CRDStatusWriteLoop
+          expr: |-
+            sum(increase(apiserver_request_total{job="apiserver", resource="customresourcedefinitions", subresource="status", verb!~"GET|LIST|WATCH"}[30m])) > 30
+          for: 1h
+          annotations:
+            summary: >-
+              The apiserver rewrote CRD status {{ $value | humanize }} times in 30 minutes; a CRD is
+              likely stuck Terminating behind instances that still hold finalizers
+          labels:
+            severity: warning
