@@ -1,0 +1,2 @@
+# Managed by Ansible (infrastructure/roles/pikvm)
+vince ALL=(ALL) NOPASSWD:ALL

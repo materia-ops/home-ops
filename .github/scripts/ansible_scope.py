@@ -7,8 +7,9 @@ Markdown to a host. The rest of the diff is ignored. A renamed file arrives as
 both its old and new path (ansible_last_applied.py). Each counted path maps to
 (tags, hosts), where ALL means "no narrowing":
 
-  infrastructure/roles/<role>/       that role's tag, every host (the tag
-                                     already confines the run to its play's hosts)
+  infrastructure/roles/<role>/       the tags of the plays that run it, every host
+                                     (the tags already confine the run to those
+                                     plays' hosts)
   talos/nodes/                       pihole, every host (node IPs feed the role)
   infrastructure/inventory/group_vars/  observability, every host
   infrastructure/inventory/host_vars/<host>.yaml  every tag, that host only
@@ -29,12 +30,14 @@ import sys
 
 ALL = None
 
+# The play tags each role runs under; a role several plays include has several.
 ROLE_TAGS = {
-    "dnscrypt_proxy": "dnscrypt",
-    "network": "network",
-    "pihole": "pihole",
-    "pikvm": "pikvm",
-    "unattended_upgrades": "unattended_upgrades",
+    "dnscrypt_proxy": ("dnscrypt",),
+    "ext4_metrics": ("observability", "pikvm"),
+    "network": ("network",),
+    "pihole": ("pihole",),
+    "pikvm": ("pikvm",),
+    "unattended_upgrades": ("unattended_upgrades",),
 }
 
 
@@ -71,7 +74,7 @@ def path_scope(path, known_hosts):
         return {"pihole"}, ALL
     m = re.fullmatch(r"infrastructure/roles/([^/]+)/.+", path)
     if m and m.group(1) in ROLE_TAGS:
-        return {ROLE_TAGS[m.group(1)]}, ALL
+        return set(ROLE_TAGS[m.group(1)]), ALL
     if path.startswith("infrastructure/inventory/group_vars/"):
         return {"observability"}, ALL
     m = re.fullmatch(r"infrastructure/inventory/host_vars/([^/]+)\.ya?ml", path)

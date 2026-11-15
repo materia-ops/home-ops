@@ -80,6 +80,13 @@ class ScopeTest(unittest.TestCase):
     def test_pikvm_role_is_its_tag(self):
         self.assertEqual(scope("infrastructure/roles/pikvm/files/pikvm-autoupdate.sh"), ("pikvm", ""))
 
+    def test_role_in_two_plays_runs_both_tags(self):
+        # The observability play and the pikvm play both include ext4_metrics.
+        self.assertEqual(
+            scope("infrastructure/roles/ext4_metrics/files/ext4-metrics.sh"),
+            ("observability,pikvm", ""),
+        )
+
     def test_roles_union(self):
         self.assertEqual(
             scope(

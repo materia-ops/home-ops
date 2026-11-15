@@ -27,6 +27,12 @@
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
 
+    # SD cards have no SMART; ext4's superblock error counter is what's left.
+    - name: ext4 error metrics
+      when: node_exporter_enabled | bool
+      ansible.builtin.include_role:
+        name: ext4_metrics
+
     - name: Smartctl Exporter
       when: smartctl_exporter_enabled | bool
       ansible.builtin.include_role:

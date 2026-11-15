@@ -65,6 +65,53 @@
       move them into inventory/host_vars/{{ inventory_hostname }}.yaml.
     quiet: true
 
+# Before rw, so a missing 1Password field fails the play with nothing changed.
+- name: Read the PiKVM secrets from 1Password
+  ansible.builtin.command:
+    argv: [op, read, "op://{{ pikvm_op_vault }}/{{ pikvm_op_item }}/{{ item.value }}"]
+  environment:
+    OP_SERVICE_ACCOUNT_TOKEN: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
+  loop: "{{ _fields | dict2items }}"
+  vars:
+    _fields:
+      cloudflare_token: CLOUDFLARE_DNS_API_TOKEN
+      totp: TOTP_SECRET
+      web_password: WEB_PASSWORD
+  delegate_to: localhost # the controller holds the op CLI + service-account token
+  become: false
+  register: pikvm_op
+  changed_when: false
+  check_mode: false
+  no_log: true
+
+# TOTP_SECRET is a one-time password field; a plain `op read` returns what was
+# stored, the bare seed or an otpauth:// URI carrying it.
+- name: Keep the PiKVM secrets
+  ansible.builtin.set_fact:
+    pikvm_secrets:
+      cloudflare_token: "{{ _raw.cloudflare_token }}"
+      totp_seed: >-
+        {{ ((_raw.totp | regex_search('[?&]secret=([^&#]+)', '\1') | first)
+            if _raw.totp is match('otpauth://') else _raw.totp)
+           | urldecode | replace(' ', '') | regex_replace('=+$', '') | upper }}
+      web_password: "{{ _raw.web_password }}"
+  vars:
+    _raw: "{{ dict(pikvm_op.results | map(attribute='item.key') | zip(pikvm_op.results | map(attribute='stdout'))) }}"
+  no_log: true
+
+- name: Check the PiKVM secrets' shape
+  ansible.builtin.assert:
+    that:
+      - pikvm_secrets.web_password | length > 0
+      - "'\n' not in pikvm_secrets.web_password"
+      - pikvm_secrets.totp_seed is match('[A-Z2-7]{16,}$')
+      - pikvm_secrets.cloudflare_token is match('[A-Za-z0-9_-]{20,}$')
+    fail_msg: >-
+      1Password {{ pikvm_op_vault }}/{{ pikvm_op_item }}: WEB_PASSWORD must be one line,
+      TOTP_SECRET must hold kvmd's base32 seed (sudo kvmd-totp show), and
+      CLOUDFLARE_DNS_API_TOKEN must be an API token.
+    quiet: true
+
 # Restores the mount state it found, so a root someone left rw stays rw.
 - name: Configure the PiKVM
   vars:
@@ -146,6 +193,25 @@
     - name: Validate the live kvmd configuration
       ansible.builtin.command: kvmd -M
       changed_when: false
+
+    # The observability play skips the PiKVM (all:!pikvms), so a
+    # node_exporter_version bump lands here on the next pikvm run. Before the
+    # secrets and drop-ins: its GitHub download failing must not strand their handlers.
+    - name: Node exporter
+      ansible.builtin.include_role:
+        name: prometheus.prometheus.node_exporter
+      when: pikvm_node_exporter_enabled | bool
+
+    - name: ext4 error metrics (SD card health)
+      ansible.builtin.include_role:
+        name: ext4_metrics
+      when: pikvm_node_exporter_enabled | bool
+
+    - name: Web UI login, TOTP and the certbot DNS token
+      ansible.builtin.import_tasks: secrets.yaml
+
+    - name: Config drop-ins, .pacnew files and rngd
+      ansible.builtin.import_tasks: system.yaml
 
     # Inside the block: a failure after this point must not drop the restart.
     - name: Apply the changes before leaving the block

@@ -1,0 +1,5 @@
+---
+# ext4_metrics role defaults. Runs after prometheus.prometheus.node_exporter,
+# whose textfile collector dir and system user it reuses.
+ext4_metrics_textfile_dir: "{{ node_exporter_textfile_dir | default('/var/lib/node_exporter') }}"
+ext4_metrics_user: "{{ node_exporter_system_user | default('node-exp') }}"

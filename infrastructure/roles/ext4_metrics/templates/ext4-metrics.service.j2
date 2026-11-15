@@ -1,0 +1,12 @@
+# Managed by Ansible (infrastructure/roles/ext4_metrics)
+[Unit]
+Description=ext4 error and write counters for node_exporter
+
+[Service]
+Type=oneshot
+User={{ ext4_metrics_user }}
+ExecStart=/usr/local/bin/ext4-metrics {{ ext4_metrics_textfile_dir }}
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths={{ ext4_metrics_textfile_dir }}

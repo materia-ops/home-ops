@@ -140,8 +140,12 @@ hand, dispatch the workflow with the `version` input; the runbook is in
 
 Configures the hosts outside the cluster from `infrastructure/`: the two Pi-holes
 (`pi-0`, `pi-1`: networking, dnscrypt-proxy, Pi-hole) and the Proxmox host `pve-0`
-(unattended upgrades), plus the observability play (node and smartctl exporters) on
-every host.
+(unattended upgrades), plus the observability play (node and smartctl exporters, and
+the `ext4_metrics` error-counter timer) on every host except the PiKVM. Its read-only
+root needs the `pikvm` play's rw window, so that play installs its node exporter and
+ext4 timer, and a `node_exporter_version` bump reaches the
+PiKVM on its next `pikvm` run rather than with the other hosts. That keeps an offline
+PiKVM from blocking exporter bumps.
 
 The toolchain (Python, `ansible-core`, the Galaxy collections, `op`) is baked into a
 job image built from `infrastructure/Dockerfile` and published to the **private** GHCR
@@ -173,7 +177,8 @@ entirely. On push to `main` (and manual dispatch):
    Markdown outside roles, plus `talos/nodes/`; a renamed file counts under its old
    and new path) with
    [`.github/scripts/ansible_scope.py`](../.github/scripts/ansible_scope.py):
-   `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`, `roles/pihole/` or
+   `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/ext4_metrics/` → `observability` and
+   `pikvm` (both plays include it), `roles/network/` → `network`, `roles/pihole/` or
    `talos/nodes/` → `pihole`, `roles/pikvm/` → `pikvm`,
    `roles/unattended_upgrades/` → `unattended_upgrades`,
    `inventory/group_vars/` → `observability`, each on every host its play targets;
@@ -239,7 +244,8 @@ admit 2.22, one PR removes both holds and bumps `--python-version` in the
 Check + Apply holds root-equivalent SSH to every host, so it does not use the general
 CI token (`OP_CI_SERVICE_ACCOUNT_TOKEN`). Its token, `OP_INFRA_SERVICE_ACCOUNT_TOKEN`, belongs to a
 dedicated service account that reads only the `infrastructure` vault (the `ansible` SSH
-key, the `dnscrypt` stamps) and `pihole`, and it exists only as a secret on two GitHub
+key, the `dnscrypt` stamps, and the `pikvm` item's web UI password, TOTP seed and
+certbot Cloudflare token) and `pihole`, and it exists only as a secret on two GitHub
 Environments:
 
 - **`infrastructure`** — deployment branches: `main` only, no reviewers. Push-to-main

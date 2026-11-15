@@ -8,3 +8,14 @@ pikvm_autoupdate_timezone: Australia/Melbourne
 
 # Merged over kvmd's defaults via /etc/kvmd/override.d/materia.yaml.
 pikvm_kvmd_override: {}
+
+# node_exporter at the fleet version (group_vars), installed inside the rw window.
+pikvm_node_exporter_enabled: true
+
+# WEB_PASSWORD, TOTP_SECRET (a one-time password field) and CLOUDFLARE_DNS_API_TOKEN;
+# CI's service account reads this vault.
+pikvm_op_item: pikvm
+pikvm_op_vault: infrastructure
+
+# The only web UI user (htpasswd); any other user is removed.
+pikvm_web_user: vince
