@@ -78,7 +78,11 @@ when he explicitly says `land` (global agent rules, PR / CI).
 2. Conventions held (alphabetical ordering, neighbor-pattern layout,
    substitution rules).
 3. Read the konflate rendered-diff comment on the PR — it is the ground
-   truth for what actually reconciles; confirm it matches intent.
+   truth for what actually reconciles; confirm it matches intent. On a
+   dependency PR also read the Claude Review comment: it summarises the
+   upstream release notes between the two versions, which
+   `.github/scripts/upgrade_evidence.py` collects, so start a deeper
+   review from it rather than from the upstream repo.
 4. PR describes what changes on the cluster when it reconciles —
    behavior before vs after, not just which files moved — how it was
    validated, and a rollback note for anything stateful.
