@@ -2,16 +2,17 @@
 # The PiKVM's root filesystem is read-only: writes happen between `rw` and
 # `ro`. pikvm-update holds `/` rw itself, so never overlap one, whether it's
 # the timer's or a manual run holding pacman's lock.
+# The service is a oneshot: `is-active` says no while it runs (`activating`).
 - name: Refuse to run during a package update
-  ansible.builtin.shell: >-
-    ! systemctl is-active -q pikvm-autoupdate.service
-    && ! test -e /var/lib/pacman/db.lck
-  changed_when: false
-  check_mode: false
-
-- name: Read the root filesystem mount options
-  ansible.builtin.command: findmnt -no OPTIONS /
-  register: pikvm_root_options
+  ansible.builtin.shell:
+    executable: /bin/bash
+    cmd: |
+      state=$(systemctl show -p ActiveState --value pikvm-autoupdate.service)
+      case "$state" in activating | active | deactivating | reloading)
+        echo "pikvm-autoupdate.service is $state" >&2
+        exit 1 ;;
+      esac
+      ! test -e /var/lib/pacman/db.lck
   changed_when: false
   check_mode: false
 
@@ -112,15 +113,13 @@
       CLOUDFLARE_DNS_API_TOKEN must be an API token.
     quiet: true
 
-# Restores the mount state it found, so a root someone left rw stays rw.
+# Always ends read-only, even if it found / rw (a failed update or a past run
+# leaves it so); restoring that state let a stuck rw root pass green.
 - name: Configure the PiKVM
-  vars:
-    pikvm_root_was_ro: "{{ 'ro' in pikvm_root_options.stdout.split(',') }}"
   block:
     - name: Make the root filesystem writable
       ansible.builtin.command: rw
       changed_when: false
-      when: pikvm_root_was_ro | bool
 
     - name: Install the auto-update wrapper
       ansible.builtin.copy:
@@ -223,11 +222,43 @@
       ansible.builtin.import_tasks: certbot.yaml
 
   always:
-    # One command, so no update can start between the check and `ro`.
+    # Skipped while an update holds / (it does its own ro or reboot); the check
+    # right before `ro` narrows that race, it can't close it. A remount fails
+    # "busy" while a file on / is deleted-but-held or open for writing (a sudo
+    # shell kept the replaced /etc/sudoers, 2026-11-15): name those on failure.
     - name: Make the root filesystem read-only again
-      ansible.builtin.shell: >-
-        systemctl is-active -q pikvm-autoupdate.service
-        || test -e /var/lib/pacman/db.lck
-        || ro
+      ansible.builtin.shell:
+        executable: /bin/bash
+        cmd: |
+          case "$(systemctl show -p ActiveState --value pikvm-autoupdate.service)" in
+            activating | active | deactivating | reloading) exit 0 ;;
+          esac
+          test -e /var/lib/pacman/db.lck && exit 0
+          ro && exit 0
+          echo "ro failed: / is $(findmnt -no OPTIONS /), /boot is $(findmnt -no OPTIONS /boot)" >&2
+          root=$(stat -c %d /)
+          rootx=$(stat -c %D /)
+          held=$(for p in /proc/[0-9]*; do
+            pid=${p#/proc/}
+            comm=$(cat "$p/comm" 2>/dev/null) || continue
+            for l in "$p/exe" "$p/cwd" "$p"/fd/*; do
+              t=$(readlink "$l" 2>/dev/null) || continue
+              [ "$(stat -L -c %d "$l" 2>/dev/null)" = "$root" ] || continue
+              case "$t" in
+                *" (deleted)") echo "pid $pid ($comm): $t" ;;
+                *) case "$l" in */fd/*)
+                     f=$(awk '/^flags:/ {print $2}' "$p/fdinfo/${l##*/}" 2>/dev/null)
+                     [ -n "$f" ] && [ $((0$f & 3)) -ne 0 ] && echo "pid $pid ($comm): $t (open for writing)" ;;
+                   esac ;;
+              esac
+            done
+            awk -v d="$rootx" '{x = $4; gsub(":", "", x); sub(/^0+/, "", x)} x == d && / \(deleted\)$/ {print $6 " (deleted, mapped)"}' \
+              "$p/maps" 2>/dev/null | sort -u | sed "s|^|pid $pid ($comm): |"
+          done)
+          if [ -n "$held" ]; then
+            printf 'Holding the root filesystem:\n%s\n' "$held" >&2
+          else
+            echo "No holder found on /; if /boot is the one still rw, check it." >&2
+          fi
+          exit 1
       changed_when: false
-      when: pikvm_root_was_ro | bool
