@@ -445,9 +445,12 @@ Per-repo notes:
   merge `main` into the build-input PR branch (never rebase or force-push) and let one
   fresh trial run. ccache seeding cuts warm builds; `versions.json` is the single realm
   gate.
-- **wow-panel / raidscope** — the release-please pattern above; release builds check out the
-  **tag ref** (a past bug built from `github.sha` and shipped an empty release — fixed,
-  but any broken release can be rebuilt via workflow dispatch from its tag ref).
+- **wow-panel / raidscope** — the release-please pattern above. wow-panel's release build
+  checks out the **tag ref** (a past bug built from `github.sha` and shipped an empty
+  release), pushes by digest, and tags only after the scan and smoke test pass; a manual
+  rebuild is a workflow dispatch from its tag ref. raidscope's release build still checks
+  out the triggering commit and pushes `X.Y.Z` and `latest` in one step, with no scan or
+  smoke test, and its workflow dispatch is not restricted to tag refs.
 
 ## GHCR namespace migration (malpractis → materia-ops)
 
