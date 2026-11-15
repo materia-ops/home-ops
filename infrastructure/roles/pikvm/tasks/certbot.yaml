@@ -1,5 +1,18 @@
 ---
 # Runs inside main.yaml's rw block, after secrets.yaml has written the DNS token.
+- name: Find the certbot renewal config
+  ansible.builtin.stat:
+    path: "{{ pikvm_certbot_cloudflare_auth | dirname }}/config/renewal/{{ pikvm_certbot_cert_name }}.conf"
+  register: pikvm_certbot_renewal_conf
+
+- name: Require an existing certbot certificate
+  ansible.builtin.assert:
+    that: pikvm_certbot_renewal_conf.stat.exists
+    fail_msg: >-
+      No certbot renewal config for {{ pikvm_certbot_cert_name }} in the PST;
+      issue the first certificate by hand (docs.pikvm.org/letsencrypt) first.
+    quiet: true
+
 - name: Read the certbot ACME profile
   ansible.builtin.command:
     argv:
@@ -32,6 +45,14 @@
 # next renewal. kvmd-certbot swaps it into the PST and reloads kvmd-nginx itself.
 - name: Reissue the kvmd certificate under the new profile
   ansible.builtin.command:
-    argv: [kvmd-certbot, renew, --force-renewal, --cert-name, "{{ pikvm_certbot_cert_name }}"]
+    # Without --no-random-sleep-on-renew certbot sleeps up to 8 minutes off a TTY,
+    # holding / rw and kvmd-certbot's /tmp lock.
+    argv:
+      - kvmd-certbot
+      - renew
+      - --force-renewal
+      - --no-random-sleep-on-renew
+      - --cert-name
+      - "{{ pikvm_certbot_cert_name }}"
   when: pikvm_certbot_profile_set.rc != 0
   changed_when: true
