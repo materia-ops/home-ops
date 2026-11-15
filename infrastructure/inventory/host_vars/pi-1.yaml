@@ -1,7 +1,6 @@
 # host_vars/pi-1.yml
 smartctl_exporter_enabled: false
 smartmontools_state: absent
-perform_smartctl_cleanup: true
 
 # Networking (managed by the `network` role) — VLAN 20 / materia.k8s
 network_v4_address: 192.168.20.2/24
