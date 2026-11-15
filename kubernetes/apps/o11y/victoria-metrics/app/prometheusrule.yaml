@@ -35,3 +35,26 @@ spec:
               {{ $labels.instance }} has no fresh ext4 metrics; check ext4-metrics.timer
           labels:
             severity: warning
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: systemd-rules
+spec:
+  groups:
+    - name: systemd.rules
+      rules:
+        # Duplicates node-mixin's rule if the chart's own node-exporter is ever enabled.
+        # keep_firing_for spans a retry's activating window (certbot sleeps up to 8m first).
+        - alert: NodeSystemdServiceFailed
+          expr: |-
+            node_systemd_unit_state{job="node-exporter", instance=~".+\\.internal:9100", instance!~"nas\\..*", state="failed"} == 1
+          for: 5m
+          keep_firing_for: 15m
+          annotations:
+            summary: >-
+              {{ $labels.name }} failed on {{ $labels.instance }}; journalctl -u {{ $labels.name }}
+              there shows why
+          labels:
+            severity: warning
