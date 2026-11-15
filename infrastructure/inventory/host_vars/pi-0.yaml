@@ -138,6 +138,9 @@ pihole_domains:
       comment: "WhatsApp",
       domain: '^whatsapp-cdn-shv-[0-9]{2}-[a-z]{3}[0-9]\.fbcdn\.net$',
     }
+  # Windows proxy auto-detect fetches its proxy config from wpad.internal, which the
+  # gateway would resolve for any DHCP client named "wpad". Blocked answers also cache.
+  - { type: deny, kind: exact, comment: "WPAD hijack guard", domain: "wpad.internal" }
 
 # Unattended upgrades (managed by the `unattended_upgrades` role) — an hour after
 # pi-1 so both Pi-holes are never down at once.
