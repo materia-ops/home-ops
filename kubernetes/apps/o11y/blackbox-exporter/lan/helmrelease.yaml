@@ -36,6 +36,16 @@ spec:
           timeout: 5s
           tcp:
             preferred_ip_protocol: ip4
+        tls_connect:
+          prober: tcp
+          timeout: 5s
+          tcp:
+            preferred_ip_protocol: ip4
+            tls: true
+            tls_config:
+              # An expired cert must still complete the handshake, so the
+              # expiry series keeps reporting it instead of going absent.
+              insecure_skip_verify: true
     serviceMonitor:
       enabled: true
       selfMonitor:
@@ -43,6 +53,17 @@ spec:
     prometheusRule:
       enabled: true
       rules:
+        # 7d sits under TrueNAS's 10-day ACME renewal window, so a healthy
+        # renewal never fires it; negative values (already expired) keep it firing.
+        - alert: LanCertExpiringSoon
+          expr: |-
+            probe_ssl_earliest_cert_expiry{service="blackbox-exporter-lan"} - time() < 7 * 86400
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: |-
+              The TLS cert served by {{ $labels.instance }} expires in {{ $value | humanizeDuration }} (negative: already expired); the device has not renewed it, or has not reloaded the renewed cert
         - alert: LanProbeFailed
           expr: |-
             probe_success{service="blackbox-exporter-lan"} == 0

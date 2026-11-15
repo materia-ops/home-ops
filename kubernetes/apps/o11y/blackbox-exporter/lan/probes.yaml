@@ -42,3 +42,24 @@ spec:
     - targetLabel: job
       replacement: nfs_probe
       action: replace
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/probe_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: lan-tls
+spec:
+  module: tls_connect
+  prober:
+    url: blackbox-exporter-lan.o11y.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      # Only hosts serving their own cert (TLSRoute passthrough). Gateway-terminated
+      # hosts use the 160h cert-manager wildcard, which would always be under 7d.
+      static:
+        - nas.internal:443
+        - pikvm.internal:443
+  metricRelabelings:
+    - targetLabel: service
+      replacement: blackbox-exporter-lan
+      action: replace
