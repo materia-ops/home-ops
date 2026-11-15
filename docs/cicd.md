@@ -168,15 +168,24 @@ entirely. On push to `main` (and manual dispatch):
 1. **Image** — on a GitHub-hosted runner, reuses the tag if it exists (and, on `main`,
    is attested), otherwise builds, pushes and attests it, and hands on the
    digest-pinned `tag@sha256` reference.
-2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` from changed paths (`roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`,
-   `roles/pihole/` or `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
-   `inventory/group_vars/` → `observability`, structural files (playbook, `inventory/hosts.yaml`,
-   requirements, `ansible.cfg`, Dockerfile, `known_hosts`) → everything). On push, the diff runs from
+2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` and
+   `--limit` from the changed paths that can touch a host (`infrastructure/` minus
+   Markdown outside roles, plus `talos/nodes/`; a renamed file counts under its old
+   and new path) with
+   [`.github/scripts/ansible_scope.py`](../.github/scripts/ansible_scope.py):
+   `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`, `roles/pihole/` or
+   `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
+   `inventory/group_vars/` → `observability`, each on every host its play targets;
+   `inventory/host_vars/<host>.yaml` → every play, limited to that host. Structural
+   files (playbook, `inventory/hosts.yaml`, requirements, `ansible.cfg`, Dockerfile,
+   `known_hosts`) and any path it doesn't recognise (a new role, say) widen the run to
+   everything rather than being skipped, and a run's scope is the union over its paths.
+   On push, the diff runs from
    the commit of the **last successful push run on `main`**, not from the push's own
    `before`, so a cancelled or failed run's changes fold into the next one; with no
    usable diff (no earlier success, an unexpected compare result, the 300-file API cap,
-   an API error) it runs everything. A dispatch takes its `tags` input verbatim, and a
-   blank value means everything.
+   an API error) it runs everything. A dispatch takes its `tags` and `limit` inputs
+   verbatim, and a blank value means everything.
 3. **Check + Apply** — one job on the self-hosted runner (LAN access to the hosts),
    running in the job image, so a run pays for one runner cold start and no installs:
    `ansible-playbook --check --diff` against the live hosts, then Apply if Check passed,
