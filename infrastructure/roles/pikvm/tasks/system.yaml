@@ -62,29 +62,31 @@
   loop: "{{ pikvm_pacnew_dropin_backed | list | select('in', pikvm_pacnew) | list }}"
   register: pikvm_pacnew_live
 
+- name: Keep the live contents
+  ansible.builtin.set_fact:
+    pikvm_pacnew_live_text: "{{ pikvm_pacnew_live.results | items2dict(key_name='item', value_name='content') }}"
+
 # Effective lines only: comments (but not sudoers' #include*) and blanks dropped,
-# whitespace collapsed.
+# whitespace collapsed. Loops over names, so a failure doesn't log the files.
 - name: Refuse to drop a local setting that no drop-in carries
   ansible.builtin.assert:
     that:
       - _lost | length == 0
       - _spec.include is not defined or _spec.include in _new
     fail_msg: >-
-      Taking {{ item.item }}.pacnew would drop {{ _lost }}{{ '' if _spec.include is not defined
+      Taking {{ item }}.pacnew would drop {{ _lost }}{{ '' if _spec.include is not defined
       or _spec.include in _new else ' and stop reading the drop-in (no ' ~ _spec.include ~ ')' }}.
       Fix roles/pikvm/files/{{ _spec.dropin }}, or merge by hand.
     quiet: true
-  loop: "{{ pikvm_pacnew_live.results }}"
-  loop_control:
-    label: "{{ item.item }}"
+  loop: "{{ pikvm_pacnew_live_text | list }}"
   vars:
-    _spec: "{{ pikvm_pacnew_dropin_backed[item.item] }}"
+    _spec: "{{ pikvm_pacnew_dropin_backed[item] }}"
     _noise: "#(?!include)|$"
     _live: >-
-      {{ (item.content | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
+      {{ (pikvm_pacnew_live_text[item] | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
          | map('trim') | reject('match', _noise) | list }}
     _new: >-
-      {{ (pikvm_pacnew_text[item.item] | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
+      {{ (pikvm_pacnew_text[item] | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
          | map('trim') | reject('match', _noise) | list }}
     _dropin: >-
       {{ lookup('ansible.builtin.file', _spec.dropin).splitlines()
@@ -112,22 +114,28 @@
     content: "{{ _new ~ ('' if '[pikvm]' in (_new.splitlines() | map('trim') | list) else pikvm_pacman_repo) }}"
     dest: /etc/pacman.conf
     mode: "0644"
-    validate: /bin/sh -c '/usr/bin/pacman-conf --config "$1" --repo-list | grep -qx pikvm' validate %s
+    # pacman ignores an Include that matches nothing, so require a server too.
+    validate: >-
+      /bin/sh -c '/usr/bin/pacman-conf --config "$1" --repo-list | grep -qx pikvm
+      && [ -n "$(/usr/bin/pacman-conf --config "$1" --repo pikvm Server)" ]' validate %s
   vars:
     _new: "{{ pikvm_pacnew_text.get('/etc/pacman.conf', '') | b64decode }}"
   when: "'/etc/pacman.conf' in pikvm_pacnew"
 
 # pikvm-update installs kvmd and the kernel from [pikvm]; losing it is silent.
-- name: Read pacman's repositories
-  ansible.builtin.command: /usr/bin/pacman-conf --repo-list
-  register: pikvm_pacman_repos
+- name: Read the [pikvm] repo's servers
+  ansible.builtin.command: /usr/bin/pacman-conf --repo pikvm Server
+  register: pikvm_pacman_repo_servers
   changed_when: false
+  failed_when: false
   check_mode: false
 
 - name: Keep the [pikvm] repo in pacman.conf
   ansible.builtin.assert:
-    that: "'pikvm' in pikvm_pacman_repos.stdout_lines"
-    fail_msg: /etc/pacman.conf has no [pikvm] repository, so pikvm-update can't install kvmd or the kernel.
+    that: pikvm_pacman_repo_servers.rc == 0 and pikvm_pacman_repo_servers.stdout | length > 0
+    fail_msg: >-
+      pacman has no server for the [pikvm] repository (/etc/pacman.conf or
+      /etc/pacman.d/pikvm), so pikvm-update can't install kvmd or the kernel.
     quiet: true
 
 - name: Remove the handled .pacnew files

@@ -194,14 +194,9 @@
       ansible.builtin.command: kvmd -M
       changed_when: false
 
-    - name: Web UI login, TOTP and the certbot DNS token
-      ansible.builtin.import_tasks: secrets.yaml
-
-    - name: Config drop-ins, .pacnew files and rngd
-      ansible.builtin.import_tasks: system.yaml
-
     # The observability play skips the PiKVM (all:!pikvms), so a
-    # node_exporter_version bump lands here on the next pikvm run.
+    # node_exporter_version bump lands here on the next pikvm run. Before the
+    # secrets and drop-ins: its GitHub download failing must not strand their handlers.
     - name: Node exporter
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
@@ -211,6 +206,12 @@
       ansible.builtin.include_role:
         name: ext4_metrics
       when: pikvm_node_exporter_enabled | bool
+
+    - name: Web UI login, TOTP and the certbot DNS token
+      ansible.builtin.import_tasks: secrets.yaml
+
+    - name: Config drop-ins, .pacnew files and rngd
+      ansible.builtin.import_tasks: system.yaml
 
     # Inside the block: a failure after this point must not drop the restart.
     - name: Apply the changes before leaving the block
