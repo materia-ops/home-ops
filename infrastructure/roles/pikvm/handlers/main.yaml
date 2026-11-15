@@ -1,10 +1,6 @@
 ---
-# Order matters: handlers run in file order, so systemd sees new units first.
-- name: Reload systemd
-  ansible.builtin.systemd:
-    daemon_reload: true
-
-# Recomputes the next elapse after a schedule change.
+# Recomputes the next elapse after a schedule change. The enable task has
+# already run daemon-reload by the time handlers fire.
 - name: Restart the auto-update timer
   ansible.builtin.systemd:
     name: pikvm-autoupdate.timer

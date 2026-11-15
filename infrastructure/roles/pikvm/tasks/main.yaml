@@ -42,24 +42,32 @@
         src: pikvm-autoupdate.service
         dest: /etc/systemd/system/pikvm-autoupdate.service
         mode: "0644"
-      notify: Reload systemd
 
     - name: Schedule the auto-update
       ansible.builtin.template:
         src: pikvm-autoupdate.timer.j2
         dest: /etc/systemd/system/pikvm-autoupdate.timer
         mode: "0644"
-      notify:
-        - Reload systemd
-        - Restart the auto-update timer
+      notify: Restart the auto-update timer
 
     # Enabling writes the timers.target.wants symlink, so it stays inside rw.
+    # On a fresh host check mode never wrote the unit, so systemd can't find it.
     - name: Enable the auto-update timer
       ansible.builtin.systemd:
         name: pikvm-autoupdate.timer
         enabled: true
         state: started
         daemon_reload: true
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    # Validated alone against an empty override.d: the live drop-in must not
+    # supply keys the candidate dropped.
+    - name: Create an empty override.d for validation
+      ansible.builtin.file:
+        path: /tmp/pikvm-empty-override.d
+        state: directory
+        mode: "0700"
+      changed_when: false
 
     # kvmd reads every file in override.d (no extension filter), then
     # override.yaml on top, so no backups may land in that directory.
@@ -68,7 +76,7 @@
         src: kvmd-override.yaml.j2
         dest: /etc/kvmd/override.d/materia.yaml
         mode: "0644"
-        validate: kvmd -M --override-dir /etc/kvmd/override.d --override-config %s
+        validate: kvmd -M --override-dir /tmp/pikvm-empty-override.d --override-config %s
       notify: Restart kvmd
 
     # kvmd ships override.yaml as comments only. Taking its .pacnew keeps the
@@ -113,7 +121,17 @@
       changed_when: false
 
   always:
+    # An update that started mid-play holds `/` rw; `ro` would break pacman.
+    - name: Check again for an auto-update
+      ansible.builtin.command: systemctl is-active pikvm-autoupdate.service
+      register: pikvm_autoupdate_late
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
     - name: Make the root filesystem read-only again
       ansible.builtin.command: ro
       changed_when: false
-      when: pikvm_root_was_ro | bool
+      when:
+        - pikvm_root_was_ro | bool
+        - pikvm_autoupdate_late.stdout not in ['active', 'activating']
