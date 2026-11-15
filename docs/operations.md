@@ -109,6 +109,16 @@ Defence in depth, roughly outermost-in:
   `materia-minion` App uninstalled, repository gone — prune it from `RENOVATE_AUTODISCOVER_FILTER`);
   any other value is Renovate's abort reason, detailed in the `Run Renovate` log. A
   yellow warning names transient or by-design skips and needs no action.
+- **`NodeSystemdServiceFailed`** (a systemd unit failed on an Ansible-managed host and
+  stays failed until its next run succeeds) → `sudo journalctl -u <unit>` on that host
+  says why. Once the cause is fixed, a clean rerun or `sudo systemctl reset-failed <unit>`
+  clears it. On the PiKVM, `kvmd-certbot.service` is the cert renewal, so this fires on its first
+  failed attempt, days before `GatusCertificateExpiringSoon`. The likeliest cause is a
+  revoked Cloudflare token: put a new one in the `pikvm` 1Password item's
+  `CLOUDFLARE_DNS_API_TOKEN` field and dispatch **Configure Infrastructure** with
+  `tags=pikvm`, `check_only=false`, which writes the token and renews. That renewal runs
+  outside the unit, so finish with `sudo systemctl start kvmd-certbot.service` on the
+  PiKVM to clear the failed state.
 
 ## Scaling
 
