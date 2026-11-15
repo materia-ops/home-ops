@@ -1,24 +1,17 @@
 ---
-# pikvm role defaults. pikvm-update owns the packages; this role lays down the
-# update schedule and the kvmd overrides.
-
 # Wall-clock time in pikvm_autoupdate_timezone; the PiKVM itself runs on UTC.
 pikvm_autoupdate_time: "03:00"
 pikvm_autoupdate_timezone: Australia/Melbourne
 
-# kvmd-certbot's lineage and the Let's Encrypt profile it renews with;
-# shortlived = 160h certs, as the cluster's letsencrypt-production ClusterIssuer.
+# Let's Encrypt profile; shortlived = 160h certs.
 pikvm_certbot_cert_name: pikvm.materia.wtf
 pikvm_certbot_profile: shortlived
 
-# Merged over kvmd's defaults via /etc/kvmd/override.d/materia.yaml.
 pikvm_kvmd_override: {}
 
-# node_exporter at the fleet version (group_vars), installed inside the rw window.
 pikvm_node_exporter_enabled: true
 
-# WEB_PASSWORD, TOTP_SECRET (a one-time password field) and CLOUDFLARE_DNS_API_TOKEN;
-# CI's service account reads this vault.
+# Must be a vault CI's service account can read.
 pikvm_op_item: pikvm
 pikvm_op_vault: infrastructure
 

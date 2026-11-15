@@ -25,8 +25,6 @@
   failed_when: pikvm_certbot_profile_set.rc > 1
   check_mode: false
 
-# reconfigure saves the profile only after a dry-run issue from LE staging
-# (real DNS-01) passes.
 - name: Set the certbot ACME profile
   ansible.builtin.command:
     argv:

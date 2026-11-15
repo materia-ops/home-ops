@@ -3,8 +3,7 @@
 # pikvm-update --no-reboot exits 0 = already up to date, 100 = updated (reboot
 # needed, / left rw), 101 = kvmd config invalid after the update (must NOT
 # reboot); anything else is a failure that leaves / rw until the next reboot.
-# The journal and /var/log are tmpfs, so every run is also recorded on the PST
-# partition: /var/lib/kvmd/pst/data/autoupdate/{history,last-run}.log.
+# The journal is tmpfs, so each run is also recorded on the PST partition.
 set -u
 
 log=/run/pikvm-autoupdate.log

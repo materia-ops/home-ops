@@ -1,8 +1,7 @@
 ---
-# The PiKVM's root filesystem is read-only: writes happen between `rw` and
-# `ro`. pikvm-update holds `/` rw itself, so never overlap one, whether it's
-# the timer's or a manual run holding pacman's lock.
-# The service is a oneshot: `is-active` says no while it runs (`activating`).
+# Root is read-only: writes happen between `rw` and `ro`. pikvm-update holds
+# `/` rw itself, so never overlap one (the timer's or a manual run's). The
+# service is a oneshot: `is-active` says no while it runs (`activating`).
 - name: Refuse to run during a package update
   ansible.builtin.shell:
     executable: /bin/bash
@@ -78,7 +77,7 @@
       cloudflare_token: CLOUDFLARE_DNS_API_TOKEN
       totp: TOTP_SECRET
       web_password: WEB_PASSWORD
-  delegate_to: localhost # the controller holds the op CLI + service-account token
+  delegate_to: localhost
   become: false
   register: pikvm_op
   changed_when: false
@@ -113,8 +112,8 @@
       CLOUDFLARE_DNS_API_TOKEN must be an API token.
     quiet: true
 
-# Always ends read-only, even if it found / rw (a failed update or a past run
-# leaves it so); restoring that state let a stuck rw root pass green.
+# Always ends read-only, even if it found / rw: a failed update or a past run
+# leaves it so.
 - name: Configure the PiKVM
   block:
     - name: Make the root filesystem writable
@@ -193,9 +192,8 @@
       ansible.builtin.command: kvmd -M
       changed_when: false
 
-    # The observability play skips the PiKVM (all:!pikvms), so a
-    # node_exporter_version bump lands here on the next pikvm run. Before the
-    # secrets and drop-ins: its GitHub download failing must not strand their handlers.
+    # Before the secrets and drop-ins: its GitHub download failing must not
+    # strand their handlers.
     - name: Node exporter
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
@@ -223,9 +221,8 @@
 
   always:
     # Skipped while an update holds / (it does its own ro or reboot); the check
-    # right before `ro` narrows that race, it can't close it. A remount fails
-    # "busy" while a file on / is deleted-but-held or open for writing (a sudo
-    # shell kept the replaced /etc/sudoers, 2026-11-15): name those on failure.
+    # only narrows that race. `ro` fails "busy" while a file on / is
+    # deleted-but-held or open for writing: name those on failure.
     - name: Make the root filesystem read-only again
       ansible.builtin.shell:
         executable: /bin/bash

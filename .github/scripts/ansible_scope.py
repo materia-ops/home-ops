@@ -1,25 +1,11 @@
 #!/usr/bin/env python3
 """Turn the paths a push changed into the --tags and --limit its Ansible run needs.
 
-Only paths that can change a host count: the push trigger's set (infrastructure/
-minus Markdown, plus talos/nodes/), plus any file in a role, since a role can ship
-Markdown to a host. The rest of the diff is ignored. A renamed file arrives as
-both its old and new path (ansible_last_applied.py). Each counted path maps to
-(tags, hosts), where ALL means "no narrowing":
-
-  infrastructure/roles/<role>/       the tags of the plays that run it, every host
-                                     (the tags already confine the run to those
-                                     plays' hosts)
-  talos/nodes/                       pihole, every host (node IPs feed the role)
-  infrastructure/inventory/group_vars/  observability, every host
-  infrastructure/inventory/host_vars/<host>.yaml  every tag, that host only
-  anything else                      everything: structural files (playbook,
-                                     hosts.yaml, requirements, ansible.cfg,
-                                     Dockerfile, known_hosts) and any path this
-                                     table doesn't know, such as a new role
-
-A run's scope is the union over its paths, and ALL in either slot wins, so an
-unrecognised path widens the run instead of being skipped.
+Only paths that can change a host count: infrastructure/ minus Markdown, plus
+talos/nodes/ (node IPs feed the pihole role) and any file in a role (a role can
+ship Markdown to a host). path_scope() maps each to (tags, hosts); a run's scope
+is the union, and ALL in either slot wins, so an unrecognised path widens the
+run instead of being skipped.
 
 Prints tags=<csv> and limit=<csv>; blank means everything.
 Stdlib only, like ansible_last_applied.py.

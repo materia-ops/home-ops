@@ -31,7 +31,6 @@ pikvm_pacnew_dropin_backed:
     validate: /usr/bin/visudo -cf %s
   /etc/systemd/journald.conf: { dropin: journald-materia.conf }
 
-# pacman.conf follows upstream plus this repo, which pikvm-update installs from.
 pikvm_pacman_repo: "\n[pikvm]\nInclude = /etc/pacman.d/pikvm\n"
 
 # kvmd-certbot renews from a /tmp copy of this runroot and rewrites paths under it.
