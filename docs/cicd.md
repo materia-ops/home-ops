@@ -177,7 +177,8 @@ entirely. On push to `main` (and manual dispatch):
    Markdown outside roles, plus `talos/nodes/`; a renamed file counts under its old
    and new path) with
    [`.github/scripts/ansible_scope.py`](../.github/scripts/ansible_scope.py):
-   `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`, `roles/pihole/` or
+   `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/ext4_metrics/` → `observability` and
+   `pikvm` (both plays include it), `roles/network/` → `network`, `roles/pihole/` or
    `talos/nodes/` → `pihole`, `roles/pikvm/` → `pikvm`,
    `roles/unattended_upgrades/` → `unattended_upgrades`,
    `inventory/group_vars/` → `observability`, each on every host its play targets;
