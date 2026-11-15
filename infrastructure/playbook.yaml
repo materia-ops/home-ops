@@ -1,6 +1,5 @@
 ---
-# Not the PiKVM: this play has no rw/ro handling for its read-only root, and
-# an offline PiKVM must not block exporter bumps for every other host.
+# Not the PiKVM: its read-only root needs the pikvm play's rw window.
 - name: Configure Infrastructure Observability
   hosts: all:!pikvms
   become: true
@@ -12,7 +11,6 @@
         update_cache: yes
         cache_valid_time: 3600
       when: ansible_os_family == 'Debian'
-      # A refreshed index isn't a config change; reporting it buried real ones in every recap.
       changed_when: false
 
     - name: Manage smartmontools package
@@ -21,13 +19,11 @@
         state: "{{ smartmontools_state | default('present') }}"
 
   tasks:
-    # The prometheus.prometheus roles have no on/off switch; these flags are ours.
     - name: Node Exporter
       when: node_exporter_enabled | bool
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
 
-    # SD cards have no SMART; ext4's superblock error counter is what's left.
     - name: ext4 error metrics
       when: node_exporter_enabled | bool
       ansible.builtin.include_role:

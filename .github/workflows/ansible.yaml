@@ -151,9 +151,8 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-  # --tags and --limit from the paths changed since the last successful push run
-  # (cancelled runs' changes must apply); the mapping and its tests live in
-  # .github/scripts/ansible_scope.py. Any doubt, or a manual blank, -> all.
+  # Diff from the last successful push run: cancelled runs' changes must apply.
+  # Mapping in .github/scripts/ansible_scope.py; any doubt, or a manual blank, -> all.
   plan:
     name: Plan (decide tags)
     if: github.event_name != 'pull_request'
@@ -170,7 +169,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # hosts.yaml: a host_vars file only narrows the run to a host it names
+          # ansible_scope.py reads inventory/hosts.yaml
           sparse-checkout: |
             .github/scripts
             infrastructure/inventory

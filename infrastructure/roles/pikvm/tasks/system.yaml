@@ -122,7 +122,6 @@
     _new: "{{ pikvm_pacnew_text.get('/etc/pacman.conf', '') | b64decode }}"
   when: "'/etc/pacman.conf' in pikvm_pacnew"
 
-# pikvm-update installs kvmd and the kernel from [pikvm]; losing it is silent.
 - name: Read the [pikvm] repo's servers
   ansible.builtin.command: /usr/bin/pacman-conf --repo pikvm Server
   register: pikvm_pacman_repo_servers

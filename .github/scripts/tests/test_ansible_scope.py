@@ -61,7 +61,6 @@ class InventoryHostsTest(unittest.TestCase):
 
 class ScopeTest(unittest.TestCase):
     def test_host_vars_limit_to_that_host_with_every_tag(self):
-        # #2551: a pi-0 domain entry must not run against pve-0.
         self.assertEqual(scope(HV + "pi-0.yaml"), ("", "pi-0"))
 
     def test_two_host_vars(self):
@@ -71,7 +70,6 @@ class ScopeTest(unittest.TestCase):
         self.assertEqual(scope(HV + "nas.yaml"), ("", ""))
 
     def test_pikvm_host_vars_limit_to_the_pikvm(self):
-        # A GPIO tweak in host_vars must not run against the Pis or pve-0.
         self.assertEqual(scope(HV + "pikvm.yaml"), ("", "pikvm"))
 
     def test_role_is_its_tag_on_every_host(self):
@@ -81,7 +79,6 @@ class ScopeTest(unittest.TestCase):
         self.assertEqual(scope("infrastructure/roles/pikvm/files/pikvm-autoupdate.sh"), ("pikvm", ""))
 
     def test_role_in_two_plays_runs_both_tags(self):
-        # The observability play and the pikvm play both include ext4_metrics.
         self.assertEqual(
             scope("infrastructure/roles/ext4_metrics/files/ext4-metrics.sh"),
             ("observability,pikvm", ""),
@@ -115,7 +112,6 @@ class ScopeTest(unittest.TestCase):
                 self.assertEqual(scope(path, HV + "pi-0.yaml"), ("", ""))
 
     def test_unknown_role_widens_instead_of_being_skipped(self):
-        # The old inline mapping kept only the recognised tag and dropped this.
         self.assertEqual(
             scope(
                 "infrastructure/roles/pihole/tasks/main.yaml",
@@ -125,7 +121,6 @@ class ScopeTest(unittest.TestCase):
         )
 
     def test_host_vars_beside_a_role_keeps_every_tag(self):
-        # The old mapping ran only --tags pihole, skipping pi-0's other plays.
         self.assertEqual(
             scope("infrastructure/roles/pihole/tasks/main.yaml", HV + "pi-0.yaml"), ("", "")
         )
@@ -143,15 +138,13 @@ class ScopeTest(unittest.TestCase):
         )
 
     def test_markdown_inside_a_role_counts(self):
-        # roles/*/files can ship Markdown to a host.
         self.assertEqual(scope("infrastructure/roles/pihole/files/notes.md"), ("pihole", ""))
         self.assertEqual(
             scope("infrastructure/roles/pihole/files/notes.md", HV + "pi-0.yaml"), ("", "")
         )
 
     def test_rename_out_of_a_role_keeps_the_old_paths_scope(self):
-        # ansible_last_applied lists both paths of a rename; dropping the old one
-        # narrowed this to --limit pi-0 and pi-1 never got the pihole change.
+        # ansible_last_applied lists both paths of a rename.
         self.assertEqual(
             scope(
                 "infrastructure/roles/pihole/tasks/lists.yaml",

@@ -1,14 +1,10 @@
-# host_vars/pikvm.yaml
 # Read-only root: Ansible's remote temp dir has to live on tmpfs. Per user
 # ($USER expands remotely): a shared 0700 dir belongs to whoever made it first.
 ansible_remote_tmp: /tmp/.ansible-$USER
 
-# Read-only root: the textfile dir the ext4 metrics timer writes lives on tmpfs
-# (the ext4_metrics role recreates it at boot).
+# Read-only root, so on tmpfs; the ext4_metrics role recreates it at boot.
 node_exporter_textfile_dir: /run/node_exporter
 
-# kvmd overrides (managed by the `pikvm` role, rendered to
-# /etc/kvmd/override.d/materia.yaml).
 pikvm_kvmd_override:
   kvmd:
     auth:

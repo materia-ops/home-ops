@@ -8,8 +8,7 @@ spec:
   groups:
     - name: ext4.rules
       rules:
-        # The Ansible ext4_metrics timer; SD cards have no SMART, so this is the
-        # failing-card signal. The counter persists until e2fsck clears it.
+        # From the Ansible ext4_metrics timer. The counter persists until e2fsck clears it.
         - alert: Ext4FilesystemErrors
           expr: |-
             ext4_errors_total > 0
@@ -21,9 +20,8 @@ spec:
           labels:
             severity: critical
 
-        # Missing or stale counters would hide the alert above. Only the static
-        # *.internal:9100 targets run the timer (in-cluster nodes are bare names);
-        # nas runs TrueNAS's own node_exporter.
+        # Only the static *.internal:9100 targets run the timer (in-cluster nodes are
+        # bare names); nas runs TrueNAS's own node_exporter.
         - alert: Ext4MetricsStale
           expr: |-
             up{job="node-exporter", instance=~".+\\.internal:9100", instance!~"nas\\..*"} == 1

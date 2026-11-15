@@ -158,9 +158,8 @@ endpoints:
   - <<: *pihole-api-guard
     name: pihole-1-api-tls-guard
     url: tcp://192.168.20.2:443
-  # Discovery (hourly, at boot) re-applies a blueprint only if its file hash differs from the last
-  # successful apply: a bad file fails until fixed (games 2026-08-31..10-15); a transient failure after
-  # a success (proxy-media 2026-11-13) stays `error` until re-applied or the ConfigMap next changes.
+  # A blueprint is re-applied only when its file hash changes, so one in `error` (a bad
+  # file, or a transient failure after a success) stays there until fixed or re-applied.
   - name: authentik-blueprints
     group: security
     url: http://authentik-server.security.svc.cluster.local/api/v3/managed/blueprints/?page_size=100
@@ -170,8 +169,7 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - '[BODY] != pat(*"status":"error"*)'
-  # TLS passthrough, so this sees TrueNAS's own ACME cert (see
-  # GatusCertificateExpiringSoon). LAN-only hostname: resolve via the Pi-hole.
+  # LAN-only hostname: resolve via the Pi-hole. GatusCertificateExpiringSoon matches this name.
   - name: nas
     group: services
     url: https://nas.materia.wtf/ui/
@@ -180,8 +178,7 @@ endpoints:
       dns-resolver: udp://192.168.1.2:53
     conditions:
       - "[STATUS] == 200"
-  # TLS passthrough, so this sees the PiKVM's own kvmd-certbot cert (see
-  # GatusCertificateExpiringSoon). LAN-only hostname: resolve via the Pi-hole.
+  # LAN-only hostname: resolve via the Pi-hole. GatusCertificateExpiringSoon matches this name.
   # 1m so the nightly update's reboot recovers inside GatusEndpointDown's 5m.
   - name: pikvm
     group: services

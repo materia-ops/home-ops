@@ -1,8 +1,7 @@
 #!/bin/sh
 # Managed by Ansible (infrastructure/roles/ext4_metrics).
-# Writes ext4's per-filesystem superblock counters for node_exporter's textfile
-# collector. errors_count survives reboots until e2fsck clears it, so it is the
-# one failing-SD-card signal an SD card (no SMART) still gives.
+# ext4 superblock counters for node_exporter's textfile collector. errors_count
+# persists until e2fsck clears it.
 set -eu
 
 dir=$1

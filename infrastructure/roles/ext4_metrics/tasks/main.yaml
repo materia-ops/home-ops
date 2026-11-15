@@ -1,13 +1,10 @@
 ---
-# The alert lives with the node-exporter ScrapeConfig in
-# kubernetes/apps/o11y/victoria-metrics/app/prometheusrule.yaml.
 - name: Install the ext4 metrics script
   ansible.builtin.copy:
     src: ext4-metrics.sh
     dest: /usr/local/bin/ext4-metrics
     mode: "0755"
 
-# A textfile dir on tmpfs (the PiKVM's) is gone after every reboot.
 - name: Recreate the textfile dir at boot
   ansible.builtin.copy:
     content: "d {{ ext4_metrics_textfile_dir }} 0775 {{ ext4_metrics_user }} {{ ext4_metrics_user }} -\n"
