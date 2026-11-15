@@ -2,8 +2,8 @@
 # worldserver liveness probe: an open TCP socket is not proof of life — a hung
 # world loop (deadlock, runaway tick) keeps port 8085 accepting while the
 # realm is effectively dead. SOAP command execution goes through the world
-# update loop, so a well-formed `server info` response proves the loop is
-# still turning.
+# update loop, so a well-formed `server info` <result> proves the loop is
+# still turning. A SOAP fault, an empty reply or a timeout fails the probe.
 #
 # Timings are deliberately conservative (helmrelease: periodSeconds 60,
 # failureThreshold 5, plus the 15s curl budget here): a lag spike from a mass
@@ -24,10 +24,21 @@ resp="$(curl -s --max-time 15 \
 EOF
 )" || { echo "liveness: SOAP request failed (world loop hung or SOAP down)"; exit 1; }
 
-# Same sentinel the preStop hook parses — present in every `server info`
-# response on this fork (WP10-verified).
+case "${resp}" in
+  *"<result>"*"</result>"*) ;;
+  *)
+    echo "liveness: no SOAP <result> in the reply (fault, auth failure or malformed payload)"
+    exit 1
+    ;;
+esac
+
+# The reply text is upstream's and can change on an image bump: a missing
+# sentinel must never fail the probe. A passing exec probe's output is
+# discarded, so the warning goes to the worldserver's (PID 1) log stream; the
+# subshell keeps a failed write from touching the exit code.
 grep -q "Connected players" <<< "${resp}" || {
-  echo "liveness: SOAP responded without 'Connected players' — unexpected payload"
-  exit 1
+  msg="liveness: WARNING: server info reply has no 'Connected players' line; the preStop hook and wow-panel cannot read the player count"
+  echo "${msg}"
+  ( echo "${msg}" > /proc/1/fd/1 ) 2>/dev/null || true
 }
 exit 0
