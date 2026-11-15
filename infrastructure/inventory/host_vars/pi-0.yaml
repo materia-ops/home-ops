@@ -83,6 +83,8 @@ pihole_adlists:
 # records come from the Talos node files (pihole_node_records).
 pihole_node_records: true
 pihole_local_hosts:
+  - "192.168.1.18 braviatv"
+  - "192.168.1.18 braviatv.internal"
   - "192.168.20.30 garage.internal"
   - "192.168.1.41 kiterium.internal"
   - "192.168.10.20 matalos.internal"
@@ -97,8 +99,6 @@ pihole_local_hosts:
   - "192.168.1.2 pi-0.internal"
   - "192.168.20.2 pi-1"
   - "192.168.20.2 pi-1.internal"
-  - "192.168.10.2 pi-2"
-  - "192.168.10.2 pi-2.internal"
   - "192.168.1.22 pikvm"
   - "192.168.1.22 pikvm.internal"
   - "192.168.20.9 pve-0"
