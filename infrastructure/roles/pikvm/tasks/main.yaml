@@ -68,10 +68,15 @@
 # Before rw, so a missing 1Password field fails the play with nothing changed.
 - name: Read the PiKVM secrets from 1Password
   ansible.builtin.command:
-    cmd: op read "op://{{ pikvm_op_vault }}/{{ pikvm_op_item }}/{{ item }}"
+    argv: [op, read, "op://{{ pikvm_op_vault }}/{{ pikvm_op_item }}/{{ item.value }}"]
   environment:
     OP_SERVICE_ACCOUNT_TOKEN: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
-  loop: [CLOUDFLARE_DNS_API_TOKEN, TOTP_SECRET, WEB_PASSWORD]
+  loop: "{{ _fields | dict2items }}"
+  vars:
+    _fields:
+      cloudflare_token: CLOUDFLARE_DNS_API_TOKEN
+      totp: TOTP_SECRET
+      web_password: WEB_PASSWORD
   delegate_to: localhost # the controller holds the op CLI + service-account token
   become: false
   register: pikvm_op
@@ -79,21 +84,32 @@
   check_mode: false
   no_log: true
 
+# TOTP_SECRET is a one-time password field; a plain `op read` returns what was
+# stored, the bare seed or an otpauth:// URI carrying it.
 - name: Keep the PiKVM secrets
   ansible.builtin.set_fact:
-    pikvm_secrets: "{{ dict(pikvm_op.results | map(attribute='item') | zip(pikvm_op.results | map(attribute='stdout'))) }}"
+    pikvm_secrets:
+      cloudflare_token: "{{ _raw.cloudflare_token }}"
+      totp_seed: >-
+        {{ ((_raw.totp | regex_search('[?&]secret=([^&#]+)', '\1') | first)
+            if _raw.totp is match('otpauth://') else _raw.totp)
+           | urldecode | replace(' ', '') | regex_replace('=+$', '') | upper }}
+      web_password: "{{ _raw.web_password }}"
+  vars:
+    _raw: "{{ dict(pikvm_op.results | map(attribute='item.key') | zip(pikvm_op.results | map(attribute='stdout'))) }}"
   no_log: true
 
 - name: Check the PiKVM secrets' shape
   ansible.builtin.assert:
     that:
-      - pikvm_secrets.WEB_PASSWORD | length > 0
-      - "'\n' not in pikvm_secrets.WEB_PASSWORD"
-      - pikvm_secrets.TOTP_SECRET is match('[A-Z2-7]{16,}$')
-      - pikvm_secrets.CLOUDFLARE_DNS_API_TOKEN is match('[A-Za-z0-9_-]{20,}$')
+      - pikvm_secrets.web_password | length > 0
+      - "'\n' not in pikvm_secrets.web_password"
+      - pikvm_secrets.totp_seed is match('[A-Z2-7]{16,}$')
+      - pikvm_secrets.cloudflare_token is match('[A-Za-z0-9_-]{20,}$')
     fail_msg: >-
       1Password {{ pikvm_op_vault }}/{{ pikvm_op_item }}: WEB_PASSWORD must be one line,
-      TOTP_SECRET a base32 seed (sudo kvmd-totp show), CLOUDFLARE_DNS_API_TOKEN an API token.
+      TOTP_SECRET must hold kvmd's base32 seed (sudo kvmd-totp show), and
+      CLOUDFLARE_DNS_API_TOKEN must be an API token.
     quiet: true
 
 # Restores the mount state it found, so a root someone left rw stays rw.
@@ -189,6 +205,11 @@
     - name: Node exporter
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
+      when: pikvm_node_exporter_enabled | bool
+
+    - name: ext4 error metrics (SD card health)
+      ansible.builtin.include_role:
+        name: ext4_metrics
       when: pikvm_node_exporter_enabled | bool
 
     # Inside the block: a failure after this point must not drop the restart.

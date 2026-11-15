@@ -1,0 +1,10 @@
+# Managed by Ansible (infrastructure/roles/ext4_metrics)
+[Unit]
+Description=Refresh ext4 error and write counters for node_exporter
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

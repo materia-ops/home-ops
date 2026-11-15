@@ -12,7 +12,8 @@ pikvm_kvmd_override: {}
 # node_exporter at the fleet version (group_vars), installed inside the rw window.
 pikvm_node_exporter_enabled: true
 
-# WEB_PASSWORD, TOTP_SECRET and CLOUDFLARE_DNS_API_TOKEN; CI's service account reads this vault.
+# WEB_PASSWORD, TOTP_SECRET (a one-time password field) and CLOUDFLARE_DNS_API_TOKEN;
+# CI's service account reads this vault.
 pikvm_op_item: pikvm
 pikvm_op_vault: infrastructure
 

@@ -112,10 +112,23 @@
     content: "{{ _new ~ ('' if '[pikvm]' in (_new.splitlines() | map('trim') | list) else pikvm_pacman_repo) }}"
     dest: /etc/pacman.conf
     mode: "0644"
-    validate: /usr/bin/pacman-conf --config %s
+    validate: /bin/sh -c '/usr/bin/pacman-conf --config "$1" --repo-list | grep -qx pikvm' validate %s
   vars:
     _new: "{{ pikvm_pacnew_text.get('/etc/pacman.conf', '') | b64decode }}"
   when: "'/etc/pacman.conf' in pikvm_pacnew"
+
+# pikvm-update installs kvmd and the kernel from [pikvm]; losing it is silent.
+- name: Read pacman's repositories
+  ansible.builtin.command: /usr/bin/pacman-conf --repo-list
+  register: pikvm_pacman_repos
+  changed_when: false
+  check_mode: false
+
+- name: Keep the [pikvm] repo in pacman.conf
+  ansible.builtin.assert:
+    that: "'pikvm' in pikvm_pacman_repos.stdout_lines"
+    fail_msg: /etc/pacman.conf has no [pikvm] repository, so pikvm-update can't install kvmd or the kernel.
+    quiet: true
 
 - name: Remove the handled .pacnew files
   ansible.builtin.file:
@@ -135,8 +148,8 @@
       {{ pikvm_pacnew | reject('in', pikvm_pacnew_keep + pikvm_pacnew_take
          + (pikvm_pacnew_dropin_backed | list) + ['/etc/pacman.conf', '/etc/kvmd/override.yaml']) | list }}
 
-# rng-tools exits 127 since the openssl-4 rebuild, and the kernel already feeds
-# the hardware RNG into the entropy pool.
+# rng-tools 6.17-3 links libp11.so.3, which the 2026-11 openssl-4 rebuild
+# removed; the kernel already feeds the hardware RNG into the entropy pool.
 - name: Disable rngd
   ansible.builtin.systemd:
     name: rngd.service

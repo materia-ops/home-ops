@@ -140,9 +140,10 @@ hand, dispatch the workflow with the `version` input; the runbook is in
 
 Configures the hosts outside the cluster from `infrastructure/`: the two Pi-holes
 (`pi-0`, `pi-1`: networking, dnscrypt-proxy, Pi-hole) and the Proxmox host `pve-0`
-(unattended upgrades), plus the observability play (node and smartctl exporters) on
-every host except the PiKVM. Its read-only root needs the `pikvm` play's rw window, so
-that play installs its node exporter, and a `node_exporter_version` bump reaches the
+(unattended upgrades), plus the observability play (node and smartctl exporters, and
+the `ext4_metrics` error-counter timer) on every host except the PiKVM. Its read-only
+root needs the `pikvm` play's rw window, so that play installs its node exporter and
+ext4 timer, and a `node_exporter_version` bump reaches the
 PiKVM on its next `pikvm` run rather than with the other hosts. That keeps an offline
 PiKVM from blocking exporter bumps.
 
