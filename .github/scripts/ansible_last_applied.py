@@ -12,7 +12,8 @@ Prints key=value lines:
   status=<s>      compare status of base...SHA: ahead, behind, identical,
                   diverged, or none when there is no base
   complete=<b>    false when the changed-file list hit the API's 300-file cap
-With --files PATH it also writes the changed paths there, one per line.
+With --files PATH it also writes the changed paths there, one per line; a
+renamed file contributes both its old and new path.
 
 Env: GH_TOKEN, GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_WORKFLOW_REF, SHA.
 Stdlib only: it runs on ubuntu-latest and in the Ansible job image. Any API
@@ -42,6 +43,17 @@ def last_applied(runs, current_run_id):
     return ""
 
 
+def changed_paths(compare_files):
+    """Every path a compare touched. A rename lists the old path only as
+    previous_filename, and the old location's hosts need the change too."""
+    paths = []
+    for f in compare_files:
+        paths.append(f["filename"])
+        if f.get("previous_filename"):
+            paths.append(f["previous_filename"])
+    return paths
+
+
 def get(path, token):
     req = urllib.request.Request(
         API + path,
@@ -69,18 +81,18 @@ def main():
     runs = get(f"/repos/{repo}/actions/workflows/{wf}/runs?{query}", token)
     base = last_applied(runs.get("workflow_runs", []), env["GITHUB_RUN_ID"])
 
-    status, files = "none", []
+    status, entries = "none", []
     if base:
         cmp = get(f"/repos/{repo}/compare/{base}...{sha}", token)
         status = cmp["status"]
-        files = [f["filename"] for f in cmp.get("files", [])]
+        entries = cmp.get("files", [])
     if args.files:
         with open(args.files, "w", encoding="utf-8") as fh:
-            fh.write("".join(f"{name}\n" for name in files))
+            fh.write("".join(f"{name}\n" for name in changed_paths(entries)))
 
     print(f"base={base}")
     print(f"status={status}")
-    print(f"complete={'true' if len(files) < COMPARE_FILE_CAP else 'false'}")
+    print(f"complete={'true' if len(entries) < COMPARE_FILE_CAP else 'false'}")
     return 0
 
 
