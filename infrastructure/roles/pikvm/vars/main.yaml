@@ -17,10 +17,18 @@ pikvm_pacnew_take:
   - /etc/tpm2-tss/fapi-profiles/P_RSA3072SHA384.json
 
 # Local settings live in this role's drop-ins (files/), so these take their
-# .pacnew too, but only while the drop-in carries every local line it drops.
+# .pacnew too, but only while the drop-in carries every local line it drops
+# and the new file still reads the drop-in directory (`include`).
 pikvm_pacnew_dropin_backed:
-  /etc/ssh/sshd_config: { dropin: sshd-materia.conf, validate: /usr/bin/sshd -t -f %s }
-  /etc/sudoers: { dropin: sudoers-vince, mode: "0440", validate: /usr/bin/visudo -cf %s }
+  /etc/ssh/sshd_config:
+    dropin: sshd-materia.conf
+    include: Include /etc/ssh/sshd_config.d/*.conf
+    validate: /usr/bin/sshd -t -f %s
+  /etc/sudoers:
+    dropin: sudoers-vince
+    include: "@includedir /etc/sudoers.d"
+    mode: "0440"
+    validate: /usr/bin/visudo -cf %s
   /etc/systemd/journald.conf: { dropin: journald-materia.conf }
 
 # pacman.conf follows upstream plus this repo, which pikvm-update installs from.

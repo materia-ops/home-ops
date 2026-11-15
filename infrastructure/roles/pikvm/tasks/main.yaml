@@ -71,7 +71,7 @@
     cmd: op read "op://{{ pikvm_op_vault }}/{{ pikvm_op_item }}/{{ item }}"
   environment:
     OP_SERVICE_ACCOUNT_TOKEN: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
-  loop: [WEB_PASSWORD, TOTP_SECRET, CLOUDFLARE_DNS_API_TOKEN]
+  loop: [CLOUDFLARE_DNS_API_TOKEN, TOTP_SECRET, WEB_PASSWORD]
   delegate_to: localhost # the controller holds the op CLI + service-account token
   become: false
   register: pikvm_op

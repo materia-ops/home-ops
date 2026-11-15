@@ -13,8 +13,8 @@ pikvm_kvmd_override: {}
 pikvm_node_exporter_enabled: true
 
 # WEB_PASSWORD, TOTP_SECRET and CLOUDFLARE_DNS_API_TOKEN; CI's service account reads this vault.
-pikvm_op_vault: infrastructure
 pikvm_op_item: pikvm
+pikvm_op_vault: infrastructure
 
 # The only web UI user (htpasswd); any other user is removed.
 pikvm_web_user: vince

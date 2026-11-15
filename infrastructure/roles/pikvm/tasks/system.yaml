@@ -66,15 +66,19 @@
 # whitespace collapsed.
 - name: Refuse to drop a local setting that no drop-in carries
   ansible.builtin.assert:
-    that: _lost | length == 0
+    that:
+      - _lost | length == 0
+      - _spec.include is not defined or _spec.include in _new
     fail_msg: >-
-      Taking {{ item.item }}.pacnew would drop {{ _lost }}. Add those lines to
-      roles/pikvm/files/{{ pikvm_pacnew_dropin_backed[item.item].dropin }}, or merge by hand.
+      Taking {{ item.item }}.pacnew would drop {{ _lost }}{{ '' if _spec.include is not defined
+      or _spec.include in _new else ' and stop reading the drop-in (no ' ~ _spec.include ~ ')' }}.
+      Fix roles/pikvm/files/{{ _spec.dropin }}, or merge by hand.
     quiet: true
   loop: "{{ pikvm_pacnew_live.results }}"
   loop_control:
     label: "{{ item.item }}"
   vars:
+    _spec: "{{ pikvm_pacnew_dropin_backed[item.item] }}"
     _noise: "#(?!include)|$"
     _live: >-
       {{ (item.content | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
@@ -83,7 +87,7 @@
       {{ (pikvm_pacnew_text[item.item] | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
          | map('trim') | reject('match', _noise) | list }}
     _dropin: >-
-      {{ lookup('ansible.builtin.file', pikvm_pacnew_dropin_backed[item.item].dropin).splitlines()
+      {{ lookup('ansible.builtin.file', _spec.dropin).splitlines()
          | map('regex_replace', '\s+', ' ') | map('trim') | reject('match', _noise) | list }}
     _lost: "{{ _live | difference(_new) | difference(_dropin) }}"
 
@@ -110,7 +114,7 @@
     mode: "0644"
     validate: /usr/bin/pacman-conf --config %s
   vars:
-    _new: "{{ pikvm_pacnew_text['/etc/pacman.conf'] | b64decode }}"
+    _new: "{{ pikvm_pacnew_text.get('/etc/pacman.conf', '') | b64decode }}"
   when: "'/etc/pacman.conf' in pikvm_pacnew"
 
 - name: Remove the handled .pacnew files
