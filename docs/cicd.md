@@ -241,7 +241,8 @@ admit 2.22, one PR removes both holds and bumps `--python-version` in the
 Check + Apply holds root-equivalent SSH to every host, so it does not use the general
 CI token (`OP_CI_SERVICE_ACCOUNT_TOKEN`). Its token, `OP_INFRA_SERVICE_ACCOUNT_TOKEN`, belongs to a
 dedicated service account that reads only the `infrastructure` vault (the `ansible` SSH
-key, the `dnscrypt` stamps) and `pihole`, and it exists only as a secret on two GitHub
+key, the `dnscrypt` stamps, and the `pikvm` item's web UI password, TOTP seed and
+certbot Cloudflare token) and `pihole`, and it exists only as a secret on two GitHub
 Environments:
 
 - **`infrastructure`** — deployment branches: `main` only, no reviewers. Push-to-main

@@ -25,6 +25,37 @@
   changed_when: false
   check_mode: false
 
+# Before rw, so a missing 1Password field fails the play with nothing changed.
+- name: Read the PiKVM secrets from 1Password
+  ansible.builtin.command:
+    cmd: op read "op://{{ pikvm_op_vault }}/{{ pikvm_op_item }}/{{ item }}"
+  environment:
+    OP_SERVICE_ACCOUNT_TOKEN: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
+  loop: [WEB_PASSWORD, TOTP_SECRET, CLOUDFLARE_DNS_API_TOKEN]
+  delegate_to: localhost # the controller holds the op CLI + service-account token
+  become: false
+  register: pikvm_op
+  changed_when: false
+  check_mode: false
+  no_log: true
+
+- name: Keep the PiKVM secrets
+  ansible.builtin.set_fact:
+    pikvm_secrets: "{{ dict(pikvm_op.results | map(attribute='item') | zip(pikvm_op.results | map(attribute='stdout'))) }}"
+  no_log: true
+
+- name: Check the PiKVM secrets' shape
+  ansible.builtin.assert:
+    that:
+      - pikvm_secrets.WEB_PASSWORD | length > 0
+      - "'\n' not in pikvm_secrets.WEB_PASSWORD"
+      - pikvm_secrets.TOTP_SECRET is match('[A-Z2-7]{16,}$')
+      - pikvm_secrets.CLOUDFLARE_DNS_API_TOKEN is match('[A-Za-z0-9_-]{20,}$')
+    fail_msg: >-
+      1Password {{ pikvm_op_vault }}/{{ pikvm_op_item }}: WEB_PASSWORD must be one line,
+      TOTP_SECRET a base32 seed (sudo kvmd-totp show), CLOUDFLARE_DNS_API_TOKEN an API token.
+    quiet: true
+
 # Restores the mount state it found, so a root someone left rw stays rw.
 - name: Configure the PiKVM
   vars:
@@ -124,6 +155,12 @@
     - name: Validate the live kvmd configuration
       ansible.builtin.command: kvmd -M
       changed_when: false
+
+    - name: Web UI login, TOTP and the certbot DNS token
+      ansible.builtin.import_tasks: secrets.yaml
+
+    - name: Config drop-ins, .pacnew files and rngd
+      ansible.builtin.import_tasks: system.yaml
 
     # The observability play skips the PiKVM (node_exporter_enabled: false):
     # the role writes its binary, user and unit to the read-only root.

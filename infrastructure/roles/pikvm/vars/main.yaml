@@ -1,0 +1,30 @@
+---
+# .pacnew files where the PiKVM's own copy always wins: deleted on sight.
+pikvm_pacnew_keep:
+  - /boot/config.txt # V4 Plus overlays (HDMI capture, OTG, RTC); the pacnew is stock RPi
+  - /etc/issue
+  - /etc/kvmd/htpasswd # users come from 1Password
+  - /etc/locale.gen
+  - /etc/mkinitcpio.conf # PiKVM's initramfs hooks
+  - /etc/pam.d/system-auth
+  - /etc/pam.d/system-login
+  - /etc/passwd # the pacnew holds root only
+
+# Package defaults with nothing local to keep: the .pacnew replaces the file.
+pikvm_pacnew_take:
+  - /etc/makepkg.conf.d/fortran.conf
+  - /etc/tpm2-tss/fapi-profiles/P_ECCP384SHA384.json
+  - /etc/tpm2-tss/fapi-profiles/P_RSA3072SHA384.json
+
+# Local settings live in this role's drop-ins (files/), so these take their
+# .pacnew too, but only while the drop-in carries every local line it drops.
+pikvm_pacnew_dropin_backed:
+  /etc/ssh/sshd_config: { dropin: sshd-materia.conf, validate: /usr/bin/sshd -t -f %s }
+  /etc/sudoers: { dropin: sudoers-vince, mode: "0440", validate: /usr/bin/visudo -cf %s }
+  /etc/systemd/journald.conf: { dropin: journald-materia.conf }
+
+# pacman.conf follows upstream plus this repo, which pikvm-update installs from.
+pikvm_pacman_repo: "\n[pikvm]\nInclude = /etc/pacman.d/pikvm\n"
+
+# kvmd-certbot renews from a /tmp copy of this runroot and rewrites paths under it.
+pikvm_certbot_cloudflare_auth: /var/lib/kvmd/pst/data/certbot/runroot/.cloudflare.auth

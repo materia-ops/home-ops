@@ -11,3 +11,26 @@
   ansible.builtin.systemd:
     name: kvmd
     state: restarted
+
+# With kvmd, ends web sessions after a password change (kvmd-htpasswd's own advice).
+- name: Restart kvmd-nginx
+  ansible.builtin.systemd:
+    name: kvmd-nginx
+    state: restarted
+
+# Open SSH sessions, Ansible's own included, survive a reload.
+- name: Reload sshd
+  ansible.builtin.systemd:
+    name: sshd
+    state: reloaded
+
+# The journal is volatile, in /run, so a restart keeps it.
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+
+# Renews only certificates that are due; kvmd-certbot reloads kvmd-nginx itself.
+- name: Renew the kvmd certificate
+  ansible.builtin.command: kvmd-certbot renew
+  changed_when: true

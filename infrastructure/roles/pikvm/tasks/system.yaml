@@ -1,0 +1,146 @@
+---
+# Runs inside main.yaml's rw block. The drop-ins go first: the stock files that
+# replace sshd_config, sudoers and journald.conf below rely on them.
+- name: Install the sshd drop-in
+  ansible.builtin.copy:
+    src: sshd-materia.conf
+    dest: /etc/ssh/sshd_config.d/10-materia.conf
+    mode: "0644"
+    validate: /usr/bin/sshd -t -f %s
+  notify: Reload sshd
+
+- name: Install the sudoers drop-in
+  ansible.builtin.copy:
+    src: sudoers-vince
+    dest: /etc/sudoers.d/010_vince-nopasswd
+    mode: "0440"
+    validate: /usr/bin/visudo -cf %s
+
+- name: Create the journald drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Install the journald drop-in
+  ansible.builtin.copy:
+    src: journald-materia.conf
+    dest: /etc/systemd/journald.conf.d/10-materia.conf
+    mode: "0644"
+  notify: Restart journald
+
+- name: Find .pacnew files
+  ansible.builtin.find:
+    paths: [/etc, /boot]
+    patterns: "*.pacnew"
+    recurse: true
+    hidden: true
+  register: pikvm_pacnew_find
+
+- name: List the files with a .pacnew
+  ansible.builtin.set_fact:
+    pikvm_pacnew: >-
+      {{ pikvm_pacnew_find.files | map(attribute='path') | map('regex_replace', '\.pacnew$', '') | list }}
+
+# Slurp + content, not copy remote_src: that checks the read-only dir is
+# writable even in check mode.
+- name: Read the .pacnew files to take
+  ansible.builtin.slurp:
+    src: "{{ item }}.pacnew"
+  loop: >-
+    {{ (pikvm_pacnew_take + (pikvm_pacnew_dropin_backed | list) + ['/etc/pacman.conf'])
+       | select('in', pikvm_pacnew) | list }}
+  register: pikvm_pacnew_read
+
+- name: Keep their contents
+  ansible.builtin.set_fact:
+    pikvm_pacnew_text: "{{ pikvm_pacnew_read.results | items2dict(key_name='item', value_name='content') }}"
+
+- name: Read the live files behind the drop-ins
+  ansible.builtin.slurp:
+    src: "{{ item }}"
+  loop: "{{ pikvm_pacnew_dropin_backed | list | select('in', pikvm_pacnew) | list }}"
+  register: pikvm_pacnew_live
+
+# Effective lines only: comments (but not sudoers' #include*) and blanks dropped,
+# whitespace collapsed.
+- name: Refuse to drop a local setting that no drop-in carries
+  ansible.builtin.assert:
+    that: _lost | length == 0
+    fail_msg: >-
+      Taking {{ item.item }}.pacnew would drop {{ _lost }}. Add those lines to
+      roles/pikvm/files/{{ pikvm_pacnew_dropin_backed[item.item].dropin }}, or merge by hand.
+    quiet: true
+  loop: "{{ pikvm_pacnew_live.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  vars:
+    _noise: "#(?!include)|$"
+    _live: >-
+      {{ (item.content | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
+         | map('trim') | reject('match', _noise) | list }}
+    _new: >-
+      {{ (pikvm_pacnew_text[item.item] | b64decode).splitlines() | map('regex_replace', '\s+', ' ')
+         | map('trim') | reject('match', _noise) | list }}
+    _dropin: >-
+      {{ lookup('ansible.builtin.file', pikvm_pacnew_dropin_backed[item.item].dropin).splitlines()
+         | map('regex_replace', '\s+', ' ') | map('trim') | reject('match', _noise) | list }}
+    _lost: "{{ _live | difference(_new) | difference(_dropin) }}"
+
+- name: Take the new package defaults
+  ansible.builtin.copy:
+    content: "{{ pikvm_pacnew_text[item] | b64decode }}"
+    dest: "{{ item }}"
+    mode: "0644"
+  loop: "{{ pikvm_pacnew_take | select('in', pikvm_pacnew) | list }}"
+
+- name: Take the stock files behind the drop-ins
+  ansible.builtin.copy:
+    content: "{{ pikvm_pacnew_text[item] | b64decode }}"
+    dest: "{{ item }}"
+    mode: "{{ pikvm_pacnew_dropin_backed[item].mode | default('0644') }}"
+    validate: "{{ pikvm_pacnew_dropin_backed[item].validate | default(omit) }}"
+  loop: "{{ pikvm_pacnew_dropin_backed | list | select('in', pikvm_pacnew) | list }}"
+  notify: [Reload sshd, Restart journald]
+
+- name: Take pacman.conf's new default, keeping the [pikvm] repo
+  ansible.builtin.copy:
+    content: "{{ _new ~ ('' if '[pikvm]' in (_new.splitlines() | map('trim') | list) else pikvm_pacman_repo) }}"
+    dest: /etc/pacman.conf
+    mode: "0644"
+    validate: /usr/bin/pacman-conf --config %s
+  vars:
+    _new: "{{ pikvm_pacnew_text['/etc/pacman.conf'] | b64decode }}"
+  when: "'/etc/pacman.conf' in pikvm_pacnew"
+
+- name: Remove the handled .pacnew files
+  ansible.builtin.file:
+    path: "{{ item }}.pacnew"
+    state: absent
+  loop: >-
+    {{ pikvm_pacnew | select('in', pikvm_pacnew_keep + pikvm_pacnew_take
+       + (pikvm_pacnew_dropin_backed | list) + ['/etc/pacman.conf']) | list }}
+
+# override.yaml is handled in main.yaml; anything else needs a human.
+- name: Report .pacnew files nobody has reviewed
+  ansible.builtin.debug:
+    msg: "Unreviewed .pacnew (merge by hand, or teach roles/pikvm/vars/main.yaml): {{ _unknown | join(', ') }}"
+  when: _unknown | length > 0
+  vars:
+    _unknown: >-
+      {{ pikvm_pacnew | reject('in', pikvm_pacnew_keep + pikvm_pacnew_take
+         + (pikvm_pacnew_dropin_backed | list) + ['/etc/pacman.conf', '/etc/kvmd/override.yaml']) | list }}
+
+# rng-tools exits 127 since the openssl-4 rebuild, and the kernel already feeds
+# the hardware RNG into the entropy pool.
+- name: Disable rngd
+  ansible.builtin.systemd:
+    name: rngd.service
+    enabled: false
+    state: stopped
+  register: pikvm_rngd
+
+- name: Clear rngd's failed state
+  ansible.builtin.command: systemctl reset-failed rngd.service
+  when: pikvm_rngd.status.ActiveState | default('') == 'failed'
+  changed_when: true

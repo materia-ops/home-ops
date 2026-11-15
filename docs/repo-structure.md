@@ -144,7 +144,11 @@ switches the PiKVM's read-only root to rw only for its own writes. It installs a
 `pikvm-update` timer (03:00 Melbourne) that records each run on the PST partition, and
 renders the kvmd overrides, including the ezCoo KVM switch's GPIO config, from
 `host_vars/pikvm.yaml`. It also installs node_exporter, which the observability play
-can't write to the read-only root. Secrets
+can't write to the read-only root. It sets the web UI login and TOTP seed and the
+certbot Cloudflare token from the `pikvm` 1Password item. It moves the local sshd,
+sudoers and journald settings into drop-ins, so the stock files can follow their
+packages. It handles each reviewed `.pacnew` (the list is in
+`roles/pikvm/vars/main.yaml`) and reports any other. Secrets
 come from 1Password via the `op` CLI. CI runs check mode on PRs and applies on merge —
 see [cicd.md](./cicd.md).
 
