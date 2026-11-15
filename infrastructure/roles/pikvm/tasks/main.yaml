@@ -9,12 +9,6 @@
   changed_when: false
   check_mode: false
 
-- name: Read the root filesystem mount options
-  ansible.builtin.command: findmnt -no OPTIONS /
-  register: pikvm_root_options
-  changed_when: false
-  check_mode: false
-
 - name: Check the auto-update schedule parses
   ansible.builtin.command: >-
     systemd-analyze calendar
@@ -112,15 +106,13 @@
       CLOUDFLARE_DNS_API_TOKEN must be an API token.
     quiet: true
 
-# Restores the mount state it found, so a root someone left rw stays rw.
+# Always ends read-only, even if it found / rw (a failed update or a past run
+# leaves it so); restoring that state let a stuck rw root pass green.
 - name: Configure the PiKVM
-  vars:
-    pikvm_root_was_ro: "{{ 'ro' in pikvm_root_options.stdout.split(',') }}"
   block:
     - name: Make the root filesystem writable
       ansible.builtin.command: rw
       changed_when: false
-      when: pikvm_root_was_ro | bool
 
     - name: Install the auto-update wrapper
       ansible.builtin.copy:
@@ -223,11 +215,25 @@
       ansible.builtin.import_tasks: certbot.yaml
 
   always:
-    # One command, so no update can start between the check and `ro`.
+    # One script, so no update can start between the check and `ro`. A remount
+    # fails "busy" while a deleted file on / is still open (a sudo shell kept the
+    # replaced /etc/sudoers, 2026-11-15), so name those holders on failure.
     - name: Make the root filesystem read-only again
-      ansible.builtin.shell: >-
-        systemctl is-active -q pikvm-autoupdate.service
-        || test -e /var/lib/pacman/db.lck
-        || ro
+      ansible.builtin.shell:
+        executable: /bin/bash
+        cmd: |
+          if systemctl is-active -q pikvm-autoupdate.service || test -e /var/lib/pacman/db.lck; then
+            exit 0
+          fi
+          ro && exit 0
+          echo "ro failed; deleted files still open on /:" >&2
+          for fd in /proc/[0-9]*/fd/*; do
+            t=$(readlink "$fd" 2>/dev/null) || continue
+            case "$t" in /*" (deleted)") ;; *) continue ;; esac
+            case "$t" in /tmp/* | /run/* | /dev/* | /var/log/* | /var/tmp/* | /memfd:*) continue ;; esac
+            pid=${fd#/proc/}
+            pid=${pid%%/*}
+            echo "  pid $pid ($(cat "/proc/$pid/comm" 2>/dev/null)): $t" >&2
+          done
+          exit 1
       changed_when: false
-      when: pikvm_root_was_ro | bool
