@@ -158,8 +158,9 @@ endpoints:
   - <<: *pihole-api-guard
     name: pihole-1-api-tls-guard
     url: tcp://192.168.20.2:443
-  # A failed Authentik blueprint stays `error` and is never retried until its
-  # file changes or Authentik restarts (games proxy sat broken 2026-08-31..10-15).
+  # Authentik re-applies a blueprint (hourly, and at boot) only when its file hash differs from the
+  # last successful apply: a bad file retries and fails until fixed (games 2026-08-31..10-15), a
+  # transient failure after a success stays `error` until re-applied by hand (proxy-media 2026-11-13).
   - name: authentik-blueprints
     group: security
     url: http://authentik-server.security.svc.cluster.local/api/v3/managed/blueprints/?page_size=100
