@@ -32,7 +32,8 @@
     name: systemd-journald
     state: restarted
 
-# Renews only certificates that are due; kvmd-certbot reloads kvmd-nginx itself.
+# The dry run (Let's Encrypt staging, real DNS-01) fails a bad token now; the
+# real renew only touches due certs. kvmd-certbot reloads kvmd-nginx itself.
 - name: Renew the kvmd certificate
-  ansible.builtin.command: kvmd-certbot renew
+  ansible.builtin.shell: kvmd-certbot renew --dry-run && kvmd-certbot renew
   changed_when: true
