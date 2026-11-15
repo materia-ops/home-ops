@@ -75,7 +75,10 @@ Defence in depth, roughly outermost-in:
   reboot, so each run's result is kept in `/var/lib/kvmd/pst/data/autoupdate/`
   (`history.log`, `last-run.log`) on the device. If that write fails (it does when
   kvmd's config is broken), the result goes to `/var/lib/pikvm-autoupdate.log`
-  instead.
+  instead. `pikvm.materia.wtf` is a TLS passthrough, so it serves the PiKVM's own
+  Let's Encrypt cert, renewed on the device by `kvmd-certbot` through Cloudflare DNS.
+  Gatus warns (`GatusCertificateExpiringSoon`) when that cert is within 14 days of
+  expiry, which means renewal has been failing for about two weeks.
 
 ### Known failure modes and their runbooks
 
