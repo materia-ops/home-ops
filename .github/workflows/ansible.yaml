@@ -151,10 +151,9 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-  # Only roles/dnscrypt_proxy changed -> dnscrypt; roles/pihole or talos/nodes -> pihole;
-  # roles/unattended_upgrades -> unattended_upgrades; only group_vars -> observability;
-  # structural files (playbook/inventory/requirements/cfg/Dockerfile) or a manual blank -> all.
-  # Diff from the last successful push run: cancelled runs' changes must apply.
+  # --tags and --limit from the paths changed since the last successful push run
+  # (cancelled runs' changes must apply); the mapping and its tests live in
+  # .github/scripts/ansible_scope.py. Any doubt, or a manual blank, -> all.
   plan:
     name: Plan (decide tags)
     if: github.event_name != 'pull_request'
@@ -164,51 +163,49 @@ jobs:
       contents: read
     outputs:
       tags: ${{ steps.decide.outputs.tags }}
+      limit: ${{ steps.decide.outputs.limit }}
     steps:
       - name: Checkout
         if: github.event_name == 'push'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          sparse-checkout: .github/scripts
-      - name: Decide ansible --tags from changed paths
+          # hosts.yaml: a host_vars file only narrows the run to a host it names
+          sparse-checkout: |
+            .github/scripts
+            infrastructure/inventory
+      - name: Decide ansible --tags and --limit from changed paths
         id: decide
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
           DISPATCH_TAGS: ${{ inputs.tags }}
+          DISPATCH_LIMIT: ${{ inputs.limit }}
           SHA: ${{ github.sha }}
         run: |
           set -uo pipefail
           if [ "$EVENT" = "workflow_dispatch" ]; then
-            echo "tags=${DISPATCH_TAGS}" >> "$GITHUB_OUTPUT"
-            echo "dispatch -> tags='${DISPATCH_TAGS}' (blank = all)"
+            printf 'tags=%s\nlimit=%s\n' "$DISPATCH_TAGS" "$DISPATCH_LIMIT" >> "$GITHUB_OUTPUT"
+            echo "dispatch -> tags='${DISPATCH_TAGS}' limit='${DISPATCH_LIMIT}' (blank = all)"
             exit 0
           fi
           LIST="$RUNNER_TEMP/changed-files"
           if ! INFO="$(python3 .github/scripts/ansible_last_applied.py --files "$LIST")"; then
-            echo "tags=" >> "$GITHUB_OUTPUT"; echo "::warning::last applied commit unknown -> all"; exit 0
+            echo "::warning::last applied commit unknown -> all"; exit 0
           fi
           BASE="$(sed -n 's/^base=//p' <<<"$INFO")"
           STATUS="$(sed -n 's/^status=//p' <<<"$INFO")"
           COMPLETE="$(sed -n 's/^complete=//p' <<<"$INFO")"
           echo "last applied: ${BASE:-none} (this commit is $STATUS of it)"
           if [ "$STATUS" != "ahead" ] || [ "$COMPLETE" != "true" ]; then
-            echo "tags=" >> "$GITHUB_OUTPUT"; echo "no usable diff from the last applied commit -> all"; exit 0
+            echo "no usable diff from the last applied commit -> all"; exit 0
           fi
-          FILES="$(cat "$LIST")"
-          echo "Changed files:"; printf '%s\n' "$FILES"
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/(playbook\.yaml|requirements\.(in|txt|ya?ml)|ansible\.cfg|Dockerfile|inventory/hosts\.yaml|known_hosts)$'; then
-            echo "tags=" >> "$GITHUB_OUTPUT"; echo "structural change -> all"; exit 0
+          echo "Changed files:"; cat "$LIST"
+          if ! SCOPE="$(python3 .github/scripts/ansible_scope.py --files "$LIST" --inventory infrastructure/inventory/hosts.yaml)"; then
+            echo "::warning::could not scope the changed paths -> all"; exit 0
           fi
-          SEL=""
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/dnscrypt_proxy/'; then SEL="${SEL:+$SEL,}dnscrypt"; fi
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/network/'; then SEL="${SEL:+$SEL,}network"; fi
-          if printf '%s\n' "$FILES" | grep -qE '^(infrastructure/roles/pihole/|talos/nodes/)'; then SEL="${SEL:+$SEL,}pihole"; fi
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/roles/unattended_upgrades/'; then SEL="${SEL:+$SEL,}unattended_upgrades"; fi
-          if printf '%s\n' "$FILES" | grep -qE '^infrastructure/inventory/group_vars/'; then SEL="${SEL:+$SEL,}observability"; fi
-          echo "tags=$SEL" >> "$GITHUB_OUTPUT"
-          echo "resolved tags='$SEL' (blank = all)"
+          printf '%s\n' "$SCOPE" >> "$GITHUB_OUTPUT"
+          echo "resolved (blank = all):"; printf '%s\n' "$SCOPE"
 
   # Holds credentials and runs on the self-hosted runner, so it must stay off
   # the pull_request path.
@@ -274,7 +271,7 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_INFRA_SERVICE_ACCOUNT_TOKEN }}
           TAGS: ${{ needs.plan.outputs.tags }}
-          LIMIT: ${{ inputs.limit }}
+          LIMIT: ${{ needs.plan.outputs.limit }}
         run: |
           args=()
           if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
@@ -285,7 +282,7 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_INFRA_SERVICE_ACCOUNT_TOKEN }}
           TAGS: ${{ needs.plan.outputs.tags }}
-          LIMIT: ${{ inputs.limit }}
+          LIMIT: ${{ needs.plan.outputs.limit }}
         run: |
           args=()
           if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
