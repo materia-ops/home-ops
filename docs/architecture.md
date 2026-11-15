@@ -68,7 +68,9 @@ selects by disk model, [`talos/nodes/controlplane/`](../talos/nodes/controlplane
 **NAS (TrueNAS SCALE VM on `pve-0`)** — passed-through disks: 2 × Intel DC S3700 400 GB
 SATA SSD and 6 × Seagate Exos 28 TB (`ST28000NM000C`), plus an LVM virtual root disk.
 Serves NFS (v4.2, `nconnect=16`) to the cluster for bulk media storage and the Kopia
-backup repository.
+backup repository. Its web UI, `nas.materia.wtf`, is a TLS passthrough serving TrueNAS's
+own Let's Encrypt cert (TrueNAS ACME renews at 10 days left). Gatus warns
+(`GatusCertificateExpiringSoon`) once that cert is within 7 days of expiry.
 
 ### Supporting devices
 

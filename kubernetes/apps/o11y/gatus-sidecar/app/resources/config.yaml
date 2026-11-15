@@ -169,6 +169,16 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - '[BODY] != pat(*"status":"error"*)'
+  # TLS passthrough, so this sees TrueNAS's own ACME cert (see
+  # GatusCertificateExpiringSoon). LAN-only hostname: resolve via the Pi-hole.
+  - name: nas
+    group: services
+    url: https://nas.materia.wtf/ui/
+    interval: 1m
+    client:
+      dns-resolver: udp://192.168.1.2:53
+    conditions:
+      - "[STATUS] == 200"
   # TLS passthrough, so this sees the PiKVM's own kvmd-certbot cert (see
   # GatusCertificateExpiringSoon). LAN-only hostname: resolve via the Pi-hole.
   # 1m so the nightly update's reboot recovers inside GatusEndpointDown's 5m.
