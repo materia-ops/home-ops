@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Turn the paths a push changed into the --tags and --limit its Ansible run needs.
 
-Only paths that can change a host count (the push trigger's set: infrastructure/
-minus Markdown, plus talos/nodes/); the rest of the diff is ignored. Each counted
-path maps to (tags, hosts), where ALL means "no narrowing":
+Only paths that can change a host count: the push trigger's set (infrastructure/
+minus Markdown, plus talos/nodes/), plus any file in a role, since a role can ship
+Markdown to a host. The rest of the diff is ignored. A renamed file arrives as
+both its old and new path (ansible_last_applied.py). Each counted path maps to
+(tags, hosts), where ALL means "no narrowing":
 
   infrastructure/roles/<role>/       that role's tag, every host (the tag
                                      already confines the run to its play's hosts)
@@ -36,8 +38,8 @@ ROLE_TAGS = {
 
 
 def counts(path):
-    """Whether a changed path can affect a host (the push trigger's paths)."""
-    if path.startswith("talos/nodes/"):
+    """Whether a changed path can affect a host."""
+    if path.startswith(("talos/nodes/", "infrastructure/roles/")):
         return True
     return path.startswith("infrastructure/") and not path.endswith(".md")
 

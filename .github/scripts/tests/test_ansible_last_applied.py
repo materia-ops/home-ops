@@ -33,5 +33,28 @@ class LastAppliedTest(unittest.TestCase):
         self.assertEqual(la.last_applied([{"id": 1, "head_sha": "a"}], 1), "")
 
 
+class ChangedPathsTest(unittest.TestCase):
+    def test_rename_contributes_old_and_new_path(self):
+        files = [
+            {"filename": "infrastructure/inventory/host_vars/pi-0.yaml", "status": "modified"},
+            {
+                "filename": "docs/lists.yaml",
+                "previous_filename": "infrastructure/roles/pihole/tasks/lists.yaml",
+                "status": "renamed",
+            },
+        ]
+        self.assertEqual(
+            la.changed_paths(files),
+            [
+                "infrastructure/inventory/host_vars/pi-0.yaml",
+                "docs/lists.yaml",
+                "infrastructure/roles/pihole/tasks/lists.yaml",
+            ],
+        )
+
+    def test_no_files(self):
+        self.assertEqual(la.changed_paths([]), [])
+
+
 if __name__ == "__main__":
     unittest.main()

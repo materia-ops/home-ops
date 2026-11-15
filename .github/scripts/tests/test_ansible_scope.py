@@ -112,11 +112,33 @@ class ScopeTest(unittest.TestCase):
                 "kubernetes/apps/network/pihole-nebula-sync/app/helmrelease.yaml",
                 "docs/cicd.md",
                 ".github/workflows/ansible.yaml",
-                "infrastructure/roles/pihole/README.md",
+                "infrastructure/README.md",
                 HV + "pi-0.yaml",
             ),
             ("", "pi-0"),
         )
+
+    def test_markdown_inside_a_role_counts(self):
+        # roles/*/files can ship Markdown to a host.
+        self.assertEqual(scope("infrastructure/roles/pihole/files/notes.md"), ("pihole", ""))
+        self.assertEqual(
+            scope("infrastructure/roles/pihole/files/notes.md", HV + "pi-0.yaml"), ("", "")
+        )
+
+    def test_rename_out_of_a_role_keeps_the_old_paths_scope(self):
+        # ansible_last_applied lists both paths of a rename; dropping the old one
+        # narrowed this to --limit pi-0 and pi-1 never got the pihole change.
+        self.assertEqual(
+            scope(
+                "infrastructure/roles/pihole/tasks/lists.yaml",
+                "docs/old-lists.yaml",
+                HV + "pi-0.yaml",
+            ),
+            ("", ""),
+        )
+
+    def test_host_vars_rename_limits_to_both_hosts(self):
+        self.assertEqual(scope(HV + "pi-0.yaml", HV + "pve-0.yaml"), ("", "pi-0,pve-0"))
 
     def test_nothing_counted_runs_everything(self):
         self.assertEqual(scope(), ("", ""))

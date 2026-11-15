@@ -170,7 +170,8 @@ entirely. On push to `main` (and manual dispatch):
    digest-pinned `tag@sha256` reference.
 2. **Plan** — in parallel with Image, on a GitHub-hosted runner; derives `--tags` and
    `--limit` from the changed paths that can touch a host (`infrastructure/` minus
-   Markdown, plus `talos/nodes/`) with
+   Markdown outside roles, plus `talos/nodes/`; a renamed file counts under its old
+   and new path) with
    [`.github/scripts/ansible_scope.py`](../.github/scripts/ansible_scope.py):
    `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`, `roles/pihole/` or
    `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
