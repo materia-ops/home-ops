@@ -10,6 +10,8 @@
         update_cache: yes
         cache_valid_time: 3600
       when: ansible_os_family == 'Debian'
+      # A refreshed index isn't a config change; reporting it buried real ones in every recap.
+      changed_when: false
 
     - name: Manage smartmontools package
       ansible.builtin.package:

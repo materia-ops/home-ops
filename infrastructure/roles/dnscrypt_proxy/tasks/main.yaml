@@ -35,7 +35,8 @@
 
 - name: Download and install dnscrypt-proxy
   when:
-    - dnscrypt_version not in (dnscrypt_installed_version.stdout | default(''))
+    # Whole-token match: a substring test treats 2.1.2 as installed when 2.1.20 is.
+    - dnscrypt_version not in (dnscrypt_installed_version.stdout | default('')).split()
     - not ansible_check_mode # download/extract can't be dry-run on a fresh host
   block:
     - name: Download dnscrypt-proxy release tarball
