@@ -62,6 +62,18 @@ spec:
             # Third-party outages aren't actionable at 3am — warn, don't page.
             severity: warning
 
+        # For certs cert-manager doesn't renew: kvmd-certbot renews at 30 days left.
+        # Not every endpoint: the gateways' Let's Encrypt short-lived certs run 6 days.
+        - alert: GatusCertificateExpiringSoon
+          expr: |
+            gatus_results_certificate_expiration_seconds{name="pikvm"} < 14 * 24 * 3600
+          for: 1h
+          annotations:
+            summary: >-
+              The {{ $labels.name }} certificate expires in {{ $value | humanizeDuration }} and is not renewing
+          labels:
+            severity: warning
+
         # The WAN, not the cluster: all three icmp checks down, or the UDM's own WAN
         # health check (unpoller, polled over the LAN). Alertmanager inhibits the
         # internet-dependent alerts; held 20m so the 15m-window send-failure alerts drain.
