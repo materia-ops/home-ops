@@ -55,7 +55,7 @@ spec:
           keep_firing_for: 15m
           annotations:
             summary: >-
-              {{ $labels.name }} failed on {{ $labels.instance }} and stays failed until its
-              next run succeeds; journalctl -u {{ $labels.name }} there shows why
+              {{ $labels.name }} failed on {{ $labels.instance }}; journalctl -u {{ $labels.name }}
+              there shows why
           labels:
             severity: warning
