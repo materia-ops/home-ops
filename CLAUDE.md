@@ -46,6 +46,13 @@ when he explicitly says `land` (global agent rules, PR / CI).
   referenced entry earlier in the file) — never reorder those.
 - New apps copy the pattern of a recently-added neighbor app, not an old
   outlier.
+- Comments: default to none. Add one only where a competent reader would
+  otherwise get it wrong — a non-obvious constraint, a trap, an order
+  dependency — in one line that states the constraint. This covers every
+  file type and applies to explanatory comments only: keep machine-read
+  ones (`# yaml-language-server: $schema=` headers, `# renovate:`
+  annotations). What changed and why goes in the commit message and PR
+  body, not in the file. Don't strip existing comments outside your diff.
 
 ## Cluster-safety rules
 
