@@ -62,11 +62,12 @@ spec:
             # Third-party outages aren't actionable at 3am — warn, don't page.
             severity: warning
 
-        # For certs cert-manager doesn't renew: kvmd-certbot renews at 30 days left,
-        # TrueNAS ACME at 10. Not every endpoint: the gateways' certs run 6 days.
+        # For certs cert-manager doesn't renew: the PiKVM's 160h certs renew from ~80h left
+        # (LE ARI, timer runs up to 24h apart), TrueNAS ACME at 10 days. Not every
+        # endpoint: the gateways' certs run 6 days.
         - alert: GatusCertificateExpiringSoon
           expr: |
-            gatus_results_certificate_expiration_seconds{name="pikvm"} < 14 * 24 * 3600
+            gatus_results_certificate_expiration_seconds{name="pikvm"} < 24 * 3600
             or
             gatus_results_certificate_expiration_seconds{name="nas"} < 7 * 24 * 3600
           for: 1h
