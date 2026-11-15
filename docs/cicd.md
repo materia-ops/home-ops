@@ -174,7 +174,8 @@ entirely. On push to `main` (and manual dispatch):
    and new path) with
    [`.github/scripts/ansible_scope.py`](../.github/scripts/ansible_scope.py):
    `roles/dnscrypt_proxy/` → `dnscrypt`, `roles/network/` → `network`, `roles/pihole/` or
-   `talos/nodes/` → `pihole`, `roles/unattended_upgrades/` → `unattended_upgrades`,
+   `talos/nodes/` → `pihole`, `roles/pikvm/` → `pikvm`,
+   `roles/unattended_upgrades/` → `unattended_upgrades`,
    `inventory/group_vars/` → `observability`, each on every host its play targets;
    `inventory/host_vars/<host>.yaml` → every play, limited to that host. Structural
    files (playbook, `inventory/hosts.yaml`, requirements, `ansible.cfg`, Dockerfile,

@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tags:
-        description: "Ansible --tags (comma-sep: dnscrypt, network, observability, pihole, unattended_upgrades). Blank = all."
+        description: "Ansible --tags (comma-sep: dnscrypt, network, observability, pihole, pikvm, unattended_upgrades). Blank = all."
         required: false
         type: string
       limit:
