@@ -45,12 +45,11 @@ spec:
   groups:
     - name: systemd.rules
       rules:
-        # node-mixin's rule: the chart ships it only with its bundled node-exporter (off
-        # here), so drop this if that's enabled. keep_firing_for spans a failing unit's
-        # retry (certbot sleeps up to 8m first), so it doesn't flap to resolved.
+        # Duplicates node-mixin's rule if the chart's own node-exporter is ever enabled.
+        # keep_firing_for spans a retry's activating window (certbot sleeps up to 8m first).
         - alert: NodeSystemdServiceFailed
           expr: |-
-            node_systemd_unit_state{job="node-exporter", state="failed"} == 1
+            node_systemd_unit_state{job="node-exporter", instance=~".+\\.internal:9100", instance!~"nas\\..*", state="failed"} == 1
           for: 5m
           keep_firing_for: 15m
           annotations:
