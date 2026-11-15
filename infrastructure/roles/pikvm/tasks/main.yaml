@@ -1,18 +1,22 @@
 ---
 # The PiKVM's root filesystem is read-only: writes happen between `rw` and
 # `ro`. A running pikvm-update holds `/` rw itself, so never overlap one.
+# The rw/ro tasks are also tagged observability: a group_vars change runs
+# only that tag, and node_exporter needs them.
 - name: Refuse to run during an auto-update
   ansible.builtin.command: systemctl is-active pikvm-autoupdate.service
   register: pikvm_autoupdate_state
   changed_when: false
   failed_when: pikvm_autoupdate_state.stdout in ['active', 'activating']
   check_mode: false
+  tags: [observability]
 
 - name: Read the root filesystem mount options
   ansible.builtin.command: findmnt -no OPTIONS /
   register: pikvm_root_options
   changed_when: false
   check_mode: false
+  tags: [observability]
 
 - name: Check the auto-update schedule parses
   ansible.builtin.command: >-
@@ -30,6 +34,7 @@
       ansible.builtin.command: rw
       changed_when: false
       when: pikvm_root_was_ro | bool
+      tags: [observability]
 
     - name: Install the auto-update wrapper
       ansible.builtin.copy:
@@ -120,6 +125,16 @@
       ansible.builtin.command: kvmd -M
       changed_when: false
 
+    # The observability play skips the PiKVM (node_exporter_enabled: false):
+    # the role writes its binary, user and unit to the read-only root.
+    - name: Node exporter
+      ansible.builtin.include_role:
+        name: prometheus.prometheus.node_exporter
+        apply:
+          tags: [observability]
+      when: pikvm_node_exporter_enabled | bool
+      tags: [observability]
+
   always:
     # An update that started mid-play holds `/` rw; `ro` would break pacman.
     - name: Check again for an auto-update
@@ -128,6 +143,7 @@
       changed_when: false
       failed_when: false
       check_mode: false
+      tags: [observability]
 
     - name: Make the root filesystem read-only again
       ansible.builtin.command: ro
@@ -135,3 +151,4 @@
       when:
         - pikvm_root_was_ro | bool
         - pikvm_autoupdate_late.stdout not in ['active', 'activating']
+      tags: [observability]

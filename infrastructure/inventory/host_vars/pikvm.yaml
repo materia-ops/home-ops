@@ -2,8 +2,8 @@
 # Read-only root: Ansible's remote temp dir has to live on tmpfs.
 ansible_remote_tmp: /tmp/.ansible-tmp
 
-# The observability play has no rw/ro handling, so it must not write here.
-# SD card only: no SMART to read.
+# The observability play has no rw/ro handling, so it must not write here;
+# the pikvm role installs node_exporter instead. SD card only: no SMART to read.
 node_exporter_enabled: false
 smartctl_exporter_enabled: false
 smartmontools_state: absent

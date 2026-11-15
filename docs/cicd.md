@@ -141,7 +141,9 @@ hand, dispatch the workflow with the `version` input; the runbook is in
 Configures the hosts outside the cluster from `infrastructure/`: the two Pi-holes
 (`pi-0`, `pi-1`: networking, dnscrypt-proxy, Pi-hole) and the Proxmox host `pve-0`
 (unattended upgrades), plus the observability play (node and smartctl exporters) on
-every host.
+every host. The PiKVM's read-only root is the exception: the `pikvm` play installs its
+node exporter inside its rw window, and those tasks also carry the `observability` tag,
+so a `group_vars` version bump still reaches it.
 
 The toolchain (Python, `ansible-core`, the Galaxy collections, `op`) is baked into a
 job image built from `infrastructure/Dockerfile` and published to the **private** GHCR

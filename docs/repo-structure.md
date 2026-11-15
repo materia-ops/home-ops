@@ -143,7 +143,8 @@ reboots, so Proxmox upgrades stay manual), and a `pikvm` play for the PiKVM. Tha
 switches the PiKVM's read-only root to rw only for its own writes. It installs a nightly
 `pikvm-update` timer (03:00 Melbourne) that records each run on the PST partition, and
 renders the kvmd overrides, including the ezCoo KVM switch's GPIO config, from
-`host_vars/pikvm.yaml`. Secrets
+`host_vars/pikvm.yaml`. It also installs node_exporter, which the observability play
+can't write to the read-only root. Secrets
 come from 1Password via the `op` CLI. CI runs check mode on PRs and applies on merge —
 see [cicd.md](./cicd.md).
 

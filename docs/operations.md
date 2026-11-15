@@ -21,7 +21,7 @@ than kube-prometheus-stack:
 | Blackbox probes    | blackbox-exporter                                     | ICMP/TCP/HTTP probes for non-cluster targets                                                                                                                                |
 | Hardware           | smartctl-exporter, node-exporter, drm-exporter (iGPU) | Disk health, node metrics, GPU utilisation                                                                                                                                  |
 | Network gear       | unpoller                                              | UniFi controller metrics                                                                                                                                                    |
-| Pi-holes           | Ansible `observability` play                          | Exporters on `pi-0`/`pi-1` feed the same stack                                                                                                                              |
+| Pi-holes, PiKVM    | Ansible `observability` and `pikvm` plays             | Exporters on `pi-0`/`pi-1` and the PiKVM feed the same stack                                                                                                                |
 
 **Strategy:** every app ships its own monitors, rules, and dashboards in its own
 directory (the standard app pattern), so observability arrives with the deployment
