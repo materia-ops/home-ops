@@ -1,10 +1,12 @@
 ---
 # Recomputes the next elapse after a schedule change. The enable task has
-# already run daemon-reload by the time handlers fire.
+# already run daemon-reload by the time handlers fire. On a fresh host check
+# mode never wrote the unit, so systemd can't find it.
 - name: Restart the auto-update timer
   ansible.builtin.systemd:
     name: pikvm-autoupdate.timer
     state: restarted
+  ignore_errors: "{{ ansible_check_mode }}"
 
 # Drops open web UI sessions and the video stream for a few seconds.
 - name: Restart kvmd

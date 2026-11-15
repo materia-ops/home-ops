@@ -1,22 +1,19 @@
 ---
 # The PiKVM's root filesystem is read-only: writes happen between `rw` and
-# `ro`. A running pikvm-update holds `/` rw itself, so never overlap one.
-# The rw/ro tasks are also tagged observability: a group_vars change runs
-# only that tag, and node_exporter needs them.
-- name: Refuse to run during an auto-update
-  ansible.builtin.command: systemctl is-active pikvm-autoupdate.service
-  register: pikvm_autoupdate_state
+# `ro`. pikvm-update holds `/` rw itself, so never overlap one, whether it's
+# the timer's or a manual run holding pacman's lock.
+- name: Refuse to run during a package update
+  ansible.builtin.shell: >-
+    ! systemctl is-active -q pikvm-autoupdate.service
+    && ! test -e /var/lib/pacman/db.lck
   changed_when: false
-  failed_when: pikvm_autoupdate_state.stdout in ['active', 'activating']
   check_mode: false
-  tags: [observability]
 
 - name: Read the root filesystem mount options
   ansible.builtin.command: findmnt -no OPTIONS /
   register: pikvm_root_options
   changed_when: false
   check_mode: false
-  tags: [observability]
 
 - name: Check the auto-update schedule parses
   ansible.builtin.command: >-
@@ -24,6 +21,49 @@
     "*-*-* {{ pikvm_autoupdate_time }} {{ pikvm_autoupdate_timezone }}"
   changed_when: false
   check_mode: false
+
+# Rendered to root-only /run and validated alone, so check mode validates too
+# and the live drop-in can't supply keys the candidate dropped.
+- name: Create a scratch dir for validating kvmd overrides
+  ansible.builtin.file:
+    path: /run/pikvm-ansible/empty-override.d
+    state: directory
+    mode: "0700"
+  changed_when: false
+  check_mode: false
+
+- name: Render the candidate kvmd overrides
+  ansible.builtin.template:
+    src: kvmd-override.yaml.j2
+    dest: /run/pikvm-ansible/kvmd-override.yaml
+    mode: "0600"
+  changed_when: false
+  check_mode: false
+  diff: false
+
+- name: Validate the candidate kvmd overrides
+  ansible.builtin.command: >-
+    kvmd -M --override-dir /run/pikvm-ansible/empty-override.d
+    --override-config /run/pikvm-ansible/kvmd-override.yaml
+  changed_when: false
+  check_mode: false
+
+- name: Read override.yaml
+  ansible.builtin.slurp:
+    src: /etc/kvmd/override.yaml
+  register: pikvm_override_yaml
+
+# The reset below discards override.yaml, so it may only hold what host_vars
+# already carries (or nothing).
+- name: Keep every kvmd override in host_vars
+  vars:
+    pikvm_override_live: "{{ pikvm_override_yaml.content | b64decode | from_yaml }}"
+  ansible.builtin.assert:
+    that: pikvm_override_live in [none, {}] or pikvm_override_live == pikvm_kvmd_override
+    fail_msg: >-
+      /etc/kvmd/override.yaml sets values that pikvm_kvmd_override doesn't;
+      move them into inventory/host_vars/{{ inventory_hostname }}.yaml.
+    quiet: true
 
 # Before rw, so a missing 1Password field fails the play with nothing changed.
 - name: Read the PiKVM secrets from 1Password
@@ -65,7 +105,6 @@
       ansible.builtin.command: rw
       changed_when: false
       when: pikvm_root_was_ro | bool
-      tags: [observability]
 
     - name: Install the auto-update wrapper
       ansible.builtin.copy:
@@ -96,15 +135,6 @@
         daemon_reload: true
       ignore_errors: "{{ ansible_check_mode }}"
 
-    # Validated alone against an empty override.d: the live drop-in must not
-    # supply keys the candidate dropped.
-    - name: Create an empty override.d for validation
-      ansible.builtin.file:
-        path: /tmp/pikvm-empty-override.d
-        state: directory
-        mode: "0700"
-      changed_when: false
-
     # kvmd reads every file in override.d (no extension filter), then
     # override.yaml on top, so no backups may land in that directory.
     - name: Template the kvmd overrides
@@ -112,7 +142,6 @@
         src: kvmd-override.yaml.j2
         dest: /etc/kvmd/override.d/materia.yaml
         mode: "0644"
-        validate: kvmd -M --override-dir /tmp/pikvm-empty-override.d --override-config %s
       notify: Restart kvmd
 
     # kvmd ships override.yaml as comments only. Taking its .pacnew keeps the
@@ -122,12 +151,20 @@
         path: /etc/kvmd/override.yaml.pacnew
       register: pikvm_override_pacnew
 
+    - name: Read kvmd's new default override.yaml
+      ansible.builtin.slurp:
+        src: /etc/kvmd/override.yaml.pacnew
+      register: pikvm_override_default
+      when: pikvm_override_pacnew.stat.exists
+
+    # Not remote_src: that path checks the read-only dir is writable even in
+    # check mode, so Check fails.
     - name: Reset override.yaml to the kvmd default
       ansible.builtin.copy:
-        src: /etc/kvmd/override.yaml.pacnew
+        content: "{{ pikvm_override_default.content | b64decode }}"
         dest: /etc/kvmd/override.yaml
-        remote_src: true
         mode: "0644"
+        backup: true
       when: pikvm_override_pacnew.stat.exists
       notify: Restart kvmd
 
@@ -136,21 +173,6 @@
         path: /etc/kvmd/override.yaml.pacnew
         state: absent
       when: pikvm_override_pacnew.stat.exists
-
-    - name: Read override.yaml
-      ansible.builtin.slurp:
-        src: /etc/kvmd/override.yaml
-      register: pikvm_override_yaml
-
-    # In check mode a pending .pacnew reset has not happened yet.
-    - name: Keep every kvmd override in host_vars
-      ansible.builtin.assert:
-        that: pikvm_override_yaml.content | b64decode | from_yaml in [none, {}]
-        fail_msg: >-
-          /etc/kvmd/override.yaml sets values by hand; move them into
-          pikvm_kvmd_override in inventory/host_vars/{{ inventory_hostname }}.yaml.
-        quiet: true
-      when: not (ansible_check_mode and pikvm_override_pacnew.stat.exists)
 
     - name: Validate the live kvmd configuration
       ansible.builtin.command: kvmd -M
@@ -162,30 +184,23 @@
     - name: Config drop-ins, .pacnew files and rngd
       ansible.builtin.import_tasks: system.yaml
 
-    # The observability play skips the PiKVM (node_exporter_enabled: false):
-    # the role writes its binary, user and unit to the read-only root.
+    # The observability play skips the PiKVM (all:!pikvms), so a
+    # node_exporter_version bump lands here on the next pikvm run.
     - name: Node exporter
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
-        apply:
-          tags: [observability]
       when: pikvm_node_exporter_enabled | bool
-      tags: [observability]
+
+    # Inside the block: a failure after this point must not drop the restart.
+    - name: Apply the changes before leaving the block
+      ansible.builtin.meta: flush_handlers
 
   always:
-    # An update that started mid-play holds `/` rw; `ro` would break pacman.
-    - name: Check again for an auto-update
-      ansible.builtin.command: systemctl is-active pikvm-autoupdate.service
-      register: pikvm_autoupdate_late
-      changed_when: false
-      failed_when: false
-      check_mode: false
-      tags: [observability]
-
+    # One command, so no update can start between the check and `ro`.
     - name: Make the root filesystem read-only again
-      ansible.builtin.command: ro
+      ansible.builtin.shell: >-
+        systemctl is-active -q pikvm-autoupdate.service
+        || test -e /var/lib/pacman/db.lck
+        || ro
       changed_when: false
-      when:
-        - pikvm_root_was_ro | bool
-        - pikvm_autoupdate_late.stdout not in ['active', 'activating']
-      tags: [observability]
+      when: pikvm_root_was_ro | bool
