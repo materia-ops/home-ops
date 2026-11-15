@@ -210,6 +210,9 @@
     - name: Web UI login, TOTP and the certbot DNS token
       ansible.builtin.import_tasks: secrets.yaml
 
+    - name: The certbot ACME profile (short-lived certs)
+      ansible.builtin.import_tasks: certbot.yaml
+
     - name: Config drop-ins, .pacnew files and rngd
       ansible.builtin.import_tasks: system.yaml
 
