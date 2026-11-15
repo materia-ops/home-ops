@@ -8,3 +8,4 @@ resources:
   - grafanadashboard.yaml
   - helm-release.yaml
   - ocirepository.yaml
+  - prometheusrule.yaml

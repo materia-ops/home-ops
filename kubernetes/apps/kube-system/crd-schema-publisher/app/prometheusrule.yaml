@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: crd-schema-publisher-rules
+spec:
+  groups:
+    - name: crd-schema-publisher.rules
+      rules:
+        - alert: CRDPublisherPublishLoop
+          expr: |-
+            sum(increase(crdpublisher_publish_cycle_total[1h])) > 20
+          for: 1h
+          annotations:
+            summary: >-
+              crd-schema-publisher ran {{ $value | humanize }} publish cycles in the last hour; a CRD is
+              being rewritten in a loop (look for one stuck Terminating)
+          labels:
+            severity: warning
