@@ -1,0 +1,10 @@
+---
+# pikvm role defaults. pikvm-update owns the packages; this role lays down the
+# update schedule and the kvmd overrides.
+
+# Wall-clock time in pikvm_autoupdate_timezone; the PiKVM itself runs on UTC.
+pikvm_autoupdate_time: "03:00"
+pikvm_autoupdate_timezone: Australia/Melbourne
+
+# Merged over kvmd's defaults via /etc/kvmd/override.d/materia.yaml.
+pikvm_kvmd_override: {}

@@ -136,10 +136,14 @@ from the same files Flux reconciles. Fully documented in [bootstrap.md](./bootst
 in `pihole_ftl_config` plus `webserver.domain`, serial with a web UI check; on pi-0 it
 also enforces the adlists and domain entries and ensures the hand-made local DNS records
 in `host_vars/pi-0.yaml`, which nebula-sync copies to pi-1, then rebuilds gravity on both),
-an `observability` play, and an `unattended_upgrades` play that configures apt's own
+an `observability` play (every host but the PiKVM), and an `unattended_upgrades` play that configures apt's own
 timers on the Pis and `pve-0` (the Pis take all Debian/Raspberry Pi updates and reboot on
 their own, staggered an hour apart; `pve-0` takes Debian security updates only and never
-reboots, so Proxmox upgrades stay manual). Secrets
+reboots, so Proxmox upgrades stay manual), and a `pikvm` play for the PiKVM. That play
+switches the PiKVM's read-only root to rw only for its own writes. It installs a nightly
+`pikvm-update` timer (03:00 Melbourne) that records each run on the PST partition, and
+renders the kvmd overrides, including the ezCoo KVM switch's GPIO config, from
+`host_vars/pikvm.yaml`. Secrets
 come from 1Password via the `op` CLI. CI runs check mode on PRs and applies on merge —
 see [cicd.md](./cicd.md).
 

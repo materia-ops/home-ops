@@ -1,0 +1,35 @@
+# host_vars/pikvm.yaml
+# Read-only root: Ansible's remote temp dir has to live on tmpfs.
+ansible_remote_tmp: /tmp/.ansible-tmp
+
+# kvmd overrides (managed by the `pikvm` role, rendered to
+# /etc/kvmd/override.d/materia.yaml).
+pikvm_kvmd_override:
+  kvmd:
+    auth:
+      expire: 21600 # 6 hours
+    gpio:
+      # ezCoo EZ-SW41HA-KVMU3L on its F/W CTL port; see docs.pikvm.org/ezcoo.
+      drivers:
+        ez:
+          device: /dev/ttyUSB0
+          protocol: 2 # the USB3 (KVMU3L) model
+          type: ezcoo
+      scheme:
+        ch0_button: { driver: ez, mode: output, pin: 0, switch: false }
+        ch0_led: { driver: ez, mode: input, pin: 0 }
+        ch1_button: { driver: ez, mode: output, pin: 1, switch: false }
+        ch1_led: { driver: ez, mode: input, pin: 1 }
+        ch2_button: { driver: ez, mode: output, pin: 2, switch: false }
+        ch2_led: { driver: ez, mode: input, pin: 2 }
+        ch3_button: { driver: ez, mode: output, pin: 3, switch: false }
+        ch3_led: { driver: ez, mode: input, pin: 3 }
+      view:
+        table:
+          - ["#Input 1", ch0_led, ch0_button]
+          - ["#Input 2", ch1_led, ch1_button]
+          - ["#Input 3", ch2_led, ch2_button]
+          - ["#Input 4", ch3_led, ch3_button]
+    prometheus:
+      auth:
+        enabled: false # scraped by vmagent (o11y ScrapeConfig `pikvm`)

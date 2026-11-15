@@ -1,6 +1,8 @@
 ---
+# Not the PiKVM: this play has no rw/ro handling for its read-only root, and
+# an offline PiKVM must not block exporter bumps for every other host.
 - name: Configure Infrastructure Observability
-  hosts: all
+  hosts: all:!pikvms
   become: true
   tags: ["observability"]
 
@@ -65,3 +67,10 @@
   tags: ["unattended_upgrades"]
   roles:
     - role: unattended_upgrades
+
+- name: Configure PiKVMs
+  hosts: pikvms
+  become: true
+  tags: ["pikvm"]
+  roles:
+    - role: pikvm

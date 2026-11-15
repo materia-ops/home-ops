@@ -11,9 +11,17 @@ all:
   vars:
     ansible_user: ansible
   children:
-    proxmox:
+    pikvms:
       vars: &remote_vars # comment
         ansible_python_interpreter: /usr/bin/python3
+        ansible_ssh_common_args: >-
+          -o HostKeyAlias={{ inventory_hostname }}
+          -o StrictHostKeyChecking=yes
+      hosts:
+        pikvm:
+          ansible_host: pikvm.internal
+    proxmox:
+      vars: *remote_vars
       hosts:
         pve-0:
           ansible_host: pve-0.internal
@@ -36,7 +44,7 @@ def scope(*paths):
 
 class InventoryHostsTest(unittest.TestCase):
     def test_hosts_only_not_groups_or_vars(self):
-        self.assertEqual(HOSTS, {"pve-0", "pi-0", "pi-1"})
+        self.assertEqual(HOSTS, {"pikvm", "pve-0", "pi-0", "pi-1"})
 
     def test_real_inventory(self):
         path = os.path.join(
@@ -45,8 +53,10 @@ class InventoryHostsTest(unittest.TestCase):
         with open(path, encoding="utf-8") as fh:
             hosts = sc.inventory_hosts(fh.read())
         # Hosts get added; groups and keywords must never parse as hosts.
-        self.assertTrue({"pve-0", "pi-0", "pi-1"} <= hosts)
-        self.assertFalse(hosts & {"all", "vars", "children", "hosts", "proxmox", "raspberry_pis"})
+        self.assertTrue({"pikvm", "pve-0", "pi-0", "pi-1"} <= hosts)
+        self.assertFalse(
+            hosts & {"all", "vars", "children", "hosts", "pikvms", "proxmox", "raspberry_pis"}
+        )
 
 
 class ScopeTest(unittest.TestCase):
@@ -58,10 +68,17 @@ class ScopeTest(unittest.TestCase):
         self.assertEqual(scope(HV + "pi-1.yaml", HV + "pi-0.yaml"), ("", "pi-0,pi-1"))
 
     def test_host_vars_for_host_not_in_inventory_runs_everywhere(self):
-        self.assertEqual(scope(HV + "pikvm.yaml"), ("", ""))
+        self.assertEqual(scope(HV + "nas.yaml"), ("", ""))
+
+    def test_pikvm_host_vars_limit_to_the_pikvm(self):
+        # A GPIO tweak in host_vars must not run against the Pis or pve-0.
+        self.assertEqual(scope(HV + "pikvm.yaml"), ("", "pikvm"))
 
     def test_role_is_its_tag_on_every_host(self):
         self.assertEqual(scope("infrastructure/roles/pihole/tasks/lists.yaml"), ("pihole", ""))
+
+    def test_pikvm_role_is_its_tag(self):
+        self.assertEqual(scope("infrastructure/roles/pikvm/files/pikvm-autoupdate.sh"), ("pikvm", ""))
 
     def test_roles_union(self):
         self.assertEqual(
@@ -95,7 +112,7 @@ class ScopeTest(unittest.TestCase):
         self.assertEqual(
             scope(
                 "infrastructure/roles/pihole/tasks/main.yaml",
-                "infrastructure/roles/pikvm/tasks/main.yaml",
+                "infrastructure/roles/newrole/tasks/main.yaml",
             ),
             ("", ""),
         )

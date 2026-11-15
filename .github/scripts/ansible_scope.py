@@ -33,6 +33,7 @@ ROLE_TAGS = {
     "dnscrypt_proxy": "dnscrypt",
     "network": "network",
     "pihole": "pihole",
+    "pikvm": "pikvm",
     "unattended_upgrades": "unattended_upgrades",
 }
 

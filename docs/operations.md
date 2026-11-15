@@ -70,7 +70,12 @@ Defence in depth, roughly outermost-in:
   rebalances after disruptions; scheduler topology-spread defaults keep replicas off a
   single node.
 - **Out-of-band access** — PiKVM for console access when a node won't boot; Talos can
-  always be re-driven from this repo (`just talos apply-node`).
+  always be re-driven from this repo (`just talos apply-node`). The PiKVM updates itself
+  nightly at 03:00 Melbourne and reboots after any update. Its journal doesn't survive a
+  reboot, so each run's result is kept in `/var/lib/kvmd/pst/data/autoupdate/`
+  (`history.log`, `last-run.log`) on the device. If that write fails (it does when
+  kvmd's config is broken), the result goes to `/var/lib/pikvm-autoupdate.log`
+  instead.
 
 ### Known failure modes and their runbooks
 

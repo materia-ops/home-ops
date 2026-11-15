@@ -3,7 +3,7 @@ all:
     ansible_user: ansible
     ansible_become: true # Always use sudo
   children:
-    proxmox:
+    pikvms:
       vars: &remote_vars # Per-group, not in all: implicit localhost would inherit it.
         ansible_python_interpreter: /usr/bin/python3
         # Host keys pinned in ../known_hosts by inventory name, so a DNS or IP
@@ -13,6 +13,11 @@ all:
           -o UserKnownHostsFile={{ playbook_dir }}/known_hosts
           -o GlobalKnownHostsFile=/dev/null
           -o StrictHostKeyChecking=yes
+      hosts:
+        pikvm:
+          ansible_host: pikvm.internal
+    proxmox:
+      vars: *remote_vars
       hosts:
         pve-0:
           ansible_host: pve-0.internal
