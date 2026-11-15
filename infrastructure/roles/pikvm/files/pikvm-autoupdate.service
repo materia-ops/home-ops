@@ -1,0 +1,9 @@
+# Managed by Ansible (infrastructure/roles/pikvm)
+[Unit]
+Description=Nightly pikvm-update
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pikvm-autoupdate

@@ -63,3 +63,10 @@
   tags: ["unattended_upgrades"]
   roles:
     - role: unattended_upgrades
+
+- name: Configure PiKVMs
+  hosts: pikvms
+  become: true
+  tags: ["pikvm"]
+  roles:
+    - role: pikvm

@@ -1,0 +1,12 @@
+# Managed by Ansible (infrastructure/roles/pikvm)
+[Unit]
+Description=Run pikvm-update nightly
+
+# No Persistent=: its stamp lives on the tmpfs /var/lib/systemd, so it would
+# never survive the reboot it is meant to catch up after.
+[Timer]
+OnCalendar=*-*-* {{ pikvm_autoupdate_time }} {{ pikvm_autoupdate_timezone }}
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

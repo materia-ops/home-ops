@@ -1,0 +1,17 @@
+---
+# Order matters: handlers run in file order, so systemd sees new units first.
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+# Recomputes the next elapse after a schedule change.
+- name: Restart the auto-update timer
+  ansible.builtin.systemd:
+    name: pikvm-autoupdate.timer
+    state: restarted
+
+# Drops open web UI sessions and the video stream for a few seconds.
+- name: Restart kvmd
+  ansible.builtin.systemd:
+    name: kvmd
+    state: restarted

@@ -1,0 +1,119 @@
+---
+# The PiKVM's root filesystem is read-only: writes happen between `rw` and
+# `ro`. A running pikvm-update holds `/` rw itself, so never overlap one.
+- name: Refuse to run during an auto-update
+  ansible.builtin.command: systemctl is-active pikvm-autoupdate.service
+  register: pikvm_autoupdate_state
+  changed_when: false
+  failed_when: pikvm_autoupdate_state.stdout in ['active', 'activating']
+  check_mode: false
+
+- name: Read the root filesystem mount options
+  ansible.builtin.command: findmnt -no OPTIONS /
+  register: pikvm_root_options
+  changed_when: false
+  check_mode: false
+
+- name: Check the auto-update schedule parses
+  ansible.builtin.command: >-
+    systemd-analyze calendar
+    "*-*-* {{ pikvm_autoupdate_time }} {{ pikvm_autoupdate_timezone }}"
+  changed_when: false
+  check_mode: false
+
+# Restores the mount state it found, so a root someone left rw stays rw.
+- name: Configure the PiKVM
+  vars:
+    pikvm_root_was_ro: "{{ 'ro' in pikvm_root_options.stdout.split(',') }}"
+  block:
+    - name: Make the root filesystem writable
+      ansible.builtin.command: rw
+      changed_when: false
+      when: pikvm_root_was_ro | bool
+
+    - name: Install the auto-update wrapper
+      ansible.builtin.copy:
+        src: pikvm-autoupdate.sh
+        dest: /usr/local/bin/pikvm-autoupdate
+        mode: "0755"
+
+    - name: Install the auto-update service
+      ansible.builtin.copy:
+        src: pikvm-autoupdate.service
+        dest: /etc/systemd/system/pikvm-autoupdate.service
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Schedule the auto-update
+      ansible.builtin.template:
+        src: pikvm-autoupdate.timer.j2
+        dest: /etc/systemd/system/pikvm-autoupdate.timer
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart the auto-update timer
+
+    # Enabling writes the timers.target.wants symlink, so it stays inside rw.
+    - name: Enable the auto-update timer
+      ansible.builtin.systemd:
+        name: pikvm-autoupdate.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # kvmd reads every file in override.d (no extension filter), then
+    # override.yaml on top, so no backups may land in that directory.
+    - name: Template the kvmd overrides
+      ansible.builtin.template:
+        src: kvmd-override.yaml.j2
+        dest: /etc/kvmd/override.d/materia.yaml
+        mode: "0644"
+        validate: kvmd -M --override-dir /etc/kvmd/override.d --override-config %s
+      notify: Restart kvmd
+
+    # kvmd ships override.yaml as comments only. Taking its .pacnew keeps the
+    # file at the package default, so later kvmd updates replace it cleanly.
+    - name: Look for a new default override.yaml from kvmd
+      ansible.builtin.stat:
+        path: /etc/kvmd/override.yaml.pacnew
+      register: pikvm_override_pacnew
+
+    - name: Reset override.yaml to the kvmd default
+      ansible.builtin.copy:
+        src: /etc/kvmd/override.yaml.pacnew
+        dest: /etc/kvmd/override.yaml
+        remote_src: true
+        mode: "0644"
+      when: pikvm_override_pacnew.stat.exists
+      notify: Restart kvmd
+
+    - name: Remove the merged override.yaml.pacnew
+      ansible.builtin.file:
+        path: /etc/kvmd/override.yaml.pacnew
+        state: absent
+      when: pikvm_override_pacnew.stat.exists
+
+    - name: Read override.yaml
+      ansible.builtin.slurp:
+        src: /etc/kvmd/override.yaml
+      register: pikvm_override_yaml
+
+    # In check mode a pending .pacnew reset has not happened yet.
+    - name: Keep every kvmd override in host_vars
+      ansible.builtin.assert:
+        that: pikvm_override_yaml.content | b64decode | from_yaml in [none, {}]
+        fail_msg: >-
+          /etc/kvmd/override.yaml sets values by hand; move them into
+          pikvm_kvmd_override in inventory/host_vars/{{ inventory_hostname }}.yaml.
+        quiet: true
+      when: not (ansible_check_mode and pikvm_override_pacnew.stat.exists)
+
+    - name: Validate the live kvmd configuration
+      ansible.builtin.command: kvmd -M
+      changed_when: false
+
+  always:
+    - name: Make the root filesystem read-only again
+      ansible.builtin.command: ro
+      changed_when: false
+      when: pikvm_root_was_ro | bool
