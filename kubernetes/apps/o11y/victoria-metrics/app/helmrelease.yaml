@@ -455,6 +455,15 @@ spec:
             # can't false-page (it did exactly that on first deploy).
             interval: 10m
             rules:
+              # The loop keeps logging while these fail, so
+              # WowPanelIdleLoopSilent stays green with auto-park dead.
+              - alert: WowPanelIdleCheckFailing
+                annotations:
+                  summary: wow-panel's idle check failed more than 3 times in 30m (server info unparseable or a Kubernetes API error) — auto-park is not running. Check the wow-panel pod logs.
+                expr: |-
+                  kubernetes.pod_namespace:=games kubernetes.container_name:=wow-panel ("[idle-scaledown] check: server info unparseable" OR "[idle-scaledown] check: check failed") _time:30m | stats count() as failures | filter failures:>3
+                labels:
+                  severity: warning
               # The panel logs `[idle-scaledown] check: ...` every tick
               # (5 min) while IDLE_SCALEDOWN_ENABLED=true — a documented
               # liveness contract (wow-panel README). Silence over a full 30m
