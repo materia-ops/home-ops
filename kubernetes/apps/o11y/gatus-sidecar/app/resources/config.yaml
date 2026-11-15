@@ -123,6 +123,20 @@ endpoints:
     interval: 15m
     conditions:
       - "[STATUS] == 200"
+  # raidscope's OIDC is app-level and turns itself off, silently, when any
+  # OIDC_* variable is missing. Unauthenticated, / must answer 401 (no Accept:
+  # text/html) or 307 to /login; a 200 means the app is serving with no auth.
+  # dns-resolver: the Pi-hole answers with the LAN gateway, so a WAN outage
+  # cannot fail this check.
+  - name: raidscope-sso-guard
+    group: security
+    url: https://raidscope.materia.wtf/
+    interval: 5m
+    client:
+      dns-resolver: udp://192.168.1.2:53
+      ignore-redirect: true
+    conditions:
+      - "[STATUS] == any(307, 401)"
   # Forward-auth guard (security review #2): wow.materia.wtf is SSO-fronted by
   # the authentik-forward-auth component. Unauthenticated, the gateway must
   # redirect to Authentik (302) - a 200 here means the SecurityPolicy is being
