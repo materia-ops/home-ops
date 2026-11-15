@@ -77,8 +77,9 @@ Defence in depth, roughly outermost-in:
   kvmd's config is broken), the result goes to `/var/lib/pikvm-autoupdate.log`
   instead. `pikvm.materia.wtf` is a TLS passthrough, so it serves the PiKVM's own
   Let's Encrypt cert, renewed on the device by `kvmd-certbot` through Cloudflare DNS.
-  Gatus warns (`GatusCertificateExpiringSoon`) when that cert is within 14 days of
-  expiry, which means renewal has been failing for about two weeks.
+  Like the cluster's wildcard it is a 160h `shortlived`-profile cert, renewed from about
+  80h before expiry. Gatus warns (`GatusCertificateExpiringSoon`) when it is within 24h
+  of expiry, which means at least two renewal attempts in a row have failed.
 
 ### Known failure modes and their runbooks
 

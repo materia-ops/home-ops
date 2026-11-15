@@ -217,6 +217,11 @@
     - name: Apply the changes before leaving the block
       ansible.builtin.meta: flush_handlers
 
+    # After the flush: it needs LE and Cloudflare, so its failing must not
+    # strand the handlers above or block the drop-ins.
+    - name: The certbot ACME profile (short-lived certs)
+      ansible.builtin.import_tasks: certbot.yaml
+
   always:
     # One command, so no update can start between the check and `ro`.
     - name: Make the root filesystem read-only again

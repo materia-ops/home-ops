@@ -6,6 +6,11 @@
 pikvm_autoupdate_time: "03:00"
 pikvm_autoupdate_timezone: Australia/Melbourne
 
+# kvmd-certbot's lineage and the Let's Encrypt profile it renews with;
+# shortlived = 160h certs, as the cluster's letsencrypt-production ClusterIssuer.
+pikvm_certbot_cert_name: pikvm.materia.wtf
+pikvm_certbot_profile: shortlived
+
 # Merged over kvmd's defaults via /etc/kvmd/override.d/materia.yaml.
 pikvm_kvmd_override: {}
 

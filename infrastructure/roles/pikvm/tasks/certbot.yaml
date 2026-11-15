@@ -1,0 +1,58 @@
+---
+# Runs inside main.yaml's rw block, after secrets.yaml has written the DNS token.
+- name: Find the certbot renewal config
+  ansible.builtin.stat:
+    path: "{{ pikvm_certbot_cloudflare_auth | dirname }}/config/renewal/{{ pikvm_certbot_cert_name }}.conf"
+  register: pikvm_certbot_renewal_conf
+
+- name: Require an existing certbot certificate
+  ansible.builtin.assert:
+    that: pikvm_certbot_renewal_conf.stat.exists
+    fail_msg: >-
+      No certbot renewal config for {{ pikvm_certbot_cert_name }} in the PST;
+      issue the first certificate by hand (docs.pikvm.org/letsencrypt) first.
+    quiet: true
+
+- name: Read the certbot ACME profile
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -qxF
+      - "preferred_profile = {{ pikvm_certbot_profile }}"
+      - "{{ pikvm_certbot_cloudflare_auth | dirname }}/config/renewal/{{ pikvm_certbot_cert_name }}.conf"
+  register: pikvm_certbot_profile_set
+  changed_when: false
+  failed_when: pikvm_certbot_profile_set.rc > 1
+  check_mode: false
+
+# reconfigure saves the profile only after a dry-run issue from LE staging
+# (real DNS-01) passes.
+- name: Set the certbot ACME profile
+  ansible.builtin.command:
+    argv:
+      - kvmd-certbot
+      - --
+      - reconfigure
+      - --non-interactive
+      - --cert-name
+      - "{{ pikvm_certbot_cert_name }}"
+      - --preferred-profile
+      - "{{ pikvm_certbot_profile }}"
+  when: pikvm_certbot_profile_set.rc != 0
+  changed_when: true
+
+# A task, not a handler: a later failure must not leave the old cert until its
+# next renewal. kvmd-certbot swaps it into the PST and reloads kvmd-nginx itself.
+- name: Reissue the kvmd certificate under the new profile
+  ansible.builtin.command:
+    # Without --no-random-sleep-on-renew certbot sleeps up to 8 minutes off a TTY,
+    # holding / rw and kvmd-certbot's /tmp lock.
+    argv:
+      - kvmd-certbot
+      - renew
+      - --force-renewal
+      - --no-random-sleep-on-renew
+      - --cert-name
+      - "{{ pikvm_certbot_cert_name }}"
+  when: pikvm_certbot_profile_set.rc != 0
+  changed_when: true
