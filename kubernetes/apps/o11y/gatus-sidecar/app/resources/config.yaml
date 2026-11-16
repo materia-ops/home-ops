@@ -3,21 +3,20 @@
 # gauges freeze, which blinds InternetDown and every LAN check during a WAN outage.
 endpoints:
   # Dead-man checks for GitHub Actions pipelines, pulled via the API because
-  # Cloudflare Bot Fight Mode would eat a push from GitHub runners. One
-  # fine-grained PAT covers them all (GATUS_STATUS_TOKEN via
-  # gatus-sidecar-secret, ESO). Two shapes, extended by name and url:
-  #   *ci-cron-enabled - the schedule must still be active: GitHub disables
-  #     crons after 60 idle days and the last run then stays green forever
-  #   *ci-last-run - the latest completed run must have succeeded
+  # Cloudflare Bot Fight Mode would eat a push from GitHub runners. Two shapes,
+  # extended by name and url: schedule still active, latest completed run succeeded.
   - &ci-cron-enabled
     name: att-release-cron-enabled
     group: ci
     url: https://api.github.com/repos/materia-ops/allthethings-wotlk/actions/workflows/upstream-release.yml
     interval: 30m
     headers:
+      # one fine-grained PAT covers every ci check (gatus-sidecar-secret, via ESO)
       Authorization: Bearer ${GATUS_STATUS_TOKEN}
     conditions:
       - "[STATUS] == 200"
+      # GitHub disables crons after 60 idle days, and the last run then stays
+      # green forever
       - "[BODY].state == active"
   - &ci-last-run
     name: att-release-last-run
@@ -37,15 +36,15 @@ endpoints:
   - <<: *ci-last-run
     name: materia-core-release-last-run
     url: "https://api.github.com/repos/materia-ops/materia-core/actions/workflows/release.yml/runs?status=completed&per_page=1"
-  # Renovate runner (home-ops renovate.yaml): a red run notifies nobody on
-  # its own. branch=main keeps feature-branch dispatches (runner trials) out;
-  # no event filter, because a dispatch that cancels the in-flight scheduled
-  # run becomes the latest completed run itself.
+  # Renovate runner (home-ops renovate.yaml): a red run notifies nobody on its own.
   - <<: *ci-cron-enabled
     name: renovate-cron-enabled
     url: https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml
   - <<: *ci-last-run
     name: renovate-last-run
+    # branch=main keeps feature-branch dispatches (runner trials) out. No event
+    # filter: a dispatch that cancels the in-flight scheduled run becomes the
+    # latest completed run itself.
     url: "https://api.github.com/repos/materia-ops/home-ops/actions/workflows/renovate.yaml/runs?status=completed&branch=main&per_page=1"
   - name: Cloudflare
     group: connectivity
@@ -85,14 +84,14 @@ endpoints:
       - "[STATUS] == 200"
   - name: Materia Core latest release assets
     group: upstreams
-    # the mirror's latest release must actually carry the installer set
-    # (installer, blockmap, latest.yml, checksums, seed stub) — catches a
-    # cut release whose asset upload died half-way, which the feed check
-    # below can't see. Unauthenticated: 2 req/h against the 60/h/IP limit.
     url: https://api.github.com/repos/materia-ops/materia-core-releases/releases/latest
+    # unauthenticated: 2 req/h against the 60/h/IP limit
     interval: 30m
     conditions:
       - "[STATUS] == 200"
+      # the installer set (installer, blockmap, latest.yml, checksums, seed stub):
+      # catches a cut release whose asset upload died half-way, which the feed
+      # check below can't see
       - "len([BODY].assets) >= 5"
   - name: Materia Core update feed
     group: upstreams
@@ -124,32 +123,29 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
   # raidscope's OIDC is app-level and silently off when a required OIDC_*
-  # variable is missing: unauthenticated, / answers 401 or 307, never 200. The
-  # gateway's 5xx codes pass, so raidscope being down is not a security page.
-  # dns-resolver: the Pi-hole answers with the LAN gateway, so a WAN outage
-  # cannot fail this check.
+  # variable is missing: unauthenticated, / answers 401 or 307, never 200.
   - name: raidscope-sso-guard
     group: security
     url: https://raidscope.materia.wtf/
     interval: 5m
     client:
+      # the Pi-hole answers with the LAN gateway, so a WAN outage cannot fail this check
       dns-resolver: udp://192.168.1.2:53
       ignore-redirect: true
     conditions:
+      # the gateway's 5xx codes pass, so raidscope being down is not a security page
       - "[STATUS] == any(307, 401, 500, 502, 503, 504)"
-  # Forward-auth guard (security review #2): wow.materia.wtf is SSO-fronted by
-  # the authentik-forward-auth component. Unauthenticated, the gateway must
-  # redirect to Authentik (302) - a 200 here means the SecurityPolicy is being
-  # skipped and the app is serving with no auth (the fail-open regression this
-  # check exists to catch). ignore-redirect so the 302 is observed, not followed.
-  # dns-resolver: LAN-only hostname (NXDOMAIN on public DNS) - resolve via
-  # the Pi-hole, which holds the internal records.
+  # Forward-auth guard: wow.materia.wtf is SSO-fronted by the authentik-forward-auth
+  # component, so unauthenticated the gateway must redirect to Authentik (302). A 200
+  # means the SecurityPolicy is skipped and the app serves with no auth (fail-open).
   - name: wow-panel-sso-guard
     group: security
     url: https://wow.materia.wtf
     interval: 5m
     client:
+      # LAN-only hostname (NXDOMAIN on public DNS): the Pi-hole holds the internal records
       dns-resolver: udp://192.168.1.2:53
+      # so the 302 is observed, not followed
       ignore-redirect: true
     conditions:
       - "[STATUS] == 302"
