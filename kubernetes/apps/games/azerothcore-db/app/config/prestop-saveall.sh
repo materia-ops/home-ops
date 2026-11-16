@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 # mysqld preStop: before the DB receives SIGTERM, ask the worldserver to flush
-# all in-memory character state (`saveall`) so an orchestrated DB roll (image
-# update, node drain, reschedule) never rewinds the realm to the last periodic
-# save (PlayerSaveInterval is 15 min — that was the 2026-07 progress-loss
-# window). The worldserver itself will drop its DB connection and be restarted
-# by its SOAP liveness probe once mysqld is gone; with the save flushed first,
-# that restart is lossless.
+# all in-memory character state (`saveall`).
+# Otherwise an orchestrated DB roll (image update, node drain, reschedule)
+# rewinds the realm to the last periodic save (PlayerSaveInterval is 15 min):
+# the worldserver drops its DB connection and its SOAP liveness probe restarts it.
 #
 # Best-effort by design: if the worldserver is down or hung there is nothing
 # to save — log and exit 0 so the DB shutdown is never blocked.
