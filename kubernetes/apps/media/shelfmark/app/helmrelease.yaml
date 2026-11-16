@@ -38,7 +38,7 @@ spec:
                   name: "{{ .Release.Name }}-secret"
             # TCP probe on the Flask port: / is OIDC-walled (302), so an HTTP
             # 200 check would false-fail — a listening socket is the honest
-            # signal that the app is up (previously had no liveness at all).
+            # signal that the app is up.
             probes:
               liveness: &probe
                 enabled: true

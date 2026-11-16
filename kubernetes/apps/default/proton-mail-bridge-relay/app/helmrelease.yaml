@@ -118,10 +118,9 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
-        # This relay is Authentik's (and the cluster's) outbound email path,
-        # but had no monitoring. A TCP-accept check is imperfect (postfix
-        # listening ≠ mail actually flowing to the bridge) but far better than
-        # the previous nothing — it catches a wedged/crashed relay.
+        # This relay is Authentik's (and the cluster's) outbound email path. A
+        # TCP-accept check only catches a wedged/crashed relay: postfix listening
+        # ≠ mail actually flowing to the bridge.
         annotations:
           gatus.home-operations.com/enabled: "true"
           gatus.home-operations.com/endpoint: |-
