@@ -161,10 +161,8 @@ spec:
           spec:
             expr: sum(up == bool 0) without(instance,pod,node)
         # Upstream only excludes fixed-size HPAs (max == min). The zeroscaler
-        # tier is min 0 / max 1, so every awake app read as "maxed out" —
-        # 19 permanently-firing alerts smothered by a blanket silence that
-        # also swallowed genuine maxed-out HPAs. Third guard (max > 1) makes
-        # the alert meaningful again; the silence is retired with it.
+        # tier is min 0 / max 1, so every awake app reads as "maxed out": the
+        # third guard (max > 1) drops those without a silence that hides real ones.
         KubeHpaMaxedOut:
           spec:
             expr: |-
@@ -376,9 +374,7 @@ spec:
             rules:
               # MAM locks each session cookie to an IP (or ASN); when the
               # cookie dies every MAM query 403s until a human mints a new
-              # one, so the alert carries the fix. Matching the bare cookie
-              # name catches all MAM error variants ("mam_id expired or
-              # invalid" etc.) — at info level it never appears otherwise.
+              # one, so the alert carries the fix.
               - alert: ProwlarrMamSessionExpired
                 annotations:
                   summary: >-
@@ -388,6 +384,8 @@ spec:
                     Fix: from the home network (Prowlarr egresses via the house WAN IP, not the VPN), log in to MyAnonamouse
                     → Preferences → Security, create a new session locked to the current IP (ASN-locked if the IP may change),
                     copy the mam_id value, then Prowlarr → Indexers → MyAnonamouse → paste into MAM ID → Test → Save.
+                # The bare cookie name catches all MAM error variants ("mam_id
+                # expired or invalid" etc.); at info level it never appears otherwise.
                 expr: |-
                   kubernetes.pod_namespace:=media kubernetes.container_name:=prowlarr "mam_id" | stats count() as failures | filter failures:>0
                 labels:
@@ -409,9 +407,8 @@ spec:
       sqlite-rules:
         create: true
         groups:
-          # Migrated from the retired per-app lokirule.yaml files; one
-          # namespace-wide group now also covers bazarr, which the
-          # old copies never did. stats by app -> one alert per container.
+          # One namespace-wide group covers every media app; stats by app -> one
+          # alert per container.
           - name: sqlite
             type: vlogs
             interval: 5m
@@ -448,11 +445,9 @@ spec:
         groups:
           - name: wow-panel
             type: vlogs
-            # Evaluate every 10m over an explicit 30m window (the _time filter
-            # in the expr overrides vmalert's default interval-sized window),
-            # with for: 30m — paging needs ~4 consecutive empty windows, so a
-            # one-off ingestion hiccup or pod roll at an evaluation boundary
-            # can't false-page (it did exactly that on first deploy).
+            # Every 10m over an explicit 30m window (the expr's _time filter overrides
+            # vmalert's interval-sized default). With for: 30m a page needs ~4 empty
+            # windows, so one ingestion hiccup or pod roll at a boundary can't page.
             interval: 10m
             rules:
               # The loop keeps logging while these fail, so
@@ -464,12 +459,9 @@ spec:
                   kubernetes.pod_namespace:=games kubernetes.container_name:=wow-panel ("[idle-scaledown] check: server info unparseable" OR "[idle-scaledown] check: check failed") _time:30m | stats count() as failures | filter failures:>3
                 labels:
                   severity: warning
-              # The panel logs `[idle-scaledown] check: ...` every tick
-              # (5 min) while IDLE_SCALEDOWN_ENABLED=true — a documented
-              # liveness contract (wow-panel README). Silence over a full 30m
-              # window means the loop is wedged, the pod is crash-looping, or
-              # log collection broke. Also fires if the kill switch is turned
-              # off — a deliberate reminder that auto-park is disabled.
+              # The panel logs `[idle-scaledown] check: ...` every 5m tick while
+              # IDLE_SCALEDOWN_ENABLED=true (wow-panel README). 30m of silence = wedged
+              # loop, crash-loop, broken log collection or, on purpose, the kill switch off.
               - alert: WowPanelIdleLoopSilent
                 annotations:
                   summary: wow-panel logged no idle-scaledown check line in 30m — the auto-park loop is wedged or disabled. Check the wow-panel pod logs.

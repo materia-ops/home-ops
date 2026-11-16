@@ -44,10 +44,9 @@ spec:
         log:
           rotation:
             enabled: false
-        # resources repeated here deliberately: removing previously-applied
-        # OperatorConfig fields makes the helm SSA upgrade fail (resources:
-        # null rejection) and loops the HelmRelease. Keep in sync with the
-        # per-driver blocks below.
+        # resources repeated here deliberately: removing applied OperatorConfig
+        # fields fails the helm SSA upgrade (resources: null rejection) and loops
+        # the HelmRelease. Keep in sync with the per-driver blocks below.
         nodePlugin:
           priorityClassName: system-node-critical
           resources:

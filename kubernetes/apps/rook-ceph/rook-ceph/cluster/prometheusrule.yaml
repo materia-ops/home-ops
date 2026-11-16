@@ -1,22 +1,8 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
-# Companion to the chart's shipped PrometheusRule: the two [2d]-lookback trend
-# rules are disabled there (monitoring.prometheusRuleOverrides in
-# ./helmrelease.yaml) and re-homed here, because the chart's per-rule override
-# mechanism cannot set a group-level eval interval. A 2d linear extrapolation
-# cannot change meaningfully between 20s default evals; 5m is plenty.
-#
-# Deviations from upstream (rook deploy/charts/rook-ceph-cluster/prometheus/localrules.yaml):
-#   - CephPoolGrowthWarning: upstream's on(cluster,pool_id,instance) join goes
-#     many-to-many when mgr failover leaves old+new pod series (same
-#     honor_labels instance) inside the [2d] lookback, and vmsingle rejects
-#     the rule (rook#10691). Deduped both sides via max by (cluster,pool_id).
-#     Threshold >= 0.95, not upstream's >= 95: ceph_pool_percent_used is a
-#     0-1 ratio (used/(used+avail), capped at 1.0), so >= 95 can never fire.
-#   - CephNodeDiskspaceWarning: free bytes merged per (cluster,instance,mountpoint)
-#     before the [2d] fit. A node-exporter restart (new pod label) or a reboot
-#     re-enumerating NVMe (new device label) starts a fresh series, and a fit on
-#     minutes of data extrapolated /var to -980GB (2026-10-16 Talos upgrade).
+# The chart's two [2d]-lookback trend rules, disabled there (prometheusRuleOverrides
+# in ./helmrelease.yaml) and re-homed here: its per-rule overrides cannot set a group
+# interval. Upstream: rook deploy/charts/rook-ceph-cluster/prometheus/localrules.yaml.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -25,8 +11,12 @@ metadata:
 spec:
   groups:
     - name: "nodes trend"
+      # A 2d linear extrapolation cannot change meaningfully between 20s default evals.
       interval: 5m
       rules:
+        # Deviation from upstream: free bytes merged per (cluster,instance,mountpoint)
+        # before the [2d] fit. A node-exporter restart or NVMe re-enumeration (new pod
+        # or device label) starts a fresh series, and a fit on minutes of data false-fires.
         - alert: "CephNodeDiskspaceWarning"
           annotations:
             description: "Mountpoint {{ $labels.mountpoint }} on {{ $labels.nodename }} will be full in less than 5 days based on the 48 hour trailing fill rate."
@@ -39,11 +29,15 @@ spec:
     - name: "pools trend"
       interval: 5m
       rules:
+        # Deviation from upstream: both sides are max by (cluster,pool_id). A mgr
+        # failover leaves old+new pod series in the [2d] lookback, the join goes
+        # many-to-many and vmsingle rejects the rule (rook#10691).
         - alert: "CephPoolGrowthWarning"
           annotations:
             description: "Pool '{{ $labels.name }}' will be full in less than 5 days assuming the average fill-up rate of the past 48 hours."
             summary: "Pool growth rate may soon exceed capacity on cluster {{ $labels.cluster }}"
-          # deviation: dedupe mgr-failover series; 0-1 ratio threshold (see header)
+          # Deviation: >= 0.95, not upstream's >= 95. ceph_pool_percent_used is a
+          # 0-1 ratio, so >= 95 can never fire.
           expr: |
             (
               predict_linear(max by (cluster, pool_id) (ceph_pool_percent_used)[2d:10m], 3600 * 24 * 5)

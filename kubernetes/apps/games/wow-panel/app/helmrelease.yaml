@@ -35,13 +35,13 @@ spec:
               repository: ghcr.io/materia-ops/wow-panel
               tag: 1.13.59@sha256:2bdf67e35d3a41b36b7b4fb075d31fbb3cf79868a3423e79c42bcdd026fb0a4f
             env:
-              # Read-only game-DB access for the /bot-roster page (the acore
-              # app user; AC_DB_PASSWORD arrives via wow-panel-secret). Unset
-              # host = the page degrades to an explanatory card.
               # /my-characters ownership beyond the automatic case-insensitive
-              # "game account == Authentik username" match (kitty↔KITTY needs
-              # nothing): vince's game account predates the SSO naming.
+              # "game account == Authentik username" match: vince's game account
+              # predates the SSO naming.
               ACCOUNT_OWNERS: "vince:MALPRACTIS"
+              # Read-only game-DB access for /bot-roster (the acore app user;
+              # AC_DB_PASSWORD arrives via wow-panel-secret). Unset host = the
+              # page degrades to an explanatory card.
               AC_DB_HOST: azerothcore-db.games.svc.cluster.local
               AC_DB_PORT: "3306"
               AC_DB_USER: acore
@@ -113,11 +113,9 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
-        # In-cluster uptime check on the SSO-free probe endpoint. The route's
-        # auto-generated gatus entry is only the internal-gateway DNS exposure
-        # guard (wow.materia.wtf must NOT resolve publicly) — without this the
-        # pod itself has no uptime monitoring. group: services lands it in the
-        # existing GatusEndpointDown alert.
+        # Uptime check on the SSO-free probe endpoint: the route's auto-generated
+        # gatus entry only guards DNS exposure (wow.materia.wtf must NOT resolve
+        # publicly). group: services lands it in the GatusEndpointDown alert.
         annotations:
           gatus.home-operations.com/enabled: "true"
           gatus.home-operations.com/endpoint: |-

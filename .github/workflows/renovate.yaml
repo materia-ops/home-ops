@@ -9,11 +9,9 @@ on:
     paths:
       - .renovaterc.json5
       - .renovate/**.json5
-  # Canary: a PR that moves the runner pin runs the candidate image as a
-  # full dry run through the same assertion (lookup mode sets no per-repo
-  # result); the pin's automerge waits on it (platformAutomerge: false, so
-  # Renovate itself checks the result instead of GitHub auto-merge).
-  # main's copy of this file runs, so a branch never holds the github-bot key.
+  # Canary: a PR that moves the runner pin dry-runs the candidate image through the
+  # same assertion; platformAutomerge: false makes Renovate, not GitHub, wait on it to
+  # automerge. main's copy of this file runs, so a branch never holds the github-bot key.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     branches:
       - main
@@ -118,15 +116,9 @@ jobs:
           # SHA-pinned actions inside .github/workflows/** (audited 2026-07-18,
           # security review #8 - do not drop without disabling that manager).
           permission-workflows: ${{ github.event_name != 'pull_request_target' && 'write' || '' }}
-          # Renovate also manages the azerothcore-image source pins
-          # (versions.json git-refs manager), wow-panel's npm/actions/base
-          # image, raidscope's pip/actions/base image, materia-core's
-          # npm/actions, and wow-realmchat's nuget/actions/Ollama pin; the
-          # github-bot App must be INSTALLED on those repos or token
-          # generation fails. .github is the org config repo: every fleet
-          # repo extends github>materia-ops/.github//renovate/default, and
-          # renovate resolves that preset with THIS token - without .github
-          # in scope the fetch 404s and every repo aborts as "invalid config".
+          # The github-bot App must be INSTALLED on each repo or token generation fails.
+          # .github: every fleet repo extends github>materia-ops/.github//renovate/default,
+          # fetched with THIS token; out of scope it 404s and all abort as "invalid config".
           repositories: |
             ${{ github.event.repository.name }}
             .github
@@ -189,6 +181,7 @@ jobs:
           # left this step green. strict raises it as an uncaught exception.
           NODE_OPTIONS: --unhandled-rejections=strict
           RENOVATE_AUTODISCOVER: true
+          # full, not lookup: lookup mode sets no per-repository result for the assertion.
           RENOVATE_DRY_RUN: ${{ github.event_name == 'pull_request_target' && 'full' || inputs.dryRun }}
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           # info is load-bearing: the assertion reads an info-level record.
@@ -202,10 +195,9 @@ jobs:
           renovate-version: ${{ steps.version.outputs.version }}
 
       - name: Assert every repository finished
-        # Renovate logs "Repository finished" for aborted repositories too,
-        # so the gate reads each listed repository's result: a hard abort or
-        # a repository missing from the log fails the run, a transient or
-        # by-design result only warns. No readable log is itself a failure.
+        # Renovate logs "Repository finished" for aborted repositories too, so the gate
+        # reads each listed repository's result: a hard abort, a repository missing from
+        # the log or no readable log fails the run; a transient or by-design result warns.
         run: |
           log="${RENOVATE_LOG_FILE}"
           if ! [ -r "${log}" ] || ! [ -s "${log}" ]; then

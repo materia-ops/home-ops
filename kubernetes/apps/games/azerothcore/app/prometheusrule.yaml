@@ -8,11 +8,9 @@ spec:
   groups:
     - name: azerothcore.rules
       rules:
-        # The gatus `games` group is intentionally outside gatus-sidecar's
-        # blanket GatusEndpointDown rule (external|services): the panel scales
-        # the realm 0↔1 on purpose, and deliberate downtime must not page.
-        # The `unless` clause drops the alert whenever either game Deployment
-        # is scaled to zero.
+        # The gatus `games` group is outside the blanket GatusEndpointDown rule
+        # (external|services): the panel scales the realm 0↔1 on purpose, so the
+        # `unless` drops the alert while either game Deployment is at zero.
         - alert: AzerothCoreRealmDown
           expr: |-
             gatus_results_endpoint_success{group="games"} == 0
@@ -39,8 +37,7 @@ spec:
             severity: critical
 
         # Dead-man switch on the worldserver→vmsingle influx flow: the server
-        # push-fails silently (metric name verified live 2026-07-15), and a
-        # silent stop would blind the sessions/update-time panels while
+        # push-fails silently, blinding the sessions/update-time panels while
         # everything else stays green. Replica-guarded like RealmDown.
         - alert: AzerothCoreMetricsFlowStopped
           expr: |-

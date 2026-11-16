@@ -1,19 +1,16 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.networking.k8s.io/referencegrant_v1beta1.json
 # adapted from https://github.com/authelia/authelia/blob/master/docs/content/integration/proxies/envoy.md#secure-route
-# Split into two grants (SecurityPolicy refs / HTTPRoute refs) because the API
-# caps spec.from at 16 items and the combined list outgrew it; multiple
-# ReferenceGrants are additive.
-#
-# The from-namespace list must cover EVERY namespace where a forward-auth app
-# can land, or the cross-ns ref to authentik-server is denied and (with
-# failOpen:false) the app fails closed. Keep it alphabetical and complete;
-# there is no `storage` namespace (Ceph is `rook-ceph`) — do not re-add it.
+# Two grants (SecurityPolicy refs / HTTPRoute refs): the API caps spec.from at
+# 16 items, and multiple ReferenceGrants are additive.
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
   name: ref-authentik-svc
 spec:
+  # Both lists must cover EVERY namespace a forward-auth app can land in, or the
+  # cross-ns ref to authentik-server is denied and (failOpen: false) the app fails
+  # closed. Keep them alphabetical; `storage` is not a namespace (Ceph is `rook-ceph`).
   from:
     # SecurityPolicy (ext_authz) references to the outpost Service
     - &policy

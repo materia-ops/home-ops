@@ -1,13 +1,10 @@
 ---
-# Modest scheduling priority for the realm control plane: under node pressure
-# the panel should outrank default-priority workloads for placement, but it
-# must never evict anything — least of all the game servers it manages —
-# hence preemptionPolicy: Never.
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
   name: wow-panel
 value: 1000
 globalDefault: false
+# Must never evict anything, least of all the game servers the panel manages.
 preemptionPolicy: Never
 description: Realm control panel — schedule ahead of default pods, never preempt.

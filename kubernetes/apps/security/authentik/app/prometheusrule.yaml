@@ -1,23 +1,8 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
-# Replaces the authentik helm chart's built-in PrometheusRule (disabled via
-# prometheus.rules.enabled: false) so we can maintain correct metric names.
-#
-# django-prometheus >= 2.x appends _total to counter names per the Prometheus
-# naming convention. The upstream chart rules still reference the old names
-# without the suffix, causing RecordingRulesNoData alerts for every rule.
-#
-# Removed groups:
-#   - "authentik Aggregate model operations": django_model_{inserts,updates,deletes}_total
-#     are model-signal metrics that authentik does not expose.
-#   - "authentik Aggregate migrations": django_migrations_{applied,unapplied}_total
-#     are not scraped from authentik's /metrics endpoint.
-#     (The PendingMigrations alert in the Alerts group still references
-#      django_migrations_unapplied_total directly and will fire if it ever appears.)
-#
-# Removed rules (authentik 2026.8.0 stopped exposing these metrics):
-#   django_http_exceptions_total_by_{type,view}_total,
-#   django_db_execute_many_total, django_db_errors_total
+# Replaces the chart's built-in PrometheusRule (prometheus.rules.enabled: false):
+# its rules use the counter names from before django-prometheus 2.x appended
+# _total, so every one of them raises RecordingRulesNoData.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -28,6 +13,9 @@ metadata:
     app.kubernetes.io/instance: authentik
     app.kubernetes.io/part-of: authentik
 spec:
+  # Not carried over, as authentik exposes none of their metrics: the "Aggregate model
+  # operations" and "Aggregate migrations" groups and, since 2026.8.0, the rules on
+  # django_http_exceptions_total_by_*, django_db_execute_many_total, django_db_errors_total.
   groups:
     - name: authentik Aggregate request counters
       rules:
@@ -125,6 +113,7 @@ spec:
           for: 10m
           labels:
             severity: critical
+        # authentik does not expose this metric today: the alert fires if it ever appears.
         - alert: PendingMigrations
           annotations:
             message: authentik instance {{ $labels.instance }} has pending database migrations

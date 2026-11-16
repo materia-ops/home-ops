@@ -19,11 +19,9 @@ spec:
     storageClass: ${DB_STORAGE_CLASS:-openebs-hostpath}
 
   postgresql:
-    # dataDurability=preferred (default): writes fall back to local-commit if the
-    # standby is unavailable rather than blocking — the right call at 2 instances.
-    # At 3+ instances set DB_DURABILITY=required: with number=1 and two standbys, a
-    # single node loss still leaves a sync standby to ack, giving zero-data-loss
-    # synchronous replication without write-stalling on single-node failure.
+    # dataDurability=preferred (default): with the standby away, writes commit locally
+    # instead of blocking, the right call at 2 instances. At 3+ set DB_DURABILITY=required:
+    # one node lost still leaves a sync standby to ack, so no data loss and no write stall.
     synchronous:
       method: any
       number: 1

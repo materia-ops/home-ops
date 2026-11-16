@@ -14,10 +14,6 @@ configMapGenerator:
     files:
       - ./lua_scripts/README.md
       - ./lua_scripts/wwi-tyraels-hilt.lua
-  # Lifecycle-hook + probe scripts (worldserver preStop restart warning,
-  # SOAP liveness). The substitute:disabled annotation below is load-bearing
-  # here: the scripts use bash ${...} that strict envsubst would otherwise
-  # mangle.
   - name: azerothcore-scripts
     files:
       - ./scripts/liveness-soap.sh
@@ -25,4 +21,5 @@ configMapGenerator:
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
+    # Load-bearing: strict envsubst would mangle the scripts' bash ${...}.
     kustomize.toolkit.fluxcd.io/substitute: disabled
