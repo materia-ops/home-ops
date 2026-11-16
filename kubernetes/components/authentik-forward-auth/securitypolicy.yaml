@@ -1,10 +1,6 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
-# Forward-auth via the Authentik embedded outpost (ext_authz).
-# Targets the app's HTTPRoute; unauthenticated requests are redirected to Authentik.
-# The embedded outpost is served by the authentik-server Service (no separate
-# ak-outpost-* Service exists for embedded outposts here). Verified:
-# GET authentik-server:80/outpost.goauthentik.io/ping -> 204.
+# Forward-auth via the Authentik embedded outpost (ext_authz) on the app's HTTPRoute.
 # Requires the app to be a proxy provider + embedded-outpost member in Authentik.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
@@ -17,14 +13,11 @@ spec:
       name: ${APP_ROUTE:-${APP}}
   extAuth:
     # failOpen=false: if the outpost is unreachable, DENY rather than serve the
-    # app unauthenticated. The outpost is now trusted (security review #2 —
-    # fail-open was a latent "silently serves with no auth" trap).
+    # app unauthenticated (security review #2).
     failOpen: false
-    # Headers forwarded FROM the client request TO the outpost (ext_authz check).
-    # For an HTTP auth service, Envoy Gateway otherwise sends only Host/Method/Path/
-    # Content-Length/Authorization — it strips Cookie, so the outpost never sees the
-    # session and loops post-login (ERR_TOO_MANY_REDIRECTS). 'accept' lets Authentik
-    # choose a 302 redirect (browser) vs 401 (API).
+    # Client headers sent to the outpost. Envoy Gateway otherwise sends an HTTP auth
+    # service only Host/Method/Path/Content-Length/Authorization; without Cookie the outpost
+    # loops post-login (ERR_TOO_MANY_REDIRECTS). 'accept' picks 302 (browser) vs 401 (API).
     headersToExtAuth:
       - authorization
       - cookie
@@ -33,6 +26,7 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
+          # The embedded outpost is served here: no ak-outpost-* Service exists.
           name: authentik-server
           namespace: security
           port: 80

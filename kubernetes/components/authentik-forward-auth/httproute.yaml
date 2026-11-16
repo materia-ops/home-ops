@@ -1,11 +1,8 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/gateway.networking.k8s.io/httproute_v1.json
-# Routes the Authentik outpost callback/start paths (/outpost.goauthentik.io/*) on the
-# app's hostname directly to the embedded outpost (authentik-server), bypassing the app
-# backend AND the ext_authz SecurityPolicy (which targets only the app's own HTTPRoute).
-# Without this, the post-login callback is mis-routed -> "invalid state" / HTTP 400.
-# Most-specific path wins, so only /outpost.goauthentik.io/* is diverted; all other
-# traffic continues to the app route.
+# Routes /outpost.goauthentik.io/* on the app's hostname straight to the embedded
+# outpost (authentik-server), past the app backend AND its ext_authz SecurityPolicy.
+# Without it the post-login callback is mis-routed -> "invalid state" / HTTP 400.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
