@@ -478,6 +478,24 @@ spec:
                 for: 30m
                 labels:
                   severity: warning
+              # A failed scale-down retries on the next 5m tick, so one is a blip
+              # and two in 30m is stuck.
+              - alert: WowPanelIdleScaleDownFailing
+                annotations:
+                  summary: wow-panel reached the idle threshold but failed to scale the realm to 0 more than once in 30m — the realm is running idle. Check the wow-panel pod logs for the "scale ... FAILED" line.
+                expr: |-
+                  kubernetes.pod_namespace:=games kubernetes.container_name:=wow-panel "[idle-scaledown] check: idle threshold reached but scale-down FAILED" _time:30m | stats count() as failures | filter failures:>1
+                labels:
+                  severity: warning
+              # SOAP is unreachable for a few ticks on every worldserver boot;
+              # 9 of an hour's 12 ticks means the panel cannot log in to SOAP.
+              - alert: WowPanelIdleSoapUnreachable
+                annotations:
+                  summary: wow-panel could not query the running worldserver over SOAP for most of the last hour (SOAP down or the panel's SOAP login rejected) — the idle timer is held, so auto-park is not running. Check the wow-panel pod logs and the azerothcore soap-password secret.
+                expr: |-
+                  kubernetes.pod_namespace:=games kubernetes.container_name:=wow-panel "[idle-scaledown] check: worldserver up but SOAP unreachable" _time:1h | stats count() as failures | filter failures:>8
+                labels:
+                  severity: warning
       zfs-rules:
         create: true
         groups:
