@@ -1,9 +1,8 @@
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/grafana.integreatly.org/grafanadashboard_v1beta1.json
-# Audit view over the panel's stdout audit contract (see wow-panel
-# ARCHITECTURE.md): every mutating call logs one `[scale]`/`[admin]` line, and
-# every idle-loop tick logs `[idle-scaledown] check: ...` (the loop's liveness
-# signal — WowPanelIdleLoopSilent alerts on its absence).
+# Audit view over the panel's stdout contract (wow-panel ARCHITECTURE.md): one
+# `[scale]`/`[admin]` line per mutating call, and `[idle-scaledown] check: ...`
+# per idle-loop tick (its liveness signal: WowPanelIdleLoopSilent alerts on absence).
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:

@@ -79,13 +79,9 @@ spec:
         # one is gone.
         strategy: Recreate
         pod:
-          # Budget = preStop hook (900s in-game restart countdown when real
-          # players are online + 120s hold margin — see
-          # scripts/prestop-restart-warning.sh) + SIGTERM save time (~180s:
-          # worldserver flushes character/bot state to the DB — generous on
-          # purpose, do not shorten). Image runs worldserver as PID 1
-          # (exec-form CMD, no shell wrapper). With nobody online the hook
-          # returns immediately and only the save time is used.
+          # Budget: preStop (900s in-game countdown + 120s hold margin, see
+          # scripts/prestop-restart-warning.sh) + ~180s SIGTERM save, in which
+          # worldserver (PID 1, exec-form CMD) flushes state to the DB. Do not shorten.
           terminationGracePeriodSeconds: 1200
         containers:
           app:
@@ -194,14 +190,14 @@ spec:
               # Liveness goes through SOAP (`server info` executes on the
               # world update loop) because a hung loop keeps 8085 accepting —
               # TCP alone can't see the realm's most likely failure mode.
-              # 5 × 60s + the script's 15s SOAP budget ≈ 5 min unresponsive
-              # before a restart; lag spikes (mass bot login) stay safe.
               liveness:
                 enabled: true
                 custom: true
                 spec:
                   exec:
                     command: ["/bin/bash", "/scripts/liveness-soap.sh"]
+                  # 5 × 60s + the script's 15s SOAP budget ≈ 5 min unresponsive
+                  # before a restart; lag spikes (mass bot login) stay safe.
                   periodSeconds: 60
                   timeoutSeconds: 20
                   failureThreshold: 5
@@ -247,25 +243,23 @@ spec:
         type: LoadBalancer
         annotations:
           # gatus-sidecar (service kind is opt-in, no auto): probe the VIP —
-          # the same path a player's client takes. Group `games` is
-          # deliberately outside the GatusEndpointDown rule's external|services
-          # match: deliberate scale-to-0 via the panel must not page; the
-          # replica-guarded alert lives in prometheusrule.yaml.
+          # the same path a player's client takes.
           gatus.home-operations.com/enabled: "true"
+          # Group `games` is deliberately outside the GatusEndpointDown rule's
+          # external|services match: scale-to-0 via the panel must not page.
+          # The replica-guarded alert lives in prometheusrule.yaml.
           gatus.home-operations.com/endpoint: |-
             name: wow-auth
             group: games
             url: tcp://192.168.10.120:3724
             interval: 1m
             conditions: ["[CONNECTED] == true"]
-          # Players' realmlist.wtf uses the name `wow.internal` → this VIP.
-          # That record is MANUAL on the Pi-holes (owner-created/preferred) —
-          # an external-dns hostname annotation can't manage it: every LAN
-          # instance filters to materia.wtf (domainFilters), so an .internal
-          # annotation is silently dropped.
-          # Both game Services share the realm VIP (WP8 validated live);
-          # the VIP is permanent — it's baked into the DB realmlist row.
+          # Players' realmlist.wtf names `wow.internal`, a MANUAL Pi-hole record
+          # for this VIP: every LAN external-dns instance filters to materia.wtf
+          # (domainFilters), so an .internal hostname annotation is silently dropped.
           lbipam.cilium.io/ips: 192.168.10.120
+          # Both game Services share the realm VIP. It is permanent: baked into
+          # the DB realmlist row.
           lbipam.cilium.io/sharing-key: azerothcore
         ports:
           auth:

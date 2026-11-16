@@ -16,10 +16,9 @@ spec:
   datasources:
     - datasourceName: VictoriaMetrics
       inputName: DS_PROMETHEUS
-  # Worldserver panels use AC's built-in InfluxDB metrics; VictoriaMetrics
-  # names them {measurement}_{field} — exact names verified live 2026-07-15
-  # (online_players_value, update_time_diff_value, world_update_time_value,
-  # db_queue_{login,character,world}_value, ...).
+  # Worldserver panels use AC's built-in InfluxDB metrics, which VictoriaMetrics
+  # names {measurement}_{field}: online_players_value, update_time_diff_value,
+  # world_update_time_value, db_queue_{login,character,world}_value, ...
   json: |-
     {
       "title": "AzerothCore Realm",

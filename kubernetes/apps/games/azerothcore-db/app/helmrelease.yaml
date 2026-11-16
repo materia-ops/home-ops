@@ -30,13 +30,9 @@ spec:
               globalMounts:
                 - path: /var/lib/mysql
         initContainers:
-          # Data-loss guard (review WR#2): refuse to boot on a datadir with no
-          # initialised MySQL system schema unless a fresh init is explicitly
-          # authorised in git. An unexpectedly blank /var/lib/mysql (the ceph-csi
-          # stale-staging fault this cluster has hit) would otherwise let mysqld
-          # silently re-create empty acore_* DBs — which mysqladmin-ping probes
-          # never notice and the nightly backup then dumps and prunes over the
-          # good ones.
+          # Data-loss guard: refuse an uninitialised datadir unless git allows a
+          # fresh init. A blank /var/lib/mysql (ceph-csi stale staging) boots empty
+          # acore_* DBs: probes pass and the nightly backup prunes the good dumps.
           01-init-guard:
             image:
               repository: docker.io/library/mysql
@@ -147,10 +143,9 @@ spec:
               - --mysqld.address=127.0.0.1:3306
               - --mysqld.username=root
             env:
-              # Root because the init script only runs on first datadir init —
-              # a dedicated exporter user would need a manual SQL step on the
-              # live DB. Same-pod loopback only; the secret never leaves the
-              # pod spec it already lives in.
+              # Root: the init script runs only on first datadir init, so an exporter
+              # user would need a manual SQL step on the live DB. Same-pod loopback
+              # only; the secret never leaves the pod spec it already lives in.
               MYSQLD_EXPORTER_PASSWORD:
                 valueFrom:
                   secretKeyRef:
