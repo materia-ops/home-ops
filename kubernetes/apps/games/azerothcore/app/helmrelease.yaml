@@ -92,9 +92,9 @@ spec:
             nameOverride: worldserver
             image: *image
             env:
-              # Override-only config model: the image ships each .conf.dist as
-              # the live conf; deviations are AC_* env vars. Derive names with
-              # the vault generator (ac-env-equivalence.sh), never by hand.
+              # Override-only config model: the image ships each .conf.dist as the
+              # live conf; deviations are AC_* env vars. Register each in
+              # azerothcore-image's config-keys.json, or a typo is a dead variable.
               AC_ACCOUNT_ACHIEVEMENTS_ANNOUNCE: "0"
               # mod-account-mounts >= 8aa6e77 defaults both limits to 1; keep full sharing.
               AC_ACCOUNT_MOUNTS_LIMIT_CLASS: "0"
