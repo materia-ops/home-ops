@@ -1,8 +1,7 @@
 ---
-# network role defaults
-# Manages the Pi's primary NetworkManager connection declaratively so a reimage
-# (or config drift) restores the exact addressing. Values identical across all
-# Pis live here; per-host address/gateway/ULA go in host_vars.
+# network role defaults: the Pi's primary NetworkManager connection, declared so
+# a reimage (or config drift) restores the exact addressing. Values identical
+# across all Pis live here; per-host address/gateway/ULA go in host_vars.
 
 network_conn_name: "Wired connection 1"
 network_ifname: eth0

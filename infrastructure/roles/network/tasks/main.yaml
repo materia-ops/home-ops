@@ -1,8 +1,6 @@
 ---
-# Declaratively manage the Pi's primary NetworkManager connection. On the first
-# run this is a no-op: the declared values mirror what's already on the Pis, so
-# nothing is reapplied and there's no chance of dropping the session Ansible is
-# connected over. Future reimages/drift converge back to this spec.
+# Declaratively manage the Pi's primary NetworkManager connection: reimages and
+# drift converge back to this spec.
 
 - name: Configure the primary NetworkManager connection
   community.general.nmcli:
@@ -30,8 +28,7 @@
   notify: Reapply connection
 
 # Apply any profile change to the live interface before validating (reapply, not
-# `up`, so the interface isn't bounced). Fires only on change → the no-op first
-# run never reaches it.
+# `up`, so the interface isn't bounced).
 - name: Flush handlers so the connection is reapplied before validation
   ansible.builtin.meta: flush_handlers
 
