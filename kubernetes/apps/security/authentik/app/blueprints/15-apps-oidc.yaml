@@ -203,9 +203,6 @@ entries:
   # ════════════════════════════════════════════════════════════════════════════
 
   # ── autobrr ─────────────────────────────────────────────────────────────────────
-  # NOTE: the old autobrr forward-auth proxy provider + application were deleted
-  # manually in the Authentik UI during migration. The OIDC application reuses slug
-  # "autobrr".
   - id: autobrr_provider
     model: authentik_providers_oauth2.oauth2provider
     identifiers:

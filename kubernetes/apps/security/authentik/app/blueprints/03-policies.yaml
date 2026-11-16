@@ -13,10 +13,9 @@ entries:
       check_ip: true
       check_username: true
 
-  # Reusable predicate: True when the client is on a local/private network.
-  # ak_client_ip is Authentik's properly-resolved client IP. .is_private covers
-  # RFC1918 + loopback + link-local + CGNAT. Compose with `negate: true` on a binding to gate "remote
-  # only" (e.g. the captcha).
+  # Reusable predicate: True when the client is on a local/private network. ak_client_ip
+  # is Authentik's properly-resolved client IP; .is_private covers RFC1918 + loopback +
+  # link-local + CGNAT. Negate it on a binding to gate "remote only" (e.g. the captcha).
   - id: policy_lan_check
     model: authentik_policies_expression.expressionpolicy
     identifiers:
@@ -26,10 +25,9 @@ entries:
         return ak_client_ip.is_private
 
   # ── Passkey detection (drives passkey-first login) ────────────────────────────
-  # True when the identified (pending) user has at least one confirmed WebAuthn
-  # passkey. Gates the order-25 passkey stage so it is only PROMPTED to users who
-  # have one. Fails CLOSED (returns False → passkey not prompted, password shown)
-  # on any error, so a broken lookup can never block login.
+  # True when the identified (pending) user has a confirmed WebAuthn passkey; gates the
+  # order-25 passkey stage so only they are PROMPTED. Fails CLOSED (False → no passkey
+  # prompt, password shown) on any error, so a broken lookup can never block login.
   - id: policy_has_passkey
     model: authentik_policies_expression.expressionpolicy
     identifiers:

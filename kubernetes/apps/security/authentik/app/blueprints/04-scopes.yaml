@@ -12,10 +12,9 @@ entries:
     attrs:
       expression: "return list(request.user.ak_groups.values_list('name', flat=True))"
 
-  # Reduced proxy outpost scope — strips large/unnecessary attributes (avatars, etc.)
-  # from the JWT forwarded by the embedded outpost. Cuts ~18kB off every forward-auth header.
-  # Used in place of the default "authentik default OAuth Mapping: Proxy outpost" scope
-  # on all proxy providers.
+  # Reduced proxy outpost scope: strips large attributes (avatars) from the JWT the
+  # embedded outpost forwards, ~18kB off every forward-auth header. All proxy providers
+  # use it in place of the default "authentik default OAuth Mapping: Proxy outpost".
   - id: scope_proxy_outpost_reduced
     model: authentik_providers_oauth2.scopemapping
     identifiers:
