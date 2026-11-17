@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: external-secrets-rules
+spec:
+  groups:
+    - name: external-secrets.rules
+      rules:
+        - alert: ExternalSecretNotReady
+          expr: |-
+            externalsecret_status_condition{condition="Ready", status="False"} == 1
+          for: 15m
+          annotations:
+            # Unless the scrape honours labels, namespace is the operator's and
+            # exported_namespace is the ExternalSecret's.
+            summary: >-
+              ExternalSecret {{ or $labels.exported_namespace $labels.namespace }}/{{ $labels.name }}
+              has not been Ready for 15 minutes; its Secret is stale. Check the 1Password item and
+              field names it reads
+          labels:
+            severity: warning
