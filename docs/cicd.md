@@ -391,6 +391,17 @@ touch `.github/**`. It is report-only: findings are uploaded to code scanning as
 and never fail the check. Fork PRs are skipped, because they cannot be granted
 `security-events: write`.
 
+### `secret-scan.yaml` — secrets in the tree and its history
+
+On pushes to `main` and every PR, calls the report-only reusable scan in
+[`materia-ops/.github`](https://github.com/materia-ops/.github): gitleaks over the tree
+and the full history, with its default rules plus the org's own. A finding fails the
+check and names file, line and rule, never the value; nothing is changed. It runs with
+`GITHUB_TOKEN` and `contents: read` only. Deleting a flagged line does not clear the
+check, because the history scan still sees it. A false positive is recorded in
+[`.github/secret-scan-exceptions.toml`](../.github/secret-scan-exceptions.toml): one
+entry per shape, with its reason and a regex that covers the whole match.
+
 ### `renovate-lint.yaml` — Renovate config validation
 
 On PRs that touch `.renovaterc.json5` (or the workflow itself), runs
