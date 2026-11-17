@@ -15,7 +15,7 @@ entries:
 
   # Reusable predicate: True when the client is on a local/private network. ak_client_ip
   # is Authentik's properly-resolved client IP; .is_private covers RFC1918 + loopback +
-  # link-local + CGNAT. Negate it on a binding to gate "remote only" (e.g. the captcha).
+  # link-local, not CGNAT (100.64.0.0/10). Negate it on a binding to gate "remote only".
   - id: policy_lan_check
     model: authentik_policies_expression.expressionpolicy
     identifiers:
