@@ -124,7 +124,10 @@ Renovate's merge gate never reads. The verdict therefore goes on the PR head as 
 **`Renovate canary`** commit status: pending from the job's first step, then
 success, failure or error. Before every run the image's keyless signature is verified against
 Renovate's own build workflow identity, since the soak does nothing against a
-re-pushed tag. Two guards make a bad runner loud instead of silent
+re-pushed tag. The check is tried up to three times, 20 seconds apart, because
+cosign's exit code does not separate a registry blip from a bad signature; only a
+passing check lets the run continue, and a retried attempt leaves a warning on the run.
+Two guards make a bad runner loud instead of silent
 ([#1681](https://github.com/materia-ops/home-ops/pull/1681)): `NODE_OPTIONS`
 strict mode turns a startup crash into a red **Run Renovate** step, and **Assert
 every repository finished** reads Renovate's log and fails the run when any
