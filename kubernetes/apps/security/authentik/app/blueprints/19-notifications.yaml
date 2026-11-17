@@ -6,16 +6,6 @@ metadata:
 # Routes Authentik's operational health events to Discord via Notifiarr's
 # passthrough integration (generic webhook + a Discord-shaped body mapping that
 # Notifiarr expects).
-#
-# These mirror the four rules authentik ships in its `default-notify-*` blueprint
-# (configuration error/warning, update available, policy/property-mapping
-# exception), but are independent `materia-*` objects so we never fight the
-# system blueprint over a shared row. The stock rules keep firing to email + the
-# in-app inbox; these add Notifiarr on top.
-#
-# The webhook URL embeds the Notifiarr API key (NOTIFIARR_API_KEY env, sourced
-# from 1Password via the authentik-blueprint-secrets ExternalSecret).
-# `send_once: true` => one POST per event, not one per member of the group.
 entries:
   # ── Notifiarr body mapping ─────────────────────────────────────────────────────
   # Payload shape required by Notifiarr's authentik integration (per their wiki).
@@ -42,13 +32,19 @@ entries:
       name: materia-notifiarr
     attrs:
       mode: webhook
+      # The URL embeds the Notifiarr API key (NOTIFIARR_API_KEY env, sourced from
+      # 1Password via the authentik-blueprint-secrets ExternalSecret).
       webhook_url: !Format
         - "https://notifiarr.com/api/v1/notification/authentik/%s"
         - !Env NOTIFIARR_API_KEY
       webhook_mapping_body: !KeyOf mapping_notifiarr
+      # one POST per event, not one per member of the group
       send_once: true
 
   # ── Event-matcher policies ─────────────────────────────────────────────────────
+  # The matchers and rules mirror the four rules in authentik's `default-notify-*`
+  # blueprint as independent `materia-*` objects, so we never fight the system blueprint
+  # over a shared row. The stock rules keep firing to email + the in-app inbox.
   - id: match_configuration_error
     model: authentik_policies_event_matcher.eventmatcherpolicy
     identifiers:

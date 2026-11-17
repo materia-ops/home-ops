@@ -59,11 +59,9 @@ entries:
       order: 20
       policy_engine_mode: all # all([]) = True → always run when no policies
 
-  # Order 25: Passkey (WebAuthn) as first factor — for any client whose identified
-  # user has a passkey enrolled. Prompted BEFORE password; on success the password
-  # (30) and MFA (40) stages are skipped (materia-no-passkey), giving a single-gesture
-  # login. Users without a passkey skip this stage and fall through to the password
-  # stage. Identification (20) always runs first, avoiding the passkey discovery loop.
+  # Order 25: Passkey (WebAuthn) as first factor for users who have one enrolled. On
+  # success materia-no-passkey skips password (30) and MFA (40): single-gesture login.
+  # Identification (20) always runs first, avoiding the passkey discovery loop.
   - id: binding_auth_passkey
     model: authentik_flows.flowstagebinding
     identifiers:
@@ -134,17 +132,14 @@ entries:
       failure_result: true # policy error → require MFA (fail safe)
 
   # Order 45: Force passkey enrolment for any user who logged in with a password and
-  # doesn't yet have one. Once enrolled, materia-no-passkey flips to False so this
-  # stage (and the password/MFA stages) are skipped, and they get passkey-first login
-  # at order 25 thereafter.
-  # NOTE: hard requirement — a client without WebAuthn support cannot finish login.
-  # Acceptable for a small trusted user base; the password-recovery flow is the escape
-  # hatch. The policy binding fail-safes to SKIP enrolment so a policy engine error
-  # never wedges login.
+  # doesn't yet have one. Once enrolled, materia-no-passkey flips to False: this stage
+  # and password/MFA are skipped, and login is passkey-first (order 25) thereafter.
   - id: binding_auth_passkey_enroll
     model: authentik_flows.flowstagebinding
     identifiers:
       target: !Find [authentik_flows.flow, [slug, "materia-authentication"]]
+      # Hard requirement: a client without WebAuthn support cannot finish login. Acceptable
+      # for a small trusted user base; the password-recovery flow is the escape hatch.
       stage:
         !Find [
           authentik_stages_authenticator_webauthn.authenticatorwebauthnstage,
@@ -154,6 +149,7 @@ entries:
       order: 45
       policy_engine_mode: all
 
+  # Fail-safes to SKIP enrolment so a policy engine error never wedges login.
   - id: policy_binding_auth_passkey_enroll_no_passkey
     model: authentik_policies.policybinding
     identifiers:

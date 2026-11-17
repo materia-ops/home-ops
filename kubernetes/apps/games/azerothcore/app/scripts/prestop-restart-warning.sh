@@ -3,20 +3,20 @@
 #
 # Any orchestrated termination (image bump, config roll via Reloader, node
 # drain) runs this BEFORE SIGTERM. If real players are online — AC's
-# "Connected players" count excludes bots (WP10-verified) — it SOAPs
+# "Connected players" count excludes bots — it SOAPs
 # `server restart <N>` against the pod's OWN worldserver, which broadcasts a
 # countdown in-game and exits cleanly (full save) when it reaches zero. With
 # nobody online (or SOAP unreachable/unparseable) it returns immediately and
 # the normal SIGTERM save-and-stop proceeds at full speed.
 #
-# pod.terminationGracePeriodSeconds must exceed WARN_SECONDS + the hold
-# margin below + save time — see the helmrelease comment.
 # Emergency bypass: kubectl delete pod <ws-pod> --grace-period=1
 #
 # Deliberately NO `set -e`: any failure here must degrade to the plain
 # SIGTERM path, never wedge the hook.
 set -uo pipefail
 
+# pod.terminationGracePeriodSeconds must exceed this + the hold margin below +
+# save time: see the helmrelease comment.
 WARN_SECONDS="${WARN_SECONDS:-900}"
 
 soap() {
@@ -43,10 +43,9 @@ fi
 echo "preStop: ${players} player(s) online — starting ${WARN_SECONDS}s in-game restart countdown"
 soap "server restart ${WARN_SECONDS}"
 
-# Hold the hook open: worldserver (PID 1) exits on its own when the countdown
-# hits zero, which ends the container — and this hook with it. If someone
-# cancels the countdown in-game (`server restart cancel`), the hold expires,
-# the hook returns, and kubelet's SIGTERM does a normal graceful stop.
+# Hold the hook open: worldserver (PID 1) exits on its own at zero, which ends
+# the container and this hook with it. After an in-game `server restart cancel`
+# the hold expires and kubelet's SIGTERM does a normal graceful stop.
 sleep $((WARN_SECONDS + 120))
 echo "preStop: countdown window elapsed (cancelled in-game?) — releasing to SIGTERM"
 exit 0

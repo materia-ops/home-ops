@@ -45,12 +45,9 @@ entries:
       order: 40
       policy_engine_mode: all # all([]) = True → always run when no policies
 
-  # Order 45: Force passkey enrolment for EVERYONE who completes recovery — ungated.
-  # Recovery is the escape hatch for passkey loss, so this guarantees anyone who comes
-  # out the other side has a fresh, working passkey (a lost-device user keeps a stale
-  # confirmed WebAuthnDevice in the DB, so a no-passkey gate would wrongly skip them and
-  # leave them stuck at the auth flow's order-25 passkey demand). Users who already have
-  # a passkey are simply prompted to add another — minor, and acceptable on this flow.
+  # Order 45: Force passkey enrolment for EVERYONE who completes recovery, ungated: a
+  # lost-device user keeps a stale confirmed WebAuthnDevice, so a no-passkey gate would
+  # strand them at the auth flow's order-25 demand. Existing passkey users add another.
   - id: binding_recovery_passkey_enroll
     model: authentik_flows.flowstagebinding
     identifiers:

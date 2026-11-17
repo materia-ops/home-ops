@@ -138,10 +138,7 @@ entries:
       not_configured_action: deny
       webauthn_user_verification: required
 
-  # First-factor passkey for the MAIN authentication flow (order 25). Only reached
-  # when the identified user has a passkey (gated by materia-has-passkey), so
-  # not_configured_action=skip is just defensive. user_verification=required makes
-  # the passkey a strong single factor (biometric/PIN), letting us skip password+MFA.
+  # First-factor passkey for the MAIN authentication flow (order 25).
   - id: stage_passkey_first_validate
     model: authentik_stages_authenticator_validate.authenticatorvalidatestage
     identifiers:
@@ -149,7 +146,11 @@ entries:
     attrs:
       device_classes:
         - webauthn
+      # just defensive: materia-has-passkey gates this stage, so only users with a
+      # passkey reach it
       not_configured_action: skip
+      # makes the passkey a strong single factor (biometric/PIN), letting us skip
+      # password + MFA
       webauthn_user_verification: required
 
   # ── User Login ────────────────────────────────────────────────────────────────

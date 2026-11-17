@@ -5,13 +5,13 @@
 # update loop, so a well-formed `server info` <result> proves the loop is
 # still turning. A SOAP fault, an empty reply or a timeout fails the probe.
 #
-# Timings are deliberately conservative (helmrelease: periodSeconds 60,
-# failureThreshold 5, plus the 15s curl budget here): a lag spike from a mass
-# bot login must never restart a healthy server. A liveness kill still runs
-# the preStop countdown first; against a truly hung server that SOAP call
-# fails fast and the plain SIGTERM path proceeds.
+# A liveness kill still runs the preStop countdown first; against a truly hung
+# server that SOAP call fails fast and the plain SIGTERM path proceeds.
 set -uo pipefail
 
+# The 15s budget is deliberately conservative, like the helmrelease's
+# periodSeconds 60 and failureThreshold 5: a lag spike from a mass bot login
+# must never restart a healthy server.
 resp="$(curl -s --max-time 15 \
   -u "${SOAP_USERNAME}:${SOAP_PASSWORD}" \
   -H "Content-Type: text/xml" \
@@ -33,12 +33,13 @@ case "${resp}" in
 esac
 
 # The reply text is upstream's and can change on an image bump: a missing
-# sentinel must never fail the probe. A passing exec probe's output is
-# discarded, so the warning goes to the worldserver's (PID 1) log stream; the
-# subshell keeps a failed write from touching the exit code.
+# sentinel must never fail the probe.
 grep -q "Connected players" <<< "${resp}" || {
   msg="liveness: WARNING: server info reply has no 'Connected players' line; the preStop hook and wow-panel cannot read the player count"
   echo "${msg}"
+  # A passing exec probe's output is discarded, so the warning goes to the
+  # worldserver's (PID 1) log stream; the subshell keeps a failed write from
+  # touching the exit code.
   ( echo "${msg}" > /proc/1/fd/1 ) 2>/dev/null || true
 }
 exit 0
