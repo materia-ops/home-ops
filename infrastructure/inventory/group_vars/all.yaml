@@ -2,7 +2,7 @@ node_exporter_enabled: true
 smartctl_exporter_enabled: true
 
 # renovate: datasource=github-releases depName=prometheus/node_exporter
-node_exporter_version: "1.12.1"
+node_exporter_version: "1.13.0"
 # renovate: datasource=github-releases depName=prometheus-community/smartctl_exporter
 smartctl_exporter_version: "0.15.0"
 smartctl_exporter_system_user: root
