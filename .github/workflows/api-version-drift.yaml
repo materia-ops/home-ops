@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: API Version Drift
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/scripts/api-version-drift-allow.yaml
+      - .github/scripts/api_version_drift.py
+      - .github/workflows/api-version-drift.yaml
+  schedule:
+    - cron: 0 21 * * 1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  dry-run:
+    name: API Version Drift - Dry Run
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare manifests against the published CRD versions
+        run: |
+          python3 .github/scripts/api_version_drift.py --out "$RUNNER_TEMP/drift.md"
+          cat "$RUNNER_TEMP/drift.md" >> "$GITHUB_STEP_SUMMARY"
+
+  report:
+    name: API Version Drift - Report
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare manifests against the published CRD versions
+        run: python3 .github/scripts/api_version_drift.py --out "$RUNNER_TEMP/drift.md"
+
+      # Report-only: one open issue, refreshed in place and closed once clean.
+      - name: Sync drift issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "api-version-drift: manifests behind the cluster's CRD versions"
+        run: |
+          report="$RUNNER_TEMP/drift.md"
+          # plain listing, not --search: the search index lags a just-created issue;
+          # the author check stops a planted issue carrying the marker from being edited
+          issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 200 \
+            --json number,body,author --jq '[.[] | select(.author.login == "app/github-actions")
+              | select(.body | contains("<!-- api-version-drift -->"))][0].number // empty')
+          if [ -s "$report" ]; then
+            if [ -n "$issue" ]; then
+              gh issue edit "$issue" --repo "$GITHUB_REPOSITORY" --body-file "$report"
+            else
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body-file "$report"
+            fi
+          elif [ -n "$issue" ]; then
+            gh issue close "$issue" --repo "$GITHUB_REPOSITORY" --comment "All manifests are on the newest published versions."
+          fi
