@@ -36,6 +36,23 @@ def index(entries):
                                  {"$ref": "x.json"}]} for av, kind in entries]}
 
 
+class UnitTest(unittest.TestCase):
+    def test_rank_follows_kubernetes_priority(self):
+        order = ["v1alpha1", "v2alpha1", "v1beta1", "v1beta2", "v2beta1", "v1", "v2"]
+        self.assertEqual(sorted(reversed(order), key=avd.rank), order)
+        self.assertIsNone(avd.rank("v1beta"))
+        self.assertIsNone(avd.rank("v0"))
+
+    def test_index_entries_with_unsafe_names_rejected(self):
+        published, rejected = avd.parse_index(index(BASE_INDEX + [
+            ("evil.io/v1", "Kind|@user"),
+            ("Evil.io/v1", "Kind"),
+            ("evil.io/v1](x)", "Kind"),
+        ]))
+        self.assertEqual(rejected, 3)
+        self.assertNotIn(("evil.io", "Kind|@user"), published)
+
+
 @unittest.skipIf(avd.yaml is None, "PyYAML not installed")
 class DriftTest(unittest.TestCase):
     def setUp(self):
@@ -71,12 +88,6 @@ class DriftTest(unittest.TestCase):
             code = avd.main(["--index", str(self.root / "all.json"), "--root", str(self.root),
                              "--allow", str(self.allow)])
         return code, out.getvalue(), err.getvalue()
-
-    def test_rank_follows_kubernetes_priority(self):
-        order = ["v1alpha1", "v2alpha1", "v1beta1", "v1beta2", "v2beta1", "v1", "v2"]
-        self.assertEqual(sorted(reversed(order), key=avd.rank), order)
-        self.assertIsNone(avd.rank("v1beta"))
-        self.assertIsNone(avd.rank("v0"))
 
     def test_clean_repo_gives_empty_report(self):
         code, out, err = self.run_main()
@@ -229,14 +240,50 @@ class DriftTest(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("index covers only", err)
 
-    def test_index_entries_with_unsafe_names_rejected(self):
-        published, rejected = avd.parse_index(index(BASE_INDEX + [
-            ("evil.io/v1", "Kind|@user"),
-            ("Evil.io/v1", "Kind"),
-            ("evil.io/v1](x)", "Kind"),
-        ]))
-        self.assertEqual(rejected, 3)
-        self.assertNotIn(("evil.io", "Kind|@user"), published)
+    def test_malformed_allowlist_fails(self):
+        for text in ("allow: [unclosed\n", "- just a list\n", "allow: {a: 1}\n"):
+            self.allow.write_text(text, encoding="utf-8")
+            code, _, err = self.run_main()
+            self.assertEqual(code, 2, text)
+            self.assertIn("error: allow.yaml", err)
+
+    def test_missing_local_index_fails(self):
+        (self.root / "all.json").unlink()
+        code, _, err = self.run_main()
+        self.assertEqual(code, 2)
+        self.assertIn("reading", err)
+
+    def test_undecodable_manifest_fails_naming_file(self):
+        (self.root / "kubernetes/bad.yaml").write_bytes(b"kind: \xff\n")
+        code, _, err = self.run_main()
+        self.assertEqual(code, 2)
+        self.assertIn("kubernetes/bad.yaml", err)
+
+    def test_recursive_alias_does_not_crash(self):
+        self.write("kubernetes/loop.yaml", """\
+            apiVersion: gateway.networking.k8s.io/v1beta1
+            kind: ReferenceGrant
+            spec: &loop
+              self: *loop
+            """)
+        code, out, _ = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertIn("ReferenceGrant | v1 |", out)
+
+    def test_nested_string_fallback_is_reported(self):
+        self.write("kubernetes/ks.yaml", """\
+            apiVersion: kustomize.toolkit.fluxcd.io/v1
+            kind: Kustomization
+            spec:
+              patches:
+                - patch: |
+                    apiVersion: gateway.networking.k8s.io/v1beta1
+                    kind: ReferenceGrant
+                    spec: [unclosed
+            """)
+        _, out, err = self.run_main()
+        self.assertIn("ReferenceGrant | v1 |", out)
+        self.assertIn("regex fallback (top-level only): kubernetes/ks.yaml", err)
 
 
 if __name__ == "__main__":

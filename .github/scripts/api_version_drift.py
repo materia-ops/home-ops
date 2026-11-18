@@ -107,7 +107,6 @@ def split_api_version(api_version):
     return group, version
 
 
-
 def load_index(source):
     if source.startswith("https://"):
         req = urllib.request.Request(source, headers={
@@ -117,16 +116,19 @@ def load_index(source):
         for attempt in (1, 2):
             try:
                 with urllib.request.urlopen(req, timeout=30) as resp:
-                    text = resp.read().decode("utf-8")
+                    raw = resp.read()
                 break
             except OSError as exc:
                 if attempt == 2:
                     raise Problem(f"fetching {source}: {exc}") from exc
                 time.sleep(5)
     else:
-        text = pathlib.Path(source).read_text(encoding="utf-8")
+        try:
+            raw = pathlib.Path(source).read_bytes()
+        except OSError as exc:
+            raise Problem(f"reading {source}: {exc}") from exc
     try:
-        data = json.loads(text)
+        data = json.loads(raw)
     except ValueError as exc:
         # The site answers unknown paths with an HTML page and status 200.
         raise Problem(f"{source} is not JSON: {exc}") from exc
@@ -156,7 +158,6 @@ def parse_index(data):
     return published, rejected
 
 
-
 if yaml is not None:
     class TolerantLoader(yaml.SafeLoader):
         """SafeLoader that ignores custom tags and allows redefined anchors."""
@@ -172,11 +173,12 @@ if yaml is not None:
 
 def refs_in_text(text):
     """apiVersion/kind pairs in a YAML text, and whether the regex fallback ran."""
-    found = []
+    found, fell_back = [], False
     try:
+        # One seen-set per document: ids of a freed document get reused.
         for doc in yaml.load_all(text, Loader=TolerantLoader):
-            walk(doc, found)
-        return found, False
+            fell_back |= walk(doc, found, set())
+        return found, fell_back
     except yaml.YAMLError:
         for doc in DOC_SPLIT_RE.split(text):
             api_version, kind = TOP_API_RE.search(doc), TOP_KIND_RE.search(doc)
@@ -185,18 +187,27 @@ def refs_in_text(text):
         return found, True
 
 
-def walk(node, found):
+def walk(node, found, seen):
+    """Collect apiVersion/kind pairs under node; True if a nested string fell back."""
+    if isinstance(node, (dict, list)):
+        # Aliases can make the loaded structure self-referencing.
+        if id(node) in seen:
+            return False
+        seen.add(id(node))
+    fell_back = False
     if isinstance(node, dict):
         api_version, kind = node.get("apiVersion"), node.get("kind")
         if isinstance(api_version, str) and isinstance(kind, str):
             found.append((api_version, kind))
         for value in node.values():
-            walk(value, found)
+            fell_back |= walk(value, found, seen)
     elif isinstance(node, list):
         for value in node:
-            walk(value, found)
+            fell_back |= walk(value, found, seen)
     elif isinstance(node, str) and "apiVersion:" in node and "kind:" in node:
-        found.extend(refs_in_text(node)[0])
+        refs, fell_back = refs_in_text(node)
+        found.extend(refs)
+    return fell_back
 
 
 def scan(root):
@@ -207,7 +218,11 @@ def scan(root):
     for path in paths:
         files += 1
         rel = path.relative_to(root).as_posix()
-        found, fell_back = refs_in_text(path.read_text(encoding="utf-8"))
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise Problem(f"reading {rel}: {exc}") from exc
+        found, fell_back = refs_in_text(text)
         if fell_back:
             fallback.append(rel)
         for api_version, kind in found:
@@ -218,11 +233,15 @@ def scan(root):
     return uses, files, fallback
 
 
-
 def load_allow(path):
     if not path.exists():
         return {}
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise Problem(f"{path.name}: {exc}") from exc
+    if not isinstance(data, dict) or not isinstance(data.get("allow") or [], list):
+        raise Problem(f"{path.name}: expected a mapping with an allow list")
     allow = {}
     for i, entry in enumerate(data.get("allow") or []):
         if not isinstance(entry, dict) or not all(
@@ -234,7 +253,6 @@ def load_allow(path):
             raise Problem(f"{path.name}: allow[{i}] has an invalid apiVersion or kind")
         allow[(split[0], split[1], entry["kind"])] = entry["reason"].strip()
     return allow
-
 
 
 def classify(uses, published, allow):
