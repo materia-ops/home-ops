@@ -71,9 +71,14 @@ class UnitTest(unittest.TestCase):
 
     def test_shown_neutralises_markdown(self):
         out = avd.shown("Foo|@user](x)`<b>\n")
-        self.assertTrue(out.startswith("Foo"))
-        self.assertFalse(set(out) & set("|@[]()`<>\n"), out)
-        self.assertTrue(avd.shown("a" * 100).endswith("..."))
+        self.assertTrue(out.startswith("`Foo") and out.endswith("`"), out)
+        self.assertFalse(set(out[1:-1]) & set("|@[]()`<>\n"), out)
+        self.assertTrue(avd.shown("a" * 100).endswith("...`"))
+        self.assertEqual(avd.shown(""), "(empty)")
+
+    def test_shown_keeps_urls_inside_a_code_span(self):
+        for value in ("https://evil.example/pwn", "www.evil.example"):
+            self.assertEqual(avd.shown(value), f"`{value}`")
 
 
 @unittest.skipIf(avd.yaml is None, "PyYAML not installed")
@@ -316,6 +321,15 @@ class DriftTest(unittest.TestCase):
             apiVersion: !Sub "${Group}/v1"
             kind: Widget
             ---
+            apiVersion: [example.io/v1]
+            kind: Widget
+            ---
+            apiVersion: example.io/v1
+            kind: {}
+            ---
+            apiVersion: https://evil.example/pwn
+            kind: www.evil.example
+            ---
             apiVersion: v1
             kind: ConfigMap
             ---
@@ -332,8 +346,18 @@ class DriftTest(unittest.TestCase):
         code, out, err = self.run_main()
         self.assertEqual(code, 0)
         self.assertIn("### apiVersion/kind the check could not parse", out)
-        self.assertIn("| `kubernetes/odd.yaml` | None Widget<br>example.io/v1beta Widget |", out)
-        self.assertIn("2 unparseable", err)
+        row = next(line for line in out.splitlines() if line.startswith("| `kubernetes/odd.yaml`"))
+        for cell in ("`example.io/v1beta` `Widget`", "`None` `Widget`", "`example.io/v1` `{}`",
+                     "`https://evil.example/pwn` `www.evil.example`"):
+            self.assertIn(cell, row)
+        self.assertNotIn("](", row)
+        self.assertIn("5 unparseable", err)
+
+    def test_deeply_nested_index_fails_cleanly(self):
+        (self.root / "all.json").write_text("[" * 200000, encoding="utf-8")
+        code, _, err = self.run_main()
+        self.assertEqual(code, 2)
+        self.assertIn("is not JSON", err)
 
     def test_uppercase_yaml_extension_is_scanned(self):
         self.write("kubernetes/RG.YAML", """\

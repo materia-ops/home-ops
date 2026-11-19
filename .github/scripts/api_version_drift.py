@@ -133,7 +133,7 @@ def load_index(source):
             raise Problem(f"reading {source}: {exc}") from exc
     try:
         data = json.loads(raw)
-    except ValueError as exc:
+    except (ValueError, RecursionError) as exc:
         # The site answers unknown paths with an HTML page and status 200.
         raise Problem(f"{source} is not JSON: {exc}") from exc
     return parse_index(data)
@@ -205,10 +205,9 @@ def walk(node, found, seen):
     fell_back = False
     if isinstance(node, dict):
         api_version, kind = node.get("apiVersion"), node.get("kind")
-        # Mapping values are JSON-schema `properties`, not references.
+        # Two mappings are JSON-schema `properties`, not a reference.
         if ("apiVersion" in node and "kind" in node
-                and not isinstance(api_version, (dict, list))
-                and not isinstance(kind, (dict, list))):
+                and not (isinstance(api_version, dict) and isinstance(kind, dict))):
             found.append((api_version, kind))
         for value in node.values():
             fell_back |= walk(value, found, seen)
@@ -236,9 +235,11 @@ def parse_pair(api_version, kind):
 
 
 def shown(value):
-    """A repo value made safe for a Markdown table cell."""
+    """A repo value as an inert Markdown code span for a table cell."""
     text = re.sub(r"[^A-Za-z0-9./${}!:_ -]", "?", str(value))
-    return text[:60] + ("..." if len(text) > 60 else "")
+    text = text[:60] + ("..." if len(text) > 60 else "")
+    # Code spans are never autolinked; backticks and pipes are already gone.
+    return f"`{text}`" if text.strip() else "(empty)"
 
 
 def scan(root):
