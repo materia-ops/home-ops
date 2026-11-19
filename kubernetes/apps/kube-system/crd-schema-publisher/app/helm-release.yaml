@@ -10,7 +10,7 @@ spec:
     name: *app
   values:
     config:
-      cfPagesProject: kubernetes-schemas
+      cfPagesProject: materia-k8s-schemas
     existingSecret:
       name: crd-schema-publisher-secret
     externalSecret:
