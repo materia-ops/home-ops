@@ -384,9 +384,12 @@ a version is gone. Weekly (and on manual dispatch),
 [`.github/scripts/api_version_drift.py`](../.github/scripts/api_version_drift.py)
 reads `all.json`, which crd-schema-publisher builds from the live cluster's CRDs. It
 fetches it from the Pages project's own alias,
-`https://kubernetes-schemas-d3q.pages.dev/all.json`, not `schemas.materia.wtf`: the
-zone's "Block Non AU" rule and Bot Fight Mode return 403 to GitHub-hosted runners.
-`kubernetes-schemas.pages.dev`, without the suffix, is an unrelated project. It compares that with every `apiVersion`/`kind` pair under
+`https://materia-k8s-schemas.pages.dev/all.json`, not `schemas.materia.wtf`: the
+zone's "Block Non AU" rule and Bot Fight Mode return 403 to GitHub-hosted runners. If
+the Pages project (set by `cfPagesProject` in the crd-schema-publisher HelmRelease) is
+renamed or replaced, update `INDEX_URL` in the script: the old alias keeps serving its
+last build, so the check would go stale without failing. It compares that with every
+`apiVersion`/`kind` pair under
 `kubernetes/`: top-level documents, nested references such as Flux `healthChecks`, and
 YAML embedded in strings such as inline patches. It reports four things:
 

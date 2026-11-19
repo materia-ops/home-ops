@@ -41,9 +41,9 @@ except ImportError:  # pragma: no cover - PyYAML ships on ubuntu-latest
     yaml = None
 
 HERE = pathlib.Path(__file__).resolve().parent
-# The project's own pages.dev alias: the custom domain's zone geo-blocks and
-# bot-fights GitHub runners. kubernetes-schemas.pages.dev is someone else's.
-INDEX_URL = "https://kubernetes-schemas-d3q.pages.dev/all.json"
+# The Pages project's own pages.dev alias: the custom domain's zone geo-blocks
+# and bot-fights GitHub runners. Follow the project if it is renamed again.
+INDEX_URL = "https://materia-k8s-schemas.pages.dev/all.json"
 MARKER = "<!-- api-version-drift -->"
 
 GROUP_RE = re.compile(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\Z")
