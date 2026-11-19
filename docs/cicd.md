@@ -389,15 +389,18 @@ zone's "Block Non AU" rule and Bot Fight Mode return 403 to GitHub-hosted runner
 the Pages project (set by `cfPagesProject` in the crd-schema-publisher HelmRelease) is
 renamed or replaced, update `INDEX_URL` in the script: the old alias keeps serving its
 last build, so the check would go stale without failing. It compares that with every
-`apiVersion`/`kind` pair under
-`kubernetes/`: top-level documents, nested references such as Flux `healthChecks`, and
-YAML embedded in strings such as inline patches. It reports four things:
+`apiVersion`/`kind` pair under `kubernetes/` (`.yaml` and `.yml`, any case): top-level
+documents, nested references such as Flux `healthChecks`, and YAML embedded in strings
+such as inline patches. It reports five things:
 
 - versions the cluster does not publish for that kind;
 - kinds the cluster does not have at all;
 - versions older than the newest published one, by Kubernetes priority (GA over beta
   over alpha, then the higher major and minor), so `v1` outranks `v2alpha1`;
-- allowlist entries that no longer match anything.
+- allowlist entries that no longer match anything;
+- pairs it cannot parse, such as a malformed version or a value behind a custom YAML
+  tag. Core-group versions (`v1`) and Flux `${VAR}` substitutions are skipped on
+  purpose and not counted.
 
 Findings go to one open issue, refreshed in place and closed once clean. Like
 recyclarr-drift, the lookup only matches issues the Actions bot opened, so an issue

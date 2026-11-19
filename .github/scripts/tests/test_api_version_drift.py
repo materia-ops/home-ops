@@ -52,6 +52,29 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(rejected, 3)
         self.assertNotIn(("evil.io", "Kind|@user"), published)
 
+    def test_index_with_wrong_shape_is_a_problem(self):
+        for data in ({"oneOf": [{"allOf": 5}]},
+                     {"oneOf": [{"allOf": [{"properties": {"apiVersion": "x"}}]}]},
+                     {"oneOf": [{"allOf": [{"properties": {"apiVersion": {"enum": 5},
+                                                           "kind": {"enum": ["K"]}}}]}]}):
+            with self.assertRaises(avd.Problem, msg=data):
+                avd.parse_index(data)
+
+    def test_parse_pair_skips_core_and_substitutions_only(self):
+        self.assertEqual(avd.parse_pair("example.io/v1", "Widget"),
+                         ("example.io", "v1", "Widget"))
+        for pair in (("v1", "ConfigMap"), ("${GROUP}/v1", "Thing"), ("apps/v1", "${KIND}")):
+            self.assertEqual(avd.parse_pair(*pair), "skip", pair)
+        for pair in (("example.io/v1beta", "Widget"), (None, "Widget"),
+                     ("example.io/v1", "widget"), ("v1", "lowercase"), ("vX", "ConfigMap")):
+            self.assertEqual(avd.parse_pair(*pair), "bad", pair)
+
+    def test_shown_neutralises_markdown(self):
+        out = avd.shown("Foo|@user](x)`<b>\n")
+        self.assertTrue(out.startswith("Foo"))
+        self.assertFalse(set(out) & set("|@[]()`<>\n"), out)
+        self.assertTrue(avd.shown("a" * 100).endswith("..."))
+
 
 @unittest.skipIf(avd.yaml is None, "PyYAML not installed")
 class DriftTest(unittest.TestCase):
@@ -284,6 +307,40 @@ class DriftTest(unittest.TestCase):
         _, out, err = self.run_main()
         self.assertIn("ReferenceGrant | v1 |", out)
         self.assertIn("regex fallback (top-level only): kubernetes/ks.yaml", err)
+
+    def test_unparseable_pairs_are_reported_not_dropped(self):
+        self.write("kubernetes/odd.yaml", """\
+            apiVersion: example.io/v1beta
+            kind: Widget
+            ---
+            apiVersion: !Sub "${Group}/v1"
+            kind: Widget
+            ---
+            apiVersion: v1
+            kind: ConfigMap
+            ---
+            apiVersion: apiextensions.k8s.io/v1
+            kind: CustomResourceDefinition
+            spec:
+              versions:
+                - schema:
+                    openAPIV3Schema:
+                      properties:
+                        apiVersion: {type: string}
+                        kind: {type: string}
+            """)
+        code, out, err = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertIn("### apiVersion/kind the check could not parse", out)
+        self.assertIn("| `kubernetes/odd.yaml` | None Widget<br>example.io/v1beta Widget |", out)
+        self.assertIn("2 unparseable", err)
+
+    def test_uppercase_yaml_extension_is_scanned(self):
+        self.write("kubernetes/RG.YAML", """\
+            apiVersion: gateway.networking.k8s.io/v1beta1
+            kind: ReferenceGrant
+            """)
+        self.assertIn("`kubernetes/RG.YAML`", self.run_main()[1])
 
 
 if __name__ == "__main__":

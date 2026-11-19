@@ -12,7 +12,9 @@ string values such as inline patches) and reports:
 - kinds the cluster does not have at all (removed CRD, or a group move);
 - versions older than the newest one published, by Kubernetes version
   priority: GA > beta > alpha, then the higher major, then the higher minor;
-- allowlist entries that no longer match anything.
+- allowlist entries that no longer match anything;
+- apiVersion/kind pairs it cannot parse (core-group versions and Flux ${VAR}
+  substitutions are skipped on purpose, not counted).
 
 Reviewed exceptions live in api-version-drift-allow.yaml next to this script.
 Kubernetes built-in groups and kustomize's own config kinds are skipped.
@@ -42,7 +44,7 @@ except ImportError:  # pragma: no cover - PyYAML ships on ubuntu-latest
 
 HERE = pathlib.Path(__file__).resolve().parent
 # The Pages project's own pages.dev alias: the custom domain's zone geo-blocks
-# and bot-fights GitHub runners. Follow the project if it is renamed again.
+# and bot-fights GitHub runners.
 INDEX_URL = "https://materia-k8s-schemas.pages.dev/all.json"
 MARKER = "<!-- api-version-drift -->"
 
@@ -142,21 +144,25 @@ def parse_index(data):
     if not isinstance(data, dict) or not isinstance(data.get("oneOf"), list):
         raise Problem("index has no oneOf list")
     published, rejected = {}, 0
-    for entry in data["oneOf"]:
-        parts = entry.get("allOf", []) if isinstance(entry, dict) else []
-        for part in parts:
-            props = part.get("properties") if isinstance(part, dict) else None
-            if not isinstance(props, dict):
-                continue
-            api_versions = (props.get("apiVersion") or {}).get("enum") or []
-            kinds = (props.get("kind") or {}).get("enum") or []
-            for api_version in api_versions:
-                for kind in kinds:
-                    split = split_api_version(api_version) if isinstance(api_version, str) else None
-                    if split is None or not isinstance(kind, str) or not KIND_RE.match(kind):
-                        rejected += 1
-                        continue
-                    published.setdefault((split[0], kind), set()).add(split[1])
+    try:
+        for entry in data["oneOf"]:
+            parts = entry.get("allOf", []) if isinstance(entry, dict) else []
+            for part in parts:
+                props = part.get("properties") if isinstance(part, dict) else None
+                if not isinstance(props, dict):
+                    continue
+                api_versions = (props.get("apiVersion") or {}).get("enum") or []
+                kinds = (props.get("kind") or {}).get("enum") or []
+                for api_version in api_versions:
+                    for kind in kinds:
+                        split = (split_api_version(api_version)
+                                 if isinstance(api_version, str) else None)
+                        if split is None or not isinstance(kind, str) or not KIND_RE.match(kind):
+                            rejected += 1
+                            continue
+                        published.setdefault((split[0], kind), set()).add(split[1])
+    except (AttributeError, TypeError) as exc:
+        raise Problem(f"index has an unexpected shape: {exc}") from exc
     return published, rejected
 
 
@@ -199,7 +205,10 @@ def walk(node, found, seen):
     fell_back = False
     if isinstance(node, dict):
         api_version, kind = node.get("apiVersion"), node.get("kind")
-        if isinstance(api_version, str) and isinstance(kind, str):
+        # Mapping values are JSON-schema `properties`, not references.
+        if ("apiVersion" in node and "kind" in node
+                and not isinstance(api_version, (dict, list))
+                and not isinstance(kind, (dict, list))):
             found.append((api_version, kind))
         for value in node.values():
             fell_back |= walk(value, found, seen)
@@ -212,11 +221,35 @@ def walk(node, found, seen):
     return fell_back
 
 
+def parse_pair(api_version, kind):
+    """(group, version, kind) for a CRD-style reference, "skip" or "bad"."""
+    if not isinstance(api_version, str) or not isinstance(kind, str):
+        return "bad"
+    if "${" in api_version or "${" in kind:
+        return "skip"
+    if "/" not in api_version:
+        return "skip" if rank(api_version) and KIND_RE.match(kind) else "bad"
+    split = split_api_version(api_version)
+    if split is None or not KIND_RE.match(kind):
+        return "bad"
+    return split[0], split[1], kind
+
+
+def shown(value):
+    """A repo value made safe for a Markdown table cell."""
+    text = re.sub(r"[^A-Za-z0-9./${}!:_ -]", "?", str(value))
+    return text[:60] + ("..." if len(text) > 60 else "")
+
+
 def scan(root):
-    """Return ({(group, version, kind): {path}}, files scanned, fallback paths)."""
-    uses, files, fallback = {}, 0, []
+    """Return (uses, files scanned, fallback paths, unparseable pairs by path).
+
+    uses maps (group, version, kind) to the set of paths using it.
+    """
+    uses, files, fallback, bad = {}, 0, [], {}
     base = root / "kubernetes"
-    paths = sorted(p for p in base.rglob("*") if p.suffix in (".yaml", ".yml") and p.is_file())
+    paths = sorted(p for p in base.rglob("*")
+                   if p.suffix.lower() in (".yaml", ".yml") and p.is_file())
     for path in paths:
         files += 1
         rel = path.relative_to(root).as_posix()
@@ -228,11 +261,12 @@ def scan(root):
         if fell_back:
             fallback.append(rel)
         for api_version, kind in found:
-            split = split_api_version(api_version)
-            if split is None or not KIND_RE.match(kind):
-                continue
-            uses.setdefault((split[0], split[1], kind), set()).add(rel)
-    return uses, files, fallback
+            key = parse_pair(api_version, kind)
+            if key == "bad":
+                bad.setdefault(rel, set()).add(f"{shown(api_version)} {shown(kind)}")
+            elif key != "skip":
+                uses.setdefault(key, set()).add(rel)
+    return uses, files, fallback, bad
 
 
 def load_allow(path):
@@ -291,8 +325,8 @@ def table(rows, uses, third):
     return lines
 
 
-def render(findings, unused, uses):
-    if not any(findings.values()) and not unused:
+def render(findings, unused, uses, bad):
+    if not any(findings.values()) and not unused and not bad:
         return ""
     out = [MARKER,
            "Manifests whose apiVersion lags what the cluster publishes on "
@@ -314,10 +348,16 @@ def render(findings, unused, uses):
     if unused:
         out += ["### Allowlist entries that no longer match", ""]
         out += [f"- `{g}/{v}` {k}" for g, v, k in unused] + [""]
+    if bad:
+        out += ["### apiVersion/kind the check could not parse", "",
+                "Not checked against the cluster; fix the value or the check.", "",
+                "| File | apiVersion kind |", "|---|---|"]
+        out += [f"| `{path}` | {'<br>'.join(sorted(values))} |"
+                for path, values in sorted(bad.items())] + [""]
     return "\n".join(out)
 
 
-def summary(published, rejected, files, fallback, uses, findings, suppressed, coverage):
+def summary(published, rejected, files, fallback, uses, findings, suppressed, coverage, bad):
     lines = [
         "### API version drift",
         "",
@@ -327,7 +367,8 @@ def summary(published, rejected, files, fallback, uses, findings, suppressed, co
         f"- Index coverage of repo CRD kinds: {coverage:.0%}",
         f"- Findings: {len(findings['unpublished'])} unpublished,"
         f" {len(findings['unknown'])} unknown, {len(findings['stale'])} stale,"
-        f" {len(suppressed)} allowlisted",
+        f" {len(suppressed)} allowlisted,"
+        f" {sum(map(len, bad.values()))} unparseable",
     ]
     if fallback:
         lines.append(f"- Parsed by regex fallback (top-level only): {', '.join(fallback)}")
@@ -350,7 +391,7 @@ def main(argv=None):
         if missing:
             raise Problem(f"index is missing sentinel kinds: {', '.join(missing)}")
         allow = load_allow(pathlib.Path(args.allow))
-        uses, files, fallback = scan(pathlib.Path(args.root).resolve())
+        uses, files, fallback, bad = scan(pathlib.Path(args.root).resolve())
         findings, suppressed, unused, considered = classify(uses, published, allow)
         coverage = (sum(1 for k in considered if k in published) / len(considered)
                     if considered else 1.0)
@@ -360,14 +401,15 @@ def main(argv=None):
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
-    text = summary(published, rejected, files, fallback, uses, findings, suppressed, coverage)
+    text = summary(published, rejected, files, fallback, uses, findings, suppressed, coverage,
+                   bad)
     sys.stderr.write(text)
     step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if step_summary:
         with open(step_summary, "a", encoding="utf-8") as fh:
             fh.write(text)
 
-    report = render(findings, unused, uses)
+    report = render(findings, unused, uses, bad)
     if args.out == "-":
         sys.stdout.write(report)
     else:
