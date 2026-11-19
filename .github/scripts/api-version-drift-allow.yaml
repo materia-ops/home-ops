@@ -1,0 +1,4 @@
+---
+# Reviewed exceptions for api_version_drift.py, apiVersions kept on purpose.
+# Each entry needs apiVersion, kind and a reason (see docs/cicd.md).
+allow: []

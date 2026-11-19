@@ -375,6 +375,66 @@ then accept the rest and commit both:
 python3 .github/scripts/recyclarr_drift.py --update-baseline
 ```
 
+### `api-version-drift.yaml` — manifests behind the cluster's CRD versions
+
+A chart bump can install a newer CRD version while manifests stay on the old one. The
+old version keeps working until upstream stops serving it, and then Flux applies fail.
+Nothing else flags that window: `yaml-language-server` and konflate only complain once
+a version is gone. Weekly (and on manual dispatch),
+[`.github/scripts/api_version_drift.py`](../.github/scripts/api_version_drift.py)
+reads `all.json`, which crd-schema-publisher builds from the live cluster's CRDs. It
+fetches it from the Pages project's own alias,
+`https://materia-k8s-schemas.pages.dev/all.json`, not `schemas.materia.wtf`: the
+zone's "Block Non AU" rule and Bot Fight Mode return 403 to GitHub-hosted runners. If
+the Pages project (set by `cfPagesProject` in the crd-schema-publisher HelmRelease) is
+renamed or replaced, update `INDEX_URL` in the script: the old alias keeps serving its
+last build, so the check would go stale without failing. It compares that with every
+`apiVersion`/`kind` pair under `kubernetes/` (`.yaml` and `.yml`, any case): top-level
+documents, nested references such as Flux `healthChecks`, and YAML embedded in strings
+such as inline patches. It reports five things:
+
+- versions the cluster does not publish for that kind;
+- kinds the cluster does not have at all;
+- versions older than the newest published one, by Kubernetes priority (GA over beta
+  over alpha, then the higher major and minor), so `v1` outranks `v2alpha1`;
+- allowlist entries that no longer match anything;
+- pairs it cannot parse, such as a malformed version or a value behind a custom YAML
+  tag. Core-group versions (`v1`) and Flux `${VAR}` substitutions are skipped on
+  purpose and not counted.
+
+Findings go to one open issue, refreshed in place and closed once clean. The lookup
+only matches issues the Actions bot opened, so an issue anyone plants with the marker
+is never edited. The run fails, rather than closing the
+issue, if the index is not JSON (the site answers unknown paths with an HTML page and
+status 200) or not shaped like `all.json`, a sentinel kind (HelmRelease, Kustomization, ExternalSecret) is missing,
+or under 90% of the repo's CRD kinds are in the index. PRs that touch the script, its
+allowlist or the workflow get a dry run that writes the report to the job summary and
+never touches the issue. It is report-only (L1).
+
+Limits:
+
+- The index shows the live cluster, so it can only see a new version after the chart
+  bump reconciles. A bump that removes a version in the same release is a
+  pre-merge question for the Claude Review comment.
+- crd-schema-publisher publishes every version that has a schema, served or not, so
+  a version the CRD still lists with `served: false` does not count as unpublished.
+- Kubernetes built-in groups and kustomize's own config kinds are skipped. Core API
+  deprecations belong to the Talos/Kubernetes upgrade checks.
+- Group moves, such as an `x-k8s.io` experimental kind graduating into another group,
+  show up only as "kind not on the cluster" once the old CRD is removed.
+
+To keep a stale version on purpose, add it with a reason to
+`.github/scripts/api-version-drift-allow.yaml`:
+
+```yaml
+allow:
+    - apiVersion: example.io/v1beta1
+      kind: Widget
+      reason: v1 drops spec.legacyField, which the chart still sets
+```
+
+Run it locally with `python3 .github/scripts/api_version_drift.py` from the repo root.
+
 ### `scripts-test.yaml` — script tests
 
 Runs `python3 -m unittest discover -s .github/scripts/tests` on PRs touching
@@ -382,7 +442,7 @@ Runs `python3 -m unittest discover -s .github/scripts/tests` on PRs touching
 #1761, #1917, #1924, #1953, #1955, #1965) with recorded API responses, so the suite runs
 offline. Re-record a fixture with the command in the test module's docstring after a
 deliberate behaviour change. The recyclarr-drift tests build a synthetic TRaSH tree in
-a temp directory.
+a temp directory, and the api-version-drift tests a small index and manifest tree.
 
 ### `zizmor.yaml` — workflow security lint
 
