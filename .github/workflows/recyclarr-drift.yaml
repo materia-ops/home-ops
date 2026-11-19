@@ -44,11 +44,9 @@ jobs:
           TITLE: "recyclarr: TRaSH Guides changes to review"
         run: |
           report="$RUNNER_TEMP/drift.md"
-          # plain listing, not --search: the search index lags a just-created issue;
-          # the author check stops a planted issue carrying the marker from being edited
+          # plain listing, not --search: the search index lags a just-created issue
           issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 200 \
-            --json number,body,author --jq '[.[] | select(.author.login == "app/github-actions")
-              | select(.body | contains("<!-- recyclarr-drift -->"))][0].number // empty')
+            --json number,body --jq '[.[] | select(.body | contains("<!-- recyclarr-drift -->"))][0].number // empty')
           if [ -s "$report" ]; then
             if [ -n "$issue" ]; then
               gh issue edit "$issue" --repo "$GITHUB_REPOSITORY" --body-file "$report"

@@ -402,9 +402,9 @@ such as inline patches. It reports five things:
   tag. Core-group versions (`v1`) and Flux `${VAR}` substitutions are skipped on
   purpose and not counted.
 
-Findings go to one open issue, refreshed in place and closed once clean. Like
-recyclarr-drift, the lookup only matches issues the Actions bot opened, so an issue
-anyone plants with the marker is never edited. The run fails, rather than closing the
+Findings go to one open issue, refreshed in place and closed once clean. The lookup
+only matches issues the Actions bot opened, so an issue anyone plants with the marker
+is never edited. The run fails, rather than closing the
 issue, if the index is not JSON (the site answers unknown paths with an HTML page and
 status 200) or not shaped like `all.json`, a sentinel kind (HelmRelease, Kustomization, ExternalSecret) is missing,
 or under 90% of the repo's CRD kinds are in the index. PRs that touch the script, its
