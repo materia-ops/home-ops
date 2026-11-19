@@ -265,21 +265,21 @@ url = "https://github.com/mitsuhiko/minijinja/releases/download/3.1.0/minijinja-
 url_api = "https://api.github.com/repos/mitsuhiko/minijinja/releases/assets/721736790"
 
 [[tools."aqua:oxc-project/oxc/oxfmt"]]
-version = "0.78.0"
+version = "0.79.0"
 backend = "aqua:oxc-project/oxc/oxfmt"
-specifiers = ["0.78.0"]
+specifiers = ["0.79.0"]
 
 [tools."aqua:oxc-project/oxc/oxfmt"."platforms.linux-x64"]
-checksum = "sha256:ed43ec296f699a5bcbb1c1947e2aeb4271c3674e43dc6db463f8c1da4c9bf15f"
+checksum = "sha256:458ba526dd692baad90c5cf164341257e339da2a6e0f585dea6eae6644df5608"
 checksum_source = "mise-versions"
-url = "https://github.com/oxc-project/oxc/releases/download/oxfmt_v0.78.0/oxfmt-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/oxc-project/oxc/releases/assets/727291793"
+url = "https://github.com/oxc-project/oxc/releases/download/oxfmt_v0.79.0/oxfmt-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/oxc-project/oxc/releases/assets/754764891"
 
 [tools."aqua:oxc-project/oxc/oxfmt"."platforms.windows-x64"]
-checksum = "sha256:79f999cbcadb28c3cac9e6ec5801513c87e8d01aabeb6bbb348c01f1ccb469a8"
+checksum = "sha256:e78cabb2b5018f38da650b05d693d054c84fd5bba4853aecb5243834d3985577"
 checksum_source = "mise-versions"
-url = "https://github.com/oxc-project/oxc/releases/download/oxfmt_v0.78.0/oxfmt-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/oxc-project/oxc/releases/assets/727291785"
+url = "https://github.com/oxc-project/oxc/releases/download/oxfmt_v0.79.0/oxfmt-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/oxc-project/oxc/releases/assets/754764862"
 
 [[tools."aqua:siderolabs/talos"]]
 version = "1.14.6"
