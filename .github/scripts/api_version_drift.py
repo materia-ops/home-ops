@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Report manifests whose CRD apiVersion lags what the cluster publishes.
 
-crd-schema-publisher publishes the live cluster's CRD schemas to
-https://schemas.materia.wtf; its all.json lists every apiVersion/kind pair.
+crd-schema-publisher publishes the live cluster's CRD schemas to a Cloudflare
+Pages project (schemas.materia.wtf); its all.json lists every apiVersion/kind pair.
 This script collects every apiVersion/kind pair in kubernetes/ (top-level
 documents, nested references such as Flux healthChecks, and YAML embedded in
 string values such as inline patches) and reports:
@@ -41,7 +41,9 @@ except ImportError:  # pragma: no cover - PyYAML ships on ubuntu-latest
     yaml = None
 
 HERE = pathlib.Path(__file__).resolve().parent
-INDEX_URL = "https://schemas.materia.wtf/all.json"
+# The project's own pages.dev alias: the custom domain's zone geo-blocks and
+# bot-fights GitHub runners. kubernetes-schemas.pages.dev is someone else's.
+INDEX_URL = "https://kubernetes-schemas-d3q.pages.dev/all.json"
 MARKER = "<!-- api-version-drift -->"
 
 GROUP_RE = re.compile(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\Z")

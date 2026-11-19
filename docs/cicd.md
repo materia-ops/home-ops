@@ -382,8 +382,11 @@ old version keeps working until upstream stops serving it, and then Flux applies
 Nothing else flags that window: `yaml-language-server` and konflate only complain once
 a version is gone. Weekly (and on manual dispatch),
 [`.github/scripts/api_version_drift.py`](../.github/scripts/api_version_drift.py)
-reads `https://schemas.materia.wtf/all.json`, which crd-schema-publisher builds from
-the live cluster's CRDs. It compares that with every `apiVersion`/`kind` pair under
+reads `all.json`, which crd-schema-publisher builds from the live cluster's CRDs. It
+fetches it from the Pages project's own alias,
+`https://kubernetes-schemas-d3q.pages.dev/all.json`, not `schemas.materia.wtf`: the
+zone's "Block Non AU" rule and Bot Fight Mode return 403 to GitHub-hosted runners.
+`kubernetes-schemas.pages.dev`, without the suffix, is an unrelated project. It compares that with every `apiVersion`/`kind` pair under
 `kubernetes/`: top-level documents, nested references such as Flux `healthChecks`, and
 YAML embedded in strings such as inline patches. It reports four things:
 
