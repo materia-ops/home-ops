@@ -131,7 +131,7 @@ class DriftTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertTrue(out.startswith(avd.MARKER))
         self.assertIn("### Newer version available", out)
-        self.assertIn("| `gateway.networking.k8s.io/v1beta1` | ReferenceGrant | v1 |", out)
+        self.assertIn("| `gateway.networking.k8s.io/v1beta1` | `ReferenceGrant` | `v1` |", out)
         self.assertIn("`kubernetes/apps/rg.yaml`", out)
 
     def test_ga_beats_newer_major_alpha(self):
@@ -156,9 +156,9 @@ class DriftTest(unittest.TestCase):
         code, out, _ = self.run_main()
         self.assertEqual(code, 0)
         self.assertIn("### Version not published by the cluster", out)
-        self.assertIn("| `external-secrets.io/v1alpha1` | ExternalSecret | v1, v1beta1 |", out)
+        self.assertIn("| `external-secrets.io/v1alpha1` | `ExternalSecret` | `v1, v1beta1` |", out)
         self.assertIn("### Kind not on the cluster", out)
-        self.assertIn("`gone.example.io/v1` | Removed", out)
+        self.assertIn("`gone.example.io/v1` | `Removed`", out)
 
     def test_builtin_and_core_groups_skipped(self):
         self.write("kubernetes/k.yaml", """\
@@ -190,8 +190,8 @@ class DriftTest(unittest.TestCase):
                       name: b
             """)
         _, out, _ = self.run_main()
-        self.assertIn("`external-secrets.io/v1beta1` | ExternalSecret | v1 |", out)
-        self.assertIn("`gateway.networking.k8s.io/v1beta1` | ReferenceGrant | v1 |", out)
+        self.assertIn("`external-secrets.io/v1beta1` | `ExternalSecret` | `v1` |", out)
+        self.assertIn("`gateway.networking.k8s.io/v1beta1` | `ReferenceGrant` | `v1` |", out)
 
     def test_custom_tags_and_redefined_anchors_parse(self):
         self.write("kubernetes/blueprint.yaml", """\
@@ -205,7 +205,7 @@ class DriftTest(unittest.TestCase):
             """)
         code, out, err = self.run_main()
         self.assertEqual(code, 0)
-        self.assertIn("ReferenceGrant | v1 |", out)
+        self.assertIn("`ReferenceGrant` | `v1` |", out)
         self.assertNotIn("regex fallback", err)
 
     def test_unparseable_file_falls_back_to_regex(self):
@@ -215,8 +215,8 @@ class DriftTest(unittest.TestCase):
             spec: [unclosed
             """)
         _, out, err = self.run_main()
-        self.assertIn("ReferenceGrant | v1 |", out)
-        self.assertIn("regex fallback (top-level only): kubernetes/broken.yaml", err)
+        self.assertIn("`ReferenceGrant` | `v1` |", out)
+        self.assertIn("regex fallback (top-level only): `kubernetes/broken.yaml`", err)
 
     def test_substituted_api_version_ignored(self):
         self.write("kubernetes/s.yaml", "apiVersion: ${GROUP}/v1\nkind: Thing\n")
@@ -239,7 +239,7 @@ class DriftTest(unittest.TestCase):
         _, out, err = self.run_main()
         self.assertNotIn("ReferenceGrant", out)
         self.assertIn("### Allowlist entries that no longer match", out)
-        self.assertIn("- `example.io/v1beta1` Widget", out)
+        self.assertIn("- `example.io/v1beta1` `Widget`", out)
         self.assertIn("1 allowlisted", err)
 
     def test_allowlist_entry_without_reason_fails(self):
@@ -269,11 +269,18 @@ class DriftTest(unittest.TestCase):
         self.assertIn("index covers only", err)
 
     def test_malformed_allowlist_fails(self):
-        for text in ("allow: [unclosed\n", "- just a list\n", "allow: {a: 1}\n"):
+        for text in ("allow: [unclosed\n", "- just a list\n", "allow: {a: 1}\n", "allow: {}\n",
+                     "allow: " + "[" * 5000 + "]" * 5000 + "\n"):
             self.allow.write_text(text, encoding="utf-8")
             code, _, err = self.run_main()
-            self.assertEqual(code, 2, text)
+            self.assertEqual(code, 2, text[:30])
             self.assertIn("error: allow.yaml", err)
+            self.assertNotIn("Traceback", err)
+
+    def test_empty_allowlist_forms_are_accepted(self):
+        for text in ("", "# only a comment\n", "allow:\n", "allow: []\n"):
+            self.allow.write_text(text, encoding="utf-8")
+            self.assertEqual(self.run_main()[0], 0, repr(text))
 
     def test_missing_local_index_fails(self):
         (self.root / "all.json").unlink()
@@ -296,7 +303,7 @@ class DriftTest(unittest.TestCase):
             """)
         code, out, _ = self.run_main()
         self.assertEqual(code, 0)
-        self.assertIn("ReferenceGrant | v1 |", out)
+        self.assertIn("`ReferenceGrant` | `v1` |", out)
 
     def test_nested_string_fallback_is_reported(self):
         self.write("kubernetes/ks.yaml", """\
@@ -310,8 +317,8 @@ class DriftTest(unittest.TestCase):
                     spec: [unclosed
             """)
         _, out, err = self.run_main()
-        self.assertIn("ReferenceGrant | v1 |", out)
-        self.assertIn("regex fallback (top-level only): kubernetes/ks.yaml", err)
+        self.assertIn("`ReferenceGrant` | `v1` |", out)
+        self.assertIn("regex fallback (top-level only): `kubernetes/ks.yaml`", err)
 
     def test_unparseable_pairs_are_reported_not_dropped(self):
         self.write("kubernetes/odd.yaml", """\
@@ -365,6 +372,24 @@ class DriftTest(unittest.TestCase):
             kind: ReferenceGrant
             """)
         self.assertIn("`kubernetes/RG.YAML`", self.run_main()[1])
+
+    def test_hostile_file_names_stay_inside_one_code_span(self):
+        rg = "apiVersion: gateway.networking.k8s.io/v1beta1\nkind: ReferenceGrant\n"
+        self.write("kubernetes/a` www.evil.example `.yaml", rg)
+        self.write("kubernetes/b` @octocat `.yaml", rg)
+        out = self.run_main()[1]
+        self.assertIn("`kubernetes/a? www.evil.example ?.yaml`", out)
+        self.assertIn("`kubernetes/b? ?octocat ?.yaml`", out)
+        self.assertNotIn("@", out)
+
+    def test_deeply_nested_manifest_falls_back_instead_of_crashing(self):
+        self.write("kubernetes/deep.yaml",
+                   "apiVersion: gateway.networking.k8s.io/v1beta1\nkind: ReferenceGrant\n"
+                   "spec: " + "[" * 5000 + "]" * 5000 + "\n")
+        code, out, err = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertIn("`ReferenceGrant` | `v1` |", out)
+        self.assertIn("regex fallback (top-level only): `kubernetes/deep.yaml`", err)
 
 
 if __name__ == "__main__":

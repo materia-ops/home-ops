@@ -187,7 +187,7 @@ def refs_in_text(text):
         for doc in yaml.load_all(text, Loader=TolerantLoader):
             fell_back |= walk(doc, found, set())
         return found, fell_back
-    except yaml.YAMLError:
+    except (yaml.YAMLError, RecursionError):
         for doc in DOC_SPLIT_RE.split(text):
             api_version, kind = TOP_API_RE.search(doc), TOP_KIND_RE.search(doc)
             if api_version and kind:
@@ -234,10 +234,11 @@ def parse_pair(api_version, kind):
     return split[0], split[1], kind
 
 
-def shown(value):
-    """A repo value as an inert Markdown code span for a table cell."""
-    text = re.sub(r"[^A-Za-z0-9./${}!:_ -]", "?", str(value))
-    text = text[:60] + ("..." if len(text) > 60 else "")
+def shown(value, limit=60):
+    """Any repo or index value as an inert Markdown code span; the only way into the report."""
+    text = re.sub(r"[^A-Za-z0-9.,/${}!:_ -]", "?", str(value))
+    if limit and len(text) > limit:
+        text = text[:limit] + "..."
     # Code spans are never autolinked; backticks and pipes are already gone.
     return f"`{text}`" if text.strip() else "(empty)"
 
@@ -274,13 +275,18 @@ def load_allow(path):
     if not path.exists():
         return {}
     try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
-        raise Problem(f"{path.name}: {exc}") from exc
-    if not isinstance(data, dict) or not isinstance(data.get("allow") or [], list):
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, yaml.YAMLError, RecursionError) as exc:
+        raise Problem(f"{path.name}: {type(exc).__name__}: {exc}") from exc
+    if data is None:
+        return {}
+    entries = data.get("allow", []) if isinstance(data, dict) else None
+    if entries is None and isinstance(data, dict):
+        entries = []
+    if not isinstance(entries, list):
         raise Problem(f"{path.name}: expected a mapping with an allow list")
     allow = {}
-    for i, entry in enumerate(data.get("allow") or []):
+    for i, entry in enumerate(entries):
         if not isinstance(entry, dict) or not all(
                 isinstance(entry.get(k), str) and entry[k].strip()
                 for k in ("apiVersion", "kind", "reason")):
@@ -321,8 +327,9 @@ def classify(uses, published, allow):
 def table(rows, uses, third):
     lines = [f"| apiVersion | Kind | {third} | Files |", "|---|---|---|---|"]
     for (group, version, kind), detail in rows:
-        files = "<br>".join(f"`{p}`" for p in sorted(uses[(group, version, kind)]))
-        lines.append(f"| `{group}/{version}` | {kind} | {detail or '-'} | {files} |")
+        files = "<br>".join(shown(p, None) for p in sorted(uses[(group, version, kind)]))
+        lines.append(f"| {shown(f'{group}/{version}', None)} | {shown(kind)} "
+                     f"| {shown(detail) if detail else '-'} | {files} |")
     return lines
 
 
@@ -348,12 +355,12 @@ def render(findings, unused, uses, bad):
         out += table(findings["stale"], uses, "Newest") + [""]
     if unused:
         out += ["### Allowlist entries that no longer match", ""]
-        out += [f"- `{g}/{v}` {k}" for g, v, k in unused] + [""]
+        out += [f"- {shown(f'{g}/{v}', None)} {shown(k)}" for g, v, k in unused] + [""]
     if bad:
         out += ["### apiVersion/kind the check could not parse", "",
                 "Not checked against the cluster; fix the value or the check.", "",
                 "| File | apiVersion kind |", "|---|---|"]
-        out += [f"| `{path}` | {'<br>'.join(sorted(values))} |"
+        out += [f"| {shown(path, None)} | {'<br>'.join(sorted(values))} |"
                 for path, values in sorted(bad.items())] + [""]
     return "\n".join(out)
 
@@ -372,7 +379,7 @@ def summary(published, rejected, files, fallback, uses, findings, suppressed, co
         f" {sum(map(len, bad.values()))} unparseable",
     ]
     if fallback:
-        lines.append(f"- Parsed by regex fallback (top-level only): {', '.join(fallback)}")
+        lines.append(f"- Parsed by regex fallback (top-level only): {', '.join(shown(p, None) for p in fallback)}")
     return "\n".join(lines) + "\n"
 
 
