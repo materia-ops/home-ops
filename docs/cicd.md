@@ -366,7 +366,9 @@ direction (something started or stopped syncing), groups and CFs that left upstr
 and config problems: trash_ids that no longer exist, `select` entries the guide has
 since made default or required, and a baseline older than the configs. Findings go to
 a single open issue ("recyclarr: TRaSH Guides changes to review"), refreshed in place
-and closed when clean. It is report-only (L1) and never edits the configs.
+and closed when clean. The lookup only matches issues the Actions bot opened, so an
+issue anyone plants with the marker is never edited. It is report-only (L1) and never
+edits the configs.
 
 To clear the issue, decide each item in the config (`add`, `select`, `exclude`, `skip`),
 then accept the rest and commit both:
