@@ -9,6 +9,10 @@ spec:
     kind: OCIRepository
     name: seerr
   interval: 1h
+  # `auto` would keep this pre-Helm-4 release on client-side apply; safe to
+  # drop once its Helm release records apply_method ssa.
+  upgrade:
+    serverSideApply: enabled
   values:
     controllers:
       seerr:
