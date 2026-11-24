@@ -71,7 +71,10 @@ Defence in depth, roughly outermost-in:
   single node.
 - **Out-of-band access** — PiKVM for console access when a node won't boot; Talos can
   always be re-driven from this repo (`just talos apply-node`). The PiKVM updates itself
-  nightly at 03:00 Melbourne and reboots after any update. Its journal doesn't survive a
+  nightly at 05:30 Melbourne, after UniFi's ~03:00 switch firmware window and the Pis'
+  reboots, and reboots after any update. A run waits up to 15-20 minutes for the package mirror before
+  it gives up, and a failed run remounts `/` read-only; `PikvmRootReadWrite` warns if
+  `/` stays writable for an hour. Its journal doesn't survive a
   reboot, so each run's result is kept in `/var/lib/kvmd/pst/data/autoupdate/`
   (`history.log`, `last-run.log`) on the device. If that write fails (it does when
   kvmd's config is broken), the result goes to `/var/lib/pikvm-autoupdate.log`

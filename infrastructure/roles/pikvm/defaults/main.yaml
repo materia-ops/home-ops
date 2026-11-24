@@ -1,6 +1,8 @@
 ---
 # Wall-clock time in pikvm_autoupdate_timezone; the PiKVM itself runs on UTC.
-pikvm_autoupdate_time: "03:00"
+# After UniFi's ~03:00 switch firmware window and the Pis' 03:30/04:30 reboots,
+# any of which can take DNS away mid-update.
+pikvm_autoupdate_time: "05:30"
 pikvm_autoupdate_timezone: Australia/Melbourne
 
 # Let's Encrypt profile; shortlived = 160h certs.
