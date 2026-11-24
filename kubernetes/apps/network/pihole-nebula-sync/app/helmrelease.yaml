@@ -30,6 +30,9 @@ spec:
           schedule: "*/10 * * * *"
           timeZone: Australia/Melbourne
           concurrencyPolicy: Forbid
+          # A run takes seconds; without a deadline one pod stuck in
+          # ContainerCreating blocks every later run under Forbid.
+          activeDeadlineSeconds: 300
           backoffLimit: 2
           successfulJobsHistory: 1
           failedJobsHistory: 3
