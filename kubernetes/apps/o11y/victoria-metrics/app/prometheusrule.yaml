@@ -33,6 +33,18 @@ spec:
               {{ $labels.instance }} has no fresh ext4 metrics; check ext4-metrics.timer
           labels:
             severity: warning
+
+        # Updates and the Ansible play hold it rw for minutes; longer exposes the SD card.
+        - alert: PikvmRootReadWrite
+          expr: |-
+            node_filesystem_readonly{instance="pikvm.internal:9100", mountpoint="/"} == 0
+          for: 1h
+          annotations:
+            summary: >-
+              The PiKVM root filesystem has been read-write for over an hour; run ro there
+              (it fails while a deleted file is still held open)
+          labels:
+            severity: warning
 ---
 # yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
 apiVersion: monitoring.coreos.com/v1

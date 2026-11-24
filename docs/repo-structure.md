@@ -141,7 +141,7 @@ timers on the Pis and `pve-0` (the Pis take all Debian/Raspberry Pi updates and 
 their own, staggered an hour apart; `pve-0` takes Debian security updates only and never
 reboots, so Proxmox upgrades stay manual), and a `pikvm` play for the PiKVM. That play
 switches the PiKVM's read-only root to rw only for its own writes. It installs a nightly
-`pikvm-update` timer (03:00 Melbourne) that records each run on the PST partition, and
+`pikvm-update` timer (05:30 Melbourne) that records each run on the PST partition, and
 renders the kvmd overrides, including the ezCoo KVM switch's GPIO config, from
 `host_vars/pikvm.yaml`. It also installs node_exporter and the ext4 error-counter
 timer (SD-card health), since the observability play skips the PiKVM. It sets the web UI login and TOTP seed and the
