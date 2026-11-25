@@ -11,10 +11,12 @@ spec:
   interval: 1h
   values:
     fullnameOverride: blackbox-exporter-lan
-    securityContext:
-      readOnlyRootFilesystem: true
-      allowPrivilegeEscalation: false
-      capabilities: { add: ["NET_RAW"] }
+    podSecurityContext:
+      # The icmp module needs unprivileged ping sockets: NET_RAW is not effective
+      # for the chart's non-root UID, and the Talos host sysctl does not reach pods.
+      sysctls:
+        - name: net.ipv4.ping_group_range
+          value: "0 2147483647"
     config:
       modules:
         http_2xx:
