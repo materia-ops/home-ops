@@ -80,6 +80,11 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
+        annotations:
+          # $$ escapes Flux substitution; dashbrr resolves ${VAR} from its own env.
+          com.dashbrr.service.apikey: "$${DASHBRR_RADARR_ANIME_API_KEY}"
+          com.dashbrr.service.name: Radarr-Anime
+          com.dashbrr.service.type: radarr
         ports:
           http:
             port: *port

@@ -87,6 +87,8 @@ spec:
       app:
         type: LoadBalancer
         annotations:
+          com.dashbrr.service.name: Plex
+          com.dashbrr.service.type: plex
           lbipam.cilium.io/ips: 192.168.10.111
         ports:
           http:
