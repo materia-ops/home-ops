@@ -12,6 +12,12 @@ spec:
   values:
     deploymentAnnotations:
       reloader.stakater.com/auto: "true"
+    podSecurityContext:
+      # The icmp:// checks in config.yaml need unprivileged ping sockets: Gatus
+      # opens a raw socket only as root, and the Talos host sysctl does not reach pods.
+      sysctls:
+        - name: net.ipv4.ping_group_range
+          value: "0 2147483647"
     gatus:
       delayStartSeconds: "5"
       env:
@@ -23,13 +29,6 @@ spec:
         - secretRef:
             name: gatus-sidecar-secret
             optional: true
-      securityContext:
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: true
-        capabilities:
-          # NET_RAW for the icmp:// connectivity checks in config.yaml
-          add: ["NET_RAW"]
-          drop: ["ALL"]
     sidecar:
       kinds:
         httproute:
