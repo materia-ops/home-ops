@@ -305,6 +305,51 @@ entries:
     attrs:
       order: 10
 
+  # ── dashbrr (autobrr suite) ─────────────────────────────────────────────────────
+  - id: dashbrr_provider
+    model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: dashbrr
+    attrs:
+      client_id: !Env DASHBRR_CLIENT_ID
+      client_secret: !Env DASHBRR_CLIENT_SECRET
+      client_type: confidential
+      redirect_uris:
+        - url: https://dashbrr.materia.wtf/api/auth/oidc/callback
+          matching_mode: strict
+      signing_key:
+        !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "materia-invalidation"]]
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "profile"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "email"]]
+      grant_types:
+        - authorization_code
+        - refresh_token
+
+  - id: dashbrr_application
+    model: authentik_core.application
+    identifiers:
+      slug: dashbrr
+    attrs:
+      name: dashbrr
+      provider: !KeyOf dashbrr_provider
+      group: media
+      meta_launch_url: https://dashbrr.materia.wtf
+      meta_description: Media stack dashboard
+      open_in_new_tab: true
+
+  - id: dashbrr_policy_binding
+    model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf dashbrr_application
+      group: !Find [authentik_core.group, [name, "media"]]
+    attrs:
+      order: 0
+
   # ── qui (autobrr suite) ─────────────────────────────────────────────────────────
   - id: qui_provider
     model: authentik_providers_oauth2.oauth2provider

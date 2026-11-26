@@ -21,6 +21,7 @@ patches:
 resources:
   - ./arr-apps
   - ./calibre-web-automated/ks.yaml
+  - ./dashbrr/ks.yaml
   - ./emby/ks.yaml
   - ./flaresolverr/ks.yaml
   - ./notifiarr/ks.yaml

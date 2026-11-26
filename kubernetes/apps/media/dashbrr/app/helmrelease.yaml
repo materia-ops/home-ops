@@ -1,0 +1,92 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dashbrr
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: dashbrr
+  interval: 1h
+  values:
+    global:
+      # rbac.yaml owns the ServiceAccount; the chart's default one would conflict.
+      createDefaultServiceAccount: false
+    controllers:
+      dashbrr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        serviceAccount:
+          name: dashbrr
+        containers:
+          app:
+            nameOverride: "{{ .Release.Name }}"
+            image:
+              repository: ghcr.io/autobrr/dashbrr
+              tag: v0.9.0@sha256:80ff5f546487893502e8e8bcde233c87fb7a5c25f8531b280670dcca22d54b69
+            env:
+              DASHBRR__K8S_DISCOVERY_ENABLED: "true"
+              DASHBRR__OIDC_ISSUER: https://auth.materia.wtf/application/o/dashbrr/
+              DASHBRR__OIDC_REDIRECT_URL: https://dashbrr.materia.wtf/api/auth/oidc/callback
+              TZ: Australia/Melbourne
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &port 8080
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probe
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      # Discovery lists Services through the API; the SA has automount off.
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.materia.wtf"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+      tmp:
+        type: emptyDir
