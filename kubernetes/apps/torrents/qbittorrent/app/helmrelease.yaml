@@ -36,9 +36,13 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /api/v2/app/version
-                    port: *port
+                  exec:
+                    command:
+                      - curl
+                      - -fsS
+                      - -o
+                      - /dev/null
+                      - http://127.0.0.1/api/v2/app/version
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
