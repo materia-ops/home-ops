@@ -33,7 +33,7 @@ spec:
             image:
               # Rolling :latest, digest-pinned so Renovate PRs each new build.
               repository: ghcr.io/materia-ops/wow-panel
-              tag: 1.13.59@sha256:2bdf67e35d3a41b36b7b4fb075d31fbb3cf79868a3423e79c42bcdd026fb0a4f
+              tag: 1.13.60@sha256:cd21493cf6294c37062246bb340b2abd41483c42615ae1baf075bd32fa5c9201
             env:
               # /my-characters ownership beyond the automatic case-insensitive
               # "game account == Authentik username" match: vince's game account
