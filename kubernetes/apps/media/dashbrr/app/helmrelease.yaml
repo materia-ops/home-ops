@@ -30,6 +30,8 @@ spec:
               # config and database paths land on the read-only root, not the PVC.
               DASHBRR__CONFIG_PATH: /config/config.toml
               DASHBRR__K8S_DISCOVERY_ENABLED: "true"
+              # One namespace failing its list fails the whole sync: each needs rbac.yaml's grant.
+              DASHBRR__K8S_DISCOVERY_NAMESPACES: media,torrents
               DASHBRR__OIDC_ISSUER: https://auth.materia.wtf/application/o/dashbrr/
               DASHBRR__OIDC_REDIRECT_URL: https://dashbrr.materia.wtf/api/auth/oidc/callback
               TZ: Australia/Melbourne
