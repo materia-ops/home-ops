@@ -12,12 +12,9 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: network
-            gateway.envoyproxy.io/owning-gateway-name: envoy-internal
-        - matchLabels:
-            io.kubernetes.pod.namespace: media
-        - matchLabels:
             io.kubernetes.pod.namespace: torrents
+            app.kubernetes.io/controller: qui
+            app.kubernetes.io/name: qui
       toPorts: &webui
         - ports:
             - port: "80"
