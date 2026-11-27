@@ -5,8 +5,6 @@ metadata:
   name: dashbrr
 automountServiceAccountToken: false
 ---
-# Cluster-scoped because this Kustomization pins namespaced objects to media,
-# so it cannot bind in torrents; DASHBRR__K8S_DISCOVERY_NAMESPACES limits the reads.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -15,7 +13,6 @@ rules:
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "list", "watch"]
-  # Discovery takes each card's link from the HTTPRoute that targets the Service.
   - apiGroups: ["gateway.networking.k8s.io"]
     resources: ["httproutes"]
     verbs: ["get", "list"]
