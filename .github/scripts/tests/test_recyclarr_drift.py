@@ -5,7 +5,9 @@ temp directory. Run from the repo root:
 
   python3 -m unittest discover -s .github/scripts/tests -v
 """
+import contextlib
 import importlib.util
+import io
 import json
 import pathlib
 import shutil
@@ -95,22 +97,74 @@ class DriftTest(unittest.TestCase):
         for pid in self.profiles:
             (base / "quality-profiles" / f"{pid}.json").write_text(json.dumps({"trash_id": pid}))
 
-    def report(self, update=False):
+    def report(self, update=False, ref="test"):
         self.write_trash()
-        return rd.run(str(self.trash), str(self.config_dir), str(self.baseline), update, "test")
+        return rd.run(str(self.trash), str(self.config_dir), str(self.baseline), update, ref)
 
-    def accept(self):
-        self.assertEqual(self.report(update=True), "")
+    def accept(self, ref="test"):
+        return self.report(update=True, ref=ref)
 
     def test_clean_after_baseline(self):
         self.accept()
         self.assertEqual(self.report(), "")
 
-    def test_update_ignores_unreadable_old_baseline(self):
-        self.baseline.write_text(json.dumps(
-            {"instances": {"sonarr/tv": {"groups": {"g-uk": "old names-only shape"}, "cfs": {}}}}))
-        self.accept()
+    def test_accept_prints_the_change_it_takes_in(self):
+        self.accept("old")
+        self.groups["g-unwanted"]["custom_formats"].pop(2)
+        self.assertEqual(self.accept("new"), (
+            "Accepting TRaSH Guides changes into the recyclarr baseline (trash_ref `old` -> `new`). "
+            "Anything the drift issue did not list landed after its last refresh.\n\n"
+            "### sonarr/tv\n"
+            "- `[Unwanted] Unwanted Formats`: CF `Retags` (`cf-retags`) left the group or became "
+            "required\n"))
+        written = json.loads(self.baseline.read_text())
+        self.assertEqual(written["trash_ref"], "new")
+        self.assertNotIn("cf-retags", written["instances"]["sonarr/tv"]["cfs"]["g-unwanted"])
         self.assertEqual(self.report(), "")
+
+    def test_accept_unchanged_is_one_line_without_config_problems(self):
+        self.groups["g-unwanted"]["custom_formats"][1]["default"] = True
+        self.accept("old")
+        self.assertIn(":warning:", self.report())
+        self.assertEqual(self.accept("new"),
+                         "Upstream state unchanged (trash_ref `old` -> `new`): nothing to accept.\n")
+        self.assertEqual(json.loads(self.baseline.read_text())["trash_ref"], "new")
+
+    def test_accept_names_silent_changes(self):
+        self.accept("old")
+        self.groups["g-unwanted"]["custom_formats"][2]["name"] = "Retags (renamed)"
+        out = self.accept("new")
+        self.assertIn("(trash_ref `old` -> `new`)", out)
+        self.assertIn("Nothing that needs a decision changed", out)
+
+    def test_accept_lists_a_newly_synced_group(self):
+        self.accept("old")
+        cfg = (self.config_dir / "sonarr.yaml").read_text().replace(
+            "        - trash_id: g-unwanted", "        - trash_id: g-uk\n        - trash_id: g-unwanted")
+        (self.config_dir / "sonarr.yaml").write_text(cfg)
+        self.assertIn("- `[Streaming Services] UK`: newly synced by a config change", self.accept())
+        self.assertEqual(self.report(), "")
+
+    def test_accept_without_old_baseline_writes_one(self):
+        self.assertEqual(self.accept("new"), "No diff to show: there is no old baseline. "
+                                             "Wrote a fresh one at guide `new`.\n")
+        self.assertEqual(self.report(), "")
+
+    def test_accept_survives_a_broken_old_baseline(self):
+        broken = {
+            "TypeError": json.dumps({"instances": {"sonarr/tv": {
+                "groups": {"g-uk": "old names-only shape"}, "cfs": {}}}}),
+            "JSONDecodeError": "{not json",
+            "AttributeError": "[]",
+        }
+        for error, text in broken.items():
+            with self.subTest(error):
+                self.baseline.write_text(text)
+                out = self.accept("new")
+                self.assertTrue(out.startswith(
+                    f"No diff to show: the old baseline cannot be read ({error}: "), out)
+                self.assertTrue(out.endswith("Wrote a fresh one at guide `new`.\n"), out)
+                self.assertEqual(self.report(), "")
 
     def test_baseline_shape(self):
         self.accept()
@@ -235,7 +289,9 @@ class DriftTest(unittest.TestCase):
         self.write_trash()
         common = ["--trash", str(self.trash), "--config-dir", str(self.config_dir),
                   "--baseline", str(self.baseline)]
-        self.assertEqual(rd.main(common + ["--update-baseline"]), 0)
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            self.assertEqual(rd.main(common + ["--update-baseline"]), 0)
+        self.assertIn("there is no old baseline", stdout.getvalue())
         self.assertTrue(self.baseline.exists())
         out = self.root / "report.md"
         self.groups["g-fr"] = group("g-fr", "French", [cf("cf-c", "C")])

@@ -16,6 +16,9 @@ and lists the ones that need a decision:
 
 It lists everything TRaSH currently offers each instance, diffs that against
 the reviewed baseline, and prints a Markdown report (empty when clean).
+--update-baseline writes the current upstream state as the new baseline and
+prints the same change lines for what it takes in, or one line when nothing
+changed.
 
 Usage:
   recyclarr_drift.py [--trash DIR] [--out FILE|-]    report (default)
@@ -184,11 +187,11 @@ def cf_syncs(g, cid, default):
 
 
 def changes(offer, base):
-    """(stale, lines): whether the baseline predates the configs, and one line
-    per upstream change since the baseline."""
+    """(fresh, lines): names of synced groups the baseline has no CFs for (it
+    predates the configs), and one line per upstream change since the baseline."""
     seen_groups = (base or {}).get("groups", {})
     seen_cfs = (base or {}).get("cfs", {})
-    stale, lines = False, []
+    fresh, lines = [], []
     for gid, g in sorted(offer.items(), key=lambda kv: kv[1]["name"]):
         name = code(g["name"])
         was = seen_groups.get(gid)
@@ -211,7 +214,7 @@ def changes(offer, base):
             continue
         known = seen_cfs.get(gid)
         if known is None:
-            stale = True  # synced since the baseline was taken: a config change
+            fresh.append(g["name"])  # synced since the baseline was taken: a config change
             continue
         for cid, c in sorted(g["cfs"].items(), key=lambda kv: kv[1]["name"]):
             cname = code(c["name"])
@@ -237,30 +240,68 @@ def changes(offer, base):
     for gid in sorted(set(seen_groups) - set(offer)):
         lines.append(f"Group {code(seen_groups[gid]['name'])} (`{gid}`) is no longer offered to "
                      "this profile (removed upstream or dropped from its compatibility list)")
-    return stale, lines
+    return fresh, lines
 
 
 # --------------------------------------------------------------------------
 # main
 
+def accept(instances, baseline_file, trash_ref):
+    """Write the current upstream state as the baseline and return what that
+    takes in, diffed against the old baseline. Config problems are left out:
+    accepting does not clear them. A missing or malformed old baseline only
+    costs the diff; the new baseline is written either way."""
+    current = {key: snapshot(offer) for key, offer, _ in instances}
+    try:
+        with open(baseline_file, encoding="utf-8") as f:
+            old = json.load(f)
+        refs = f"trash_ref `{old.get('trash_ref', 'none')}` -> `{trash_ref}`"
+        sections = []
+        for key, offer, _ in instances:
+            fresh, lines = changes(offer, old.get("instances", {}).get(key))
+            lines += [f"{code(n)}: newly synced by a config change; its CFs are recorded as "
+                      "offered now" for n in fresh]
+            if lines:
+                sections.append("\n".join([f"### {key}"] + [f"- {line}" for line in lines]))
+        if old.get("instances") == current:
+            out = f"Upstream state unchanged ({refs}): nothing to accept.\n"
+        else:
+            out = (f"Accepting TRaSH Guides changes into the recyclarr baseline ({refs}). "
+                   "Anything the drift issue did not list landed after its last refresh.\n\n")
+            out += "\n\n".join(sections) if sections else (
+                "Nothing that needs a decision changed: the rest (renames, default flips that leave "
+                "syncing unchanged, config changes) shows only in `git diff` on the baseline.")
+            out += "\n"
+    except FileNotFoundError:
+        out = f"No diff to show: there is no old baseline. Wrote a fresh one at guide `{trash_ref}`.\n"
+    except (OSError, ValueError, AttributeError, KeyError, TypeError) as e:
+        out = (f"No diff to show: the old baseline cannot be read ({type(e).__name__}: {e}). "
+               f"Wrote a fresh one at guide `{trash_ref}`.\n")
+    with open(baseline_file, "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"trash_ref": trash_ref, "instances": current}, f, indent=2, sort_keys=True)
+        f.write("\n")
+    return out
+
+
 def run(trash_dir, config_dir, baseline_file, update, trash_ref):
     guides = {app: load_guide(trash_dir, app) for app in ("radarr", "sonarr")}
-    baseline = {}
-    if not update:  # accepting must not depend on the old baseline's shape
-        try:
-            with open(baseline_file, encoding="utf-8") as f:
-                baseline = json.load(f)
-        except FileNotFoundError:
-            pass
-    current, sections = {}, []
+    instances = []
     for app, name, cfg in load_instances(config_dir):
         groups, cfs, profiles = guides[app]
-        offer = offered(cfg, groups)
-        key = f"{app}/{name}"
-        current[key] = snapshot(offer)
-        problems = config_problems(cfg, groups, cfs, profiles)
-        stale, lines = changes(offer, baseline.get("instances", {}).get(key))
-        if stale:
+        instances.append((f"{app}/{name}", offered(cfg, groups),
+                          config_problems(cfg, groups, cfs, profiles)))
+    if update:
+        return accept(instances, baseline_file, trash_ref)
+    baseline = {}
+    try:
+        with open(baseline_file, encoding="utf-8") as f:
+            baseline = json.load(f)
+    except FileNotFoundError:
+        pass
+    sections = []
+    for key, offer, problems in instances:
+        fresh, lines = changes(offer, baseline.get("instances", {}).get(key))
+        if fresh:
             problems.append("the baseline predates a config change (a newly synced group has no "
                             "recorded CFs): run `--update-baseline`")
         if problems or lines:
@@ -268,11 +309,6 @@ def run(trash_dir, config_dir, baseline_file, update, trash_ref):
             body += [f"- :warning: {p}" for p in problems]
             body += [f"- {line}" for line in lines]
             sections.append("\n".join(body))
-    if update:
-        with open(baseline_file, "w", encoding="utf-8", newline="\n") as f:
-            json.dump({"trash_ref": trash_ref, "instances": current}, f, indent=2, sort_keys=True)
-            f.write("\n")
-        return ""
     if not sections:
         return ""
     head = (f"{MARKER}\nTRaSH Guides changes since the reviewed recyclarr baseline "
