@@ -11,7 +11,6 @@ spec:
   interval: 1h
   values:
     global:
-      # rbac.yaml owns the ServiceAccount; the chart's default one would conflict.
       createDefaultServiceAccount: false
     controllers:
       dashbrr:
@@ -26,11 +25,8 @@ spec:
               repository: ghcr.io/autobrr/dashbrr
               tag: v0.9.0@sha256:80ff5f546487893502e8e8bcde233c87fb7a5c25f8531b280670dcca22d54b69
             env:
-              # The published image's workdir is / with no HOME, so the default
-              # config and database paths land on the read-only root, not the PVC.
               DASHBRR__CONFIG_PATH: /config/config.toml
               DASHBRR__K8S_DISCOVERY_ENABLED: "true"
-              # One namespace failing its list fails the whole sync: each needs rbac.yaml's grant.
               DASHBRR__K8S_DISCOVERY_NAMESPACES: media,torrents
               DASHBRR__OIDC_ISSUER: https://auth.materia.wtf/application/o/dashbrr/
               DASHBRR__OIDC_REDIRECT_URL: https://dashbrr.materia.wtf/api/auth/oidc/callback
@@ -70,7 +66,6 @@ spec:
               limits:
                 memory: 512Mi
     defaultPodOptions:
-      # Discovery lists Services through the API; the SA has automount off.
       automountServiceAccountToken: true
       securityContext:
         runAsNonRoot: true

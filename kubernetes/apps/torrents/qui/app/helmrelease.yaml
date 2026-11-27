@@ -73,7 +73,6 @@ spec:
     service:
       app:
         annotations:
-          # $$ escapes Flux substitution; dashbrr resolves ${VAR} from its own env.
           com.dashbrr.service.apikey: "$${DASHBRR_QUI_API_KEY}"
           com.dashbrr.service.name: qui
           com.dashbrr.service.type: qui
