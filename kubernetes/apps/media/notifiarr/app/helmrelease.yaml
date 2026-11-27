@@ -61,7 +61,6 @@ spec:
               DN_SONARR_1_INTERVAL: 5m
               DN_SONARR_1_TIMEOUT: 15s
               # qBittorrent Configuration
-              # DN_QBIT_0_URL is in notifiarr-secret: the qui proxy URL holds its key.
               DN_QBIT_0_NAME: "qBittorrent"
               DN_QBIT_0_INTERVAL: 5m
               DN_QBIT_0_TIMEOUT: 60s
