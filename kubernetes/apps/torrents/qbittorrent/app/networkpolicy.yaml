@@ -10,14 +10,13 @@ spec:
       app.kubernetes.io/controller: qbittorrent
       app.kubernetes.io/name: qbittorrent
   ingress:
+    # Only qui reaches the WebUI API: clients use qui proxy keys, and qBittorrent
+    # skips auth for pod and LAN subnets, so any wider rule is an open API.
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: network
-            gateway.envoyproxy.io/owning-gateway-name: envoy-internal
-        - matchLabels:
-            io.kubernetes.pod.namespace: media
-        - matchLabels:
             io.kubernetes.pod.namespace: torrents
+            app.kubernetes.io/controller: qui
+            app.kubernetes.io/name: qui
       toPorts: &webui
         - ports:
             - port: "80"
