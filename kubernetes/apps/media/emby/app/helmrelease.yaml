@@ -71,6 +71,10 @@ spec:
       app:
         type: LoadBalancer
         annotations:
+          # $$ escapes Flux substitution; dashbrr resolves ${VAR} from its own env.
+          com.dashbrr.service.apikey: "$${DASHBRR_EMBY_API_KEY}"
+          com.dashbrr.service.name: Emby
+          com.dashbrr.service.type: emby
           lbipam.cilium.io/ips: "192.168.10.110"
         ports:
           http:
