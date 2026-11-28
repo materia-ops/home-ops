@@ -6,6 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+  - ./prometheusrule.yaml
 
 configMapGenerator:
   - name: recyclarr-configs
@@ -15,6 +16,9 @@ configMapGenerator:
       - radarr.yaml=./config/radarr.yaml
       - sonarr-anime.yaml=./config/sonarr-anime.yaml
       - sonarr.yaml=./config/sonarr.yaml
+  - name: recyclarr-settings
+    files:
+      - settings.yml=./resources/settings.yml
 
 generatorOptions:
   disableNameSuffixHash: true
