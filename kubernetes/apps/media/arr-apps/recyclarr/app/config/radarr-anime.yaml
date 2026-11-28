@@ -7,6 +7,9 @@ radarr:
     base_url: http://radarr-anime.media.svc.cluster.local
     api_key: !env_var RADARR_ANIME_API_KEY
 
+    # Off: with this on, an unresolved profile trash_id deletes every custom format.
+    # delete_old_custom_formats: true
+
     quality_definition:
       type: anime
 

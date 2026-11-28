@@ -7,6 +7,9 @@ radarr:
     base_url: http://radarr-4k.media.svc.cluster.local
     api_key: !env_var RADARR_4K_API_KEY
 
+    # Off: with this on, an unresolved profile trash_id deletes every custom format.
+    # delete_old_custom_formats: true
+
     quality_definition:
       type: sqp-uhd
 
