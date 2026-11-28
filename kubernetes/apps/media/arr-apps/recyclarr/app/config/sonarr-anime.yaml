@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/v9/config-schema.json
 # Source:  https://github.com/recyclarr/config-templates/blob/master/sonarr/templates/anime-remux-1080p.yml
 # Guide-backed: profile scores, default CF groups and default CFs follow TRaSH
 # on every sync, so this file holds only deviations from the guide.

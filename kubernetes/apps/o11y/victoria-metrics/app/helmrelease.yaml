@@ -401,7 +401,7 @@ spec:
                 annotations:
                   summary: Recyclarr logged {{ $value }} error/warning line(s) in the last 30m. Check the recyclarr logs in VictoriaLogs.
                 expr: |-
-                  kubernetes.pod_namespace:=media kubernetes.container_name:=recyclarr ("[ERR]" OR "[WRN]" OR "[FTL]" OR "level=error") | stats count() as errors | filter errors:>0
+                  kubernetes.pod_namespace:=media kubernetes.container_name:=recyclarr (level:in(warn,error,fatal) OR "IncompatibleCustomFormatGroupOutcome" OR "Server startup failed" OR "Unhandled exception") | stats count() as problems | filter problems:>0
                 labels:
                   severity: warning
       sqlite-rules:

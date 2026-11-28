@@ -20,23 +20,52 @@ spec:
             nameOverride: "{{ .Release.Name }}"
             image:
               repository: ghcr.io/recyclarr/recyclarr
-              tag: 8.8.1@sha256:3e9c41b9ec29bbf65fe846864058730d321a21f7695d8c0d9437b73e34d50ad9
+              tag: 9.0.0@sha256:4973d11b18b5ef09fb226f4161eecb16434ff7e6b43c56d50fceb52fb22c66c7
             env:
-              CRON_SCHEDULE: "@daily"
-              RECYCLARR_CREATE_CONFIG: "true"
               TZ: Australia/Melbourne
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /livez
+                    port: &port 7983
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /readyz
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /livez
+                    port: *port
+                  failureThreshold: 30
+                  periodSeconds: 10
             securityContext:
               allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: false
+              readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 10m
+                memory: 256Mi
               limits:
-                memory: 128Mi
+                memory: 512Mi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -44,33 +73,32 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          metrics:
+            port: *port
+    serviceMonitor:
+      app:
+        endpoints:
+          - port: metrics
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /config
-      configs-dir:
-        type: emptyDir
-        globalMounts:
-          - path: /config/configs
       configs:
         type: configMap
         name: recyclarr-configs
-        advancedMounts:
-          recyclarr:
-            app:
-              - path: /config/configs/radarr-4k.yaml
-                subPath: radarr-4k.yaml
-                readOnly: true
-              - path: /config/configs/radarr-anime.yaml
-                subPath: radarr-anime.yaml
-                readOnly: true
-              - path: /config/configs/radarr.yaml
-                subPath: radarr.yaml
-                readOnly: true
-              - path: /config/configs/sonarr-anime.yaml
-                subPath: sonarr-anime.yaml
-                readOnly: true
-              - path: /config/configs/sonarr.yaml
-                subPath: sonarr.yaml
-                readOnly: true
+        globalMounts:
+          - path: /config/configs
+            readOnly: true
+      settings:
+        type: configMap
+        name: recyclarr-settings
+        globalMounts:
+          - path: /config/settings.yml
+            subPath: settings.yml
+            readOnly: true
+      tmp:
+        type: emptyDir

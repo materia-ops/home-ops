@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://schemas.materia.wtf/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: recyclarr-rules
+spec:
+  groups:
+    - name: recyclarr.rules
+      rules:
+        - alert: RecyclarrSyncFailed
+          expr: |-
+            sum(increase(recyclarr_sync_job_duration_seconds_count{namespace="media", job="recyclarr", recyclarr_sync_job_status=~"failed|partial"}[1h])) > 0
+          annotations:
+            summary: >-
+              A recyclarr sync job ended partial or failed in the last hour; check the recyclarr logs in VictoriaLogs for the failing instance.
+          labels:
+            severity: warning
+        - alert: RecyclarrNoRecentSync
+          expr: |-
+            (
+              sum(increase(recyclarr_sync_job_duration_seconds_count{namespace="media", job="recyclarr"}[26h])) < 1
+              or absent_over_time(recyclarr_sync_job_duration_seconds_count{namespace="media", job="recyclarr"}[26h])
+            )
+            unless on() (kube_deployment_spec_replicas{namespace="media", deployment="recyclarr"} == 0)
+          for: 1h
+          annotations:
+            summary: >-
+              recyclarr has completed no sync job in 26h; the server, its schedule or its pod is not running syncs.
+          labels:
+            severity: warning
