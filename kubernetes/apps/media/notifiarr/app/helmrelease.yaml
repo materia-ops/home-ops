@@ -62,8 +62,13 @@ spec:
               DN_SONARR_1_TIMEOUT: 15s
               # qBittorrent Configuration
               DN_QBIT_0_NAME: "qBittorrent"
-              DN_QBIT_0_INTERVAL: 5m
+              DN_QBIT_0_INTERVAL: -1s
               DN_QBIT_0_TIMEOUT: 60s
+              DN_SERVICE_0_NAME: "qBittorrent"
+              DN_SERVICE_0_TYPE: http
+              DN_SERVICE_0_EXPECT: "200"
+              DN_SERVICE_0_INTERVAL: 5m
+              DN_SERVICE_0_TIMEOUT: 15s
               # SABnzbd Configuration
               DN_SABNZBD_0_NAME: "SABnzbd"
               DN_SABNZBD_0_URL: http://sabnzbd.media.svc.cluster.local
